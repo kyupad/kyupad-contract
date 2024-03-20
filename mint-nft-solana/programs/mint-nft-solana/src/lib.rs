@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token;
-use anchor_spl::token::{MintTo, Token, Transfer};
+use anchor_spl::token::{MintTo, Token};
 
 declare_id!("DzLwtQgPcmxuEjMpWCD9rQJEkmw925ycDnWeyTzBNKQP");
 
