@@ -48,8 +48,8 @@ describe("solana-nft-anchor", async () => {
   })[0];
 
   const metadata = {
-    name: "Kobeni",
-    symbol: "kBN",
+    name: "Aminofox",
+    symbol: "ANF",
     uri: "https://raw.githubusercontent.com/687c/solana-nft-native-client/main/metadata.json",
   };
 

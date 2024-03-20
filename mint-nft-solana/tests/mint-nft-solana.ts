@@ -77,7 +77,7 @@ describe("mint-nft-solana", () => {
     console.log("User: ", key.toString());
 
     // Executes our code to mint our token into our specified ATA
-    let amount = 1;
+    let amount = 0.1;
     await program.methods
       .mintToken(new anchor.BN(amount))
       .accounts({
