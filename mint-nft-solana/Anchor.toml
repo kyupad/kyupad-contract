@@ -8,10 +8,10 @@ skip-lint = false
 mint_nft_solana = "6MDBAfNk1J7e1mWnsQwgTRffTuusUUpgbCKSiNBPwSYR"
 
 [registry]
-url = "https://api.apr.dev"
+url = "https://api.testnet.solana.com"
 
 [provider]
-cluster = "devnet"
+cluster = "testnet"
 wallet = "id.json"
 
 [scripts]

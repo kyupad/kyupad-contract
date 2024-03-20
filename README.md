@@ -1,5 +1,5 @@
 <p style="text-align:center; font-size:48px;font-weight: 700">
-KYUPAD CONTRACT
+    <span>KYUPAD CONTRACT</span>
 </p>
 
 # Solana docs:
@@ -103,11 +103,13 @@ anchor init contract-empty
 solana-keygen new -o id.json
 ```
 
-Thay đổi wallet ở file `Anchor.toml` chính là file id.json vừa tạo ra
+- Thay đổi wallet ở file `Anchor.toml` chính là file id.json vừa tạo ra
+- Copy file id.json ở thư mục gốc vào từng thư mục
+- WalletID: b6q9jftfVvYcdVkaYHahQ9XVaVwsSv6Ssbv2aZPa4uW
 
 ```code
 [provider]
-cluster = "Localnet"
+cluster = "testnet"
 wallet = "id.json"
 ```
 
@@ -122,6 +124,7 @@ anchor test
 ```
 
 # Deploy
+
 Lưu ý: tài khoản phải có sol thì mới deploy thành công
 
 ```

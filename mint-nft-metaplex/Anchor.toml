@@ -8,10 +8,10 @@ skip-lint = false
 mint_nft_metaplex = "EEXjKscUeFpFsFoK5k2EMV2VTJdn6iiX3CGYFXo9AT8D"
 
 [registry]
-url = "https://api.apr.dev"
+url = "https://api.testnet.solana.com"
 
 [provider]
-cluster = "devnet"
+cluster = "testnet"
 wallet = "id.json"
 
 [scripts]
