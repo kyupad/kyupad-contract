@@ -56,7 +56,7 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ## Solana CLI
 
 ```
-sh -c "$(curl -sSfL https://release.solana.com/1.18.1/install)"
+sh -c "$(curl -sSfL https://release.solana.com/v1.18.1/install)"
 ```
 
 Nếu nhận được message sau khi cài : `Please update your PATH environment variable to include the solana programs`
@@ -90,6 +90,18 @@ sudo apt-get update && sudo apt-get upgrade && sudo apt-get install -y pkg-confi
 ```
 anchor --version
 ```
+
+## Install sugar
+
+```
+bash <(curl -sSf https://sugar.metaplex.com/install.sh)
+```
+
+## Check version
+```
+sugar --version
+```
+
 
 # Create project anchor
 
