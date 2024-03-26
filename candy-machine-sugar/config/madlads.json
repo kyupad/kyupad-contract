@@ -1,0 +1,43 @@
+{
+  "price": 0.1,
+  "tokenStandard": "nft",
+  "number": 8,
+  "symbol": "CRAB",
+  "sellerFeeBasisPoints": 500,
+  "isMutable": true,
+  "isSequential": false,
+  "creators": [
+    {
+      "address": "3yM3Y1oDCPxNSHUDjB6QEswCDz1bkaCuiihvEdA8tu1R",
+      "share": 100
+    }
+  ],
+  "uploadMethod": "bundlr",
+  "ruleSet": null,
+  "awsConfig": null,
+  "sdriveApiKey": null,
+  "nftStorageAuthToken": null,
+  "shdwStorageAccount": null,
+  "pinataConfig": null,
+  "hiddenSettings": null,
+  "guards": {
+    "default": {
+      "botTax": {
+        "value": 0.01,
+        "lastInstruction": true
+      },
+      "mintLimit": {
+        "id": 1,
+        "limit": 1
+      },
+      "solPayment": {
+        "value": 1,
+        "destination": "5joHam4BWRY8dLP4TiS4K9MeDWbLZ2rT6WvRRbBQPzL"
+      },
+      "startDate": {
+        "date": "2024-03-21T01:00:00Z"
+      }
+    }
+  },
+  "maxEditionSupply": null
+}

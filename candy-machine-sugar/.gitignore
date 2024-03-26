@@ -8,5 +8,4 @@ test-ledger
 .yarn
 id.json
 sugar.log
-cache.json
-
+.env
