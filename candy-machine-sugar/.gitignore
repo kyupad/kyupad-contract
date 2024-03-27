@@ -6,6 +6,5 @@ target
 node_modules
 test-ledger
 .yarn
-id.json
 sugar.log
 .env

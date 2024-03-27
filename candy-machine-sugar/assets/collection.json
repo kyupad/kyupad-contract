@@ -1,15 +1,16 @@
 {
-  "name": "Studious Crabs Collection",
-  "symbol": "CRAB",
-  "description": "Collection of 5 crabs seeking refuge from overfishing on the blockchain.",
-  "image": "collection.png",
-  "attributes": [],
-  "properties": {
-    "files": [
-      {
-        "uri": "collection.png",
-        "type": "image/png"
-      }
-    ]
+    "name": "Studious AMI Collection",
+    "symbol": "CAT",
+    "description": "Collection of 5 cat seeking refuge from overfishing on the blockchain.",
+    "image": "collection.png",
+    "attributes": [],
+    "properties": {
+      "files": [
+        {
+          "uri": "collection.png",
+          "type": "image/png"
+        }
+      ]
+    }
   }
-}
+  

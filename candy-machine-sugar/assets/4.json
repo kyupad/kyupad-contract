@@ -1,8 +1,8 @@
 {
-    "name": "Studious Crab #4",
-    "symbol": "CRAB",
-    "description": "The Studious Crabs are smart and productive crabs.",
-    "image": "4.png",
+    "name": "AMI big stomach#0",
+    "symbol": "CAT",
+    "description": "The Studious AMI are smart and productive cat.",
+    "image": "0.png",
     "attributes": [
         {
             "trait_type": "accessory",
@@ -20,7 +20,7 @@
     "properties": {
         "files": [
             {
-                "uri": "4.png",
+                "uri": "0.png",
                 "type": "image/png"
             }
         ]

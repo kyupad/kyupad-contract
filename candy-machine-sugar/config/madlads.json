@@ -8,7 +8,7 @@
   "isSequential": false,
   "creators": [
     {
-      "address": "5joHam4BWRY8dLP4TiS4K9MeDWbLZ2rT6WvRRbBQPzL",
+      "address": "3yM3Y1oDCPxNSHUDjB6QEswCDz1bkaCuiihvEdA8tu1R",
       "share": 100
     }
   ],
@@ -32,7 +32,7 @@
       },
       "solPayment": {
         "value": 1,
-        "destination": "5joHam4BWRY8dLP4TiS4K9MeDWbLZ2rT6WvRRbBQPzL"
+        "destination": "3yM3Y1oDCPxNSHUDjB6QEswCDz1bkaCuiihvEdA8tu1R"
       },
       "startDate": {
         "date": "2024-03-21T01:00:00Z"
