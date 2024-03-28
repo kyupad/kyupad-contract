@@ -32,13 +32,14 @@ const keypair = umi1.eddsa.createKeypairFromSecretKey(Buffer.from(owner));
 export const umi = umi1.use(keypairIdentity(keypair));
 umi.use(nftStorageUploader({ token: process.env.KYUPAD_NFT_STORAGE_KEY }));
 
-export const mySigner = createSignerFromKeypair(umi, keypair);
 
 const main = async () => {
-  const collectionMint = await createCollection(umi, mySigner);
-  const candyMachinePk = await createMachine(umi, collectionMint, mySigner, 3);
-
-  await updateCandyMachineData(umi, candyMachinePk);
+  // const collectionMint = await createCollection(umi);
+  // const candyMachinePk = await createMachine(umi, collectionMint, 3);
+  await updateCandyMachineData(
+    umi,
+    "CrVuqP1xzQqxMsSiHmDcKKHYaZ73SxfMczpndURG4n8i"
+  );
 };
 
 main();

@@ -32,20 +32,18 @@ import path from "path";
 import { getImageMimeType, isImageFile } from "../util/util";
 
 // Create function
-export async function createCollection(umi: Umi, authority: KeypairSigner) {
+export async function createCollection(umi: Umi) {
   const collectionMint = generateSigner(umi);
 
   const collection = await createNft(umi, {
     mint: collectionMint,
-    authority: authority,
+    authority: umi.identity,
     name: "Kyupad Collection NFT",
     symbol: "KYUPAD",
     uri: "https://bafybeifpyhhx4tufmzikpyty3dvi4veh5xgx4zk47iago524b4h45oxoke.ipfs.nftstorage.link/1.json",
     sellerFeeBasisPoints: percentAmount(0),
     isCollection: true,
   }).sendAndConfirm(umi);
-
-  console.log(`✅ - collection: ${collection}`);
 
   console.log(
     `✅ - Minted Collection NFT: ${base58.encode(collection.signature)}`
@@ -61,7 +59,6 @@ export async function createCollection(umi: Umi, authority: KeypairSigner) {
 export async function createMachine(
   umi: Umi,
   collectionMint: string,
-  collectionUpdateAuthority: KeypairSigner,
   itemsAvailable = 10
 ) {
   // Create the Candy Machine.
@@ -70,7 +67,7 @@ export async function createMachine(
     await create(umi, {
       candyMachine,
       collectionMint: publicKey(collectionMint),
-      collectionUpdateAuthority: collectionUpdateAuthority,
+      collectionUpdateAuthority: umi.identity,
       tokenStandard: TokenStandard.NonFungible,
       sellerFeeBasisPoints: percentAmount(9.99, 2), // 9.99%
       itemsAvailable: itemsAvailable,
@@ -93,7 +90,7 @@ export async function createMachine(
         botTax: some({ lamports: sol(0.01), lastInstruction: true }),
         solPayment: some({
           lamports: sol(1),
-          destination: collectionUpdateAuthority.publicKey,
+          destination: umi.identity.publicKey,
         }),
         startDate: { date: dateTime("2024-03-30T17:00:00Z") },
         mintLimit: some({ id: 1, limit: 1 }),
@@ -176,29 +173,29 @@ export async function fetchCandyMachineData(umi: Umi, candyMachinePk: string) {
   const candyMachinePublicKey = publicKey(candyMachinePk);
   const candy_machine = await fetchCandyMachine(umi, candyMachinePublicKey);
 
-  console.log(`✅ - Candy Machine fetch success : ${candy_machine}`);
+  console.log(`✅ - Candy Machine fetch success :`, candy_machine);
   return candy_machine;
 }
 
 export async function fetchCandyGuardData(umi: Umi, mintAuthority: PublicKey) {
   const candy_guard = await fetchCandyGuard(umi, mintAuthority);
 
-  console.log(`✅ - Candy Guard fetch success : ${candy_guard}`);
+  console.log(`✅ - Candy Guard fetch success :`, candy_guard);
   return candy_guard;
 }
 
 //Update function
 export async function updateCandyMachineData(umi: Umi, candyMachinePk: string) {
   console.log("candyMachineUpdate", candyMachinePk);
-  const candyMachinePublicKey = publicKey(candyMachinePk);
-  const candyMachine = await fetchCandyMachine(umi, candyMachinePublicKey);
+  const candyMachine = await fetchCandyMachineData(umi, candyMachinePk);
   console.log("✅ - Old candy machine: ", candyMachine);
+
   await updateCandyMachine(umi, {
     candyMachine: candyMachine.publicKey,
     data: {
       ...candyMachine.data,
       hiddenSettings: none(),
-      symbol: "K",
+      symbol: "KYUPAD",
       configLineSettings: some({
         prefixName: "KYUPAD #$ID+1$",
         nameLength: 0,
@@ -211,7 +208,7 @@ export async function updateCandyMachineData(umi: Umi, candyMachinePk: string) {
     },
   }).sendAndConfirm(umi);
 
-  const newCandyMachine = await fetchCandyMachine(umi, candyMachinePublicKey);
+  const newCandyMachine = await fetchCandyMachineData(umi, candyMachinePk);
 
   console.log("✅ - New candy machine: ", newCandyMachine);
   console.log(`✅ - Updated candy machine success : ${candyMachine.publicKey}`);
