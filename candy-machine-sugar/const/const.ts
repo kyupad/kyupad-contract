@@ -5,6 +5,7 @@ export const allowListWL = [
   "7UvSycMiBikyErLyCGrTcAECDrCwghikvD7PunVDh2DS",
   "G78qwbjfetiHGHhjKpPLxWrUq4eJqkLotS6CVQ2BQ2ZA",
   "85XUKZ77v3ADNw1QZeLhGSWi1gz1NwbnwqA8QDeQCeRf",
+  "A75CR9bxnUGqZ4xjCLT2ts7kFvNJ6t93GXZWUaBaJbzv",
 ];
 
 export interface IConfigLineSettings {

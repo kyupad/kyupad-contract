@@ -11,10 +11,13 @@ import {
   createMachine,
   fetchCandyGuardData,
   fetchCandyMachineData,
+  mintWL,
   updateCandyMachineData,
   updateGuard,
 } from "./umi/handler";
 import { nftStorageUploader } from "@metaplex-foundation/umi-uploader-nft-storage";
+import { Connection } from "@solana/web3.js";
+import { allowListWL } from "./const/const";
 
 dotenv.config();
 
@@ -34,16 +37,20 @@ const umi1 = createUmi(process.env.KYUPAD_PUBLIC_RPC_ENDPOINT).use(
 const keypair = umi1.eddsa.createKeypairFromSecretKey(Buffer.from(owner));
 export const umi = umi1.use(keypairIdentity(keypair));
 umi.use(nftStorageUploader({ token: process.env.KYUPAD_NFT_STORAGE_KEY }));
+const mySigner = createSignerFromKeypair(umi, keypair);
+const connection = new Connection(process.env.KYUPAD_PUBLIC_RPC_ENDPOINT);
 
 const main = async () => {
-  const collectionMint = await createCollection(umi);
-  const candyMachinePk = await createMachine(umi, collectionMint, 3);
-  await updateCandyMachineData(umi, candyMachinePk);
+  const collectionMint = await createCollection(umi, mySigner);
+  const candyMachinePk = await createMachine(umi, collectionMint, mySigner, 3);
 
-  const candyMachine = await fetchCandyMachineData(umi, candyMachinePk);
+  // const candyMachinePk = "EFeGnqvdTyRLrKjeSnaNgwuiCr3qkUVf4PSuxsuZExW4";
+  // await updateCandyMachineData(umi, candyMachinePk);
+  // const candyMachine = await fetchCandyMachineData(umi, candyMachinePk);
+  // const candyGuard = await fetchCandyGuardData(umi, candyMachine.mintAuthority);
+  // await updateGuard(umi, candyGuard,allowListWL);
 
-  const candyGuard = await fetchCandyGuardData(umi, candyMachine.mintAuthority);
-  await updateGuard(umi, candyGuard);
+  // await mintWL(umi, candyMachinePk, mySigner, allowListWL);
 };
 
 main();
