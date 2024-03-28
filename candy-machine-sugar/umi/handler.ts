@@ -215,6 +215,7 @@ export async function updateCandyMachineData(umi: Umi, candyMachinePk: string) {
 }
 
 export async function updateGuard(umi: Umi, candy_guard: CandyGuard) {
+  console.log("updateGuard");
   try {
     await updateCandyGuard(umi, {
       candyGuard: candy_guard.publicKey,

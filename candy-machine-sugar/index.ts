@@ -9,7 +9,10 @@ import owner from "./id.json";
 import {
   createCollection,
   createMachine,
+  fetchCandyGuardData,
+  fetchCandyMachineData,
   updateCandyMachineData,
+  updateGuard,
 } from "./umi/handler";
 import { nftStorageUploader } from "@metaplex-foundation/umi-uploader-nft-storage";
 
@@ -32,14 +35,15 @@ const keypair = umi1.eddsa.createKeypairFromSecretKey(Buffer.from(owner));
 export const umi = umi1.use(keypairIdentity(keypair));
 umi.use(nftStorageUploader({ token: process.env.KYUPAD_NFT_STORAGE_KEY }));
 
-
 const main = async () => {
-  // const collectionMint = await createCollection(umi);
-  // const candyMachinePk = await createMachine(umi, collectionMint, 3);
-  await updateCandyMachineData(
-    umi,
-    "CrVuqP1xzQqxMsSiHmDcKKHYaZ73SxfMczpndURG4n8i"
-  );
+  const collectionMint = await createCollection(umi);
+  const candyMachinePk = await createMachine(umi, collectionMint, 3);
+  await updateCandyMachineData(umi, candyMachinePk);
+
+  const candyMachine = await fetchCandyMachineData(umi, candyMachinePk);
+
+  const candyGuard = await fetchCandyGuardData(umi, candyMachine.mintAuthority);
+  await updateGuard(umi, candyGuard);
 };
 
 main();
