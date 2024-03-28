@@ -1,81 +1,57 @@
 {
   "program": {
-    "candyMachine": "HZaMsjUgRNs9zE8U59KCWrcza3QZSkQCzkQn6e5oGXc6",
+    "candyMachine": "2CBomAwjC1NwU383VXVunyn5a4wmd7Pa2ad3GH9ewGGL",
     "candyGuard": "",
-    "candyMachineCreator": "8B2rq5gSXGYUsqTmPqhveZyX8bYC26EGHeWCH9vsnbeV",
-    "collectionMint": "D1a3dHnXYAJt58hxkmyRb8LfbtV3jcm9wvhwA7tp6jv6"
+    "candyMachineCreator": "6HmxBBTa5ZgHWecFuhkgXgSfRxf7DVUHcYGa5phUnSaP",
+    "collectionMint": "14h5eSaJVtRvkKo7hsCdg5zq43gMagio7Ve53fi5B9ZE"
   },
   "items": {
     "-1": {
-      "name": "Studious Crabs Collection",
-      "image_hash": "4c16db39492bc794fbde16cf0aa0abe5f172fa88a45bd2e4afdfea782af241d5",
-      "image_link": "https://arweave.net/PuAonCOjfaYi_zC8eoGO_noXbt4eZRhJoGpQotVDDcM?ext=png",
-      "metadata_hash": "dfea8aa55a9ef08939f4f96c35c9ce95839a02061048fc5367009ebc469aaff5",
-      "metadata_link": "https://arweave.net/Aeet2n1vrsU-F97V_FEjVH7dzEKKdn58tZY2OHCph2c",
+      "name": "Studious AMI Collection",
+      "image_hash": "ca0ad95eaef9283c23fac0c1dec7b7ebc8ca53c7e354c10836276138fbc9b99f",
+      "image_link": "https://arweave.net/0Bd5i9bhpc460ZpEHSl25Fv_RMPYssWv4v5BdVF5tgQ?ext=png",
+      "metadata_hash": "b7f42a563a04b8de94b507106de081d15f702dc4f65fc9250f1505d89b11440a",
+      "metadata_link": "https://arweave.net/VHcgTNg5O70gNl_r1VUUqABw1LiPR_NezVpfZzBLWj4",
       "onChain": true
     },
     "0": {
-      "name": "Studious Crab #0",
-      "image_hash": "b75e90da586f1ad72707cc25f714b3d205dcf41f1399f25e06485a98b0145a56",
-      "image_link": "https://arweave.net/jqHCNJF0-rD6ept7CVWRgLMS6tOBQC5hzlGa1wRTEks?ext=png",
-      "metadata_hash": "8eaaec1730d53a980e7b524bc30f9cc5d3d7f43efdd64f977cb40a6685caad47",
-      "metadata_link": "https://arweave.net/GSea3mlG0SI1O_gz619bjhsRolIlwKCggx7QRd59Cno",
+      "name": "AMI big stomach#0",
+      "image_hash": "8ab29648e0b1d2769bcbecef9961858f61fce42521dba3e2e5fadaa5b77b1c71",
+      "image_link": "https://arweave.net/6lRMjPSS6Ra4j2TDtUwh1kACvUN2Kx_gSxZlfvRtkBo?ext=png",
+      "metadata_hash": "929b9e11b0249af4ab53f72f339a63b29ad9c085e776a0b1f33bdb3daf4eb0ae",
+      "metadata_link": "https://arweave.net/FQGzT7UsoVoA-bzOwIOy-d-bNOhtSrKsXWBoDwS_HT4",
       "onChain": true
     },
     "1": {
-      "name": "Studious Crab #1",
-      "image_hash": "05630c3bd2118672360930884df0eb2010c4f8960d173af0a0c8dac12a596908",
-      "image_link": "https://arweave.net/hGEzGZBQT93AVReoSLvzWMjJQaFYSBPh_8fioJLuVg0?ext=png",
-      "metadata_hash": "f63e515787b5e100a501c501d608ced5bdd85b289856aba47612940461cadfc9",
-      "metadata_link": "https://arweave.net/N9U8VZMajetK4ZVAsV_481XXmgztcWbJt1LBSX3rTlY",
+      "name": "AMI big stomach#0",
+      "image_hash": "7c024444de8343da595b051bf3f3dc32890c878d7cc2596548b0540419a4c85c",
+      "image_link": "https://arweave.net/4YLHf8O2BezSh6ccGEib699MM6rFGgJyKgTcTW8VSiQ?ext=png",
+      "metadata_hash": "80692aa40dee034c056ddf4c635d90752564d15e67c135856b558840b7b056b7",
+      "metadata_link": "https://arweave.net/AIgkNMgw0swV9Nx_lshvr3bqU6BwT15MuVlpwbigY5Y",
       "onChain": true
     },
     "2": {
-      "name": "Studious Crab #2",
-      "image_hash": "95cf2457576cc15a29c35a68d9ccf6579e592ebef8dee406ac05dedb3bd901be",
-      "image_link": "https://arweave.net/sdI9LEQfCULQv6inCwdRK2IV7j5jbJwlTAaqgva1R2w?ext=png",
-      "metadata_hash": "c2ee75409d2b12e616dc2eea9962f83b13b5c2d434822e59edc44ebdb91b0566",
-      "metadata_link": "https://arweave.net/7aUjqDXwZgegK_M5rzRuRzGtz9TpZ13DNnDcmrSAPPU",
+      "name": "AMI big stomach#0",
+      "image_hash": "d0f3310da2f15ae6b5355aba8369ef19f2a7a35ebafdc1149920b3fb8131b5fa",
+      "image_link": "https://arweave.net/EgWDsNkOz7zeacxBOE2phWJ8gLemUzIwi7Vd1ZgT_ec?ext=png",
+      "metadata_hash": "3469326875d7a59a5e503564e98f363119438cf79ae3a13347a629feaac3812e",
+      "metadata_link": "https://arweave.net/fPN-gzPkG8ww_n_zYWV7Xr7DJdYKE8VMw8EUYYZdT1c",
       "onChain": true
     },
     "3": {
-      "name": "Studious Crab #3",
-      "image_hash": "f6b62fc18668ffe28bb1b558e2e5d0ed4b61ef997df130489e5b808a77f171de",
-      "image_link": "https://arweave.net/STzU9-rfG7LpQ6rhnask1LgCKvjLm77AW6yQfxSVV40?ext=png",
-      "metadata_hash": "879d7d5b18cc1a7f84934f73efa22689de7afbc2a4ac27e0ac7d7256807a6431",
-      "metadata_link": "https://arweave.net/XwcmS8t0gLBksRXDo45gjWGnGmNE6X2yiLtlFHh9P0A",
+      "name": "AMI big stomach#0",
+      "image_hash": "ea9ca44873e10fb5f5d1075d18bfa200494de887f3d8cc5a7cd806e59d47352c",
+      "image_link": "https://arweave.net/RBbBsQ0K-bXBVOjHxOlEX_Ip-tG9vq95jYwkpIHVlwU?ext=png",
+      "metadata_hash": "79eae29ff49e998637eb0c53fb659b0ed5b36ecdf4caf03b6c5321baafb671c4",
+      "metadata_link": "https://arweave.net/oECEvvmKjedwiIN_n2WErCUmYIGz9vzUCQRIQIpvrgs",
       "onChain": true
     },
     "4": {
-      "name": "Studious Crab #4",
-      "image_hash": "be7f5dbc6317ee0df2bf48b79fa7c22bbca639f94da82bacefddab08aaf7a25d",
-      "image_link": "https://arweave.net/U3R62NbZIDkMVu-gD5d54YK-I9FV5QplBm-VOMPAjfY?ext=png",
-      "metadata_hash": "7500257b931eb1a2166b7b3112a4e0fbebf719db257e8a0655ed1491c4cc449c",
-      "metadata_link": "https://arweave.net/tctxSoWUEwk6dxEsocl41h7vq8D18K4t18IMgwZwaWk",
-      "onChain": true
-    },
-    "5": {
-      "name": "Studious Crab #5",
-      "image_hash": "0d044bb696e34c997433ebb472a43d7e94a1ad4511e421c716f680932b0bb571",
-      "image_link": "https://arweave.net/ytUUKqMfPdBLWDjQhUnPips5csIasPpzqXbZQBHOIKA?ext=png",
-      "metadata_hash": "22635e6de32432125e0e6d002e6556c8bcb7fc29a0369128a9c737cbb6f2a053",
-      "metadata_link": "https://arweave.net/VyI-0_QgVIVR4riKA0sHptluilW3RjnuA25VEc90sEE",
-      "onChain": true
-    },
-    "6": {
-      "name": "Studious Crab #6",
-      "image_hash": "c1138568a640cd359061120de70571891b97d17151b0bd42a9bfdca6f1a77294",
-      "image_link": "https://arweave.net/twMGesFOvVnPwdRPKZiGuqJs-hMEXmt2Mc34IkdH1Kg?ext=png",
-      "metadata_hash": "12058186ccf10ceee35eeade8f1802390c718ae5136deaf3299998485226216a",
-      "metadata_link": "https://arweave.net/eIR46JwcQSpTNUU9-brJj2gol_dh-vcSltfVHzX5G1o",
-      "onChain": true
-    },
-    "7": {
-      "name": "Studious Crab #7",
-      "image_hash": "0ed8f1b8132c0d81dfdc94dfcba34a8936de537367149ab731fb3340ac6911f1",
-      "image_link": "https://arweave.net/VIUyHh7XPKYsrn0kUTjKj2tFz_zlm7Vt03gX0SNaEas?ext=png",
-      "metadata_hash": "697bd704bf2003b901a17a3f07b6883efd103fc98a0a21796e94e227192ee1ec",
-      "metadata_link": "https://arweave.net/hT_dLcjerrrc_fWzN9cNxpzS23RNkBHKG1Hn8Y2Y65g",
+      "name": "AMI big stomach#0",
+      "image_hash": "f03e1cef70bc07151180555697b12779926ba6629cddbe9bbf2a96b229e13cfa",
+      "image_link": "https://arweave.net/-TVs9bNhpfcrSTQu4T9rmmjDgMzu8rBGTAupyjI4VSc?ext=png",
+      "metadata_hash": "18caf29677d716e6e0a3aba184ae7208a5eee8715311a34bd19e13f2773cf6f3",
+      "metadata_link": "https://arweave.net/sDnKgZYvW3KRJwgMWTAXam82McPka5GGSZmMIXfWMWI",
       "onChain": true
     }
   }

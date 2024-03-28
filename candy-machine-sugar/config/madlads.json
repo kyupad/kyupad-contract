@@ -1,8 +1,8 @@
 {
   "price": 0.1,
   "tokenStandard": "nft",
-  "number": 8,
-  "symbol": "CRAB",
+  "number": 5,
+  "symbol": "CAT",
   "sellerFeeBasisPoints": 500,
   "isMutable": true,
   "isSequential": false,
