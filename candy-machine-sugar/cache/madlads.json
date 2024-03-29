@@ -1,57 +1,57 @@
 {
   "program": {
-    "candyMachine": "2CBomAwjC1NwU383VXVunyn5a4wmd7Pa2ad3GH9ewGGL",
+    "candyMachine": "Dhuf4b8KkM8MuYA5dRvmxKmNpDSm2kjLdfrYkGBXUx6f",
     "candyGuard": "",
-    "candyMachineCreator": "6HmxBBTa5ZgHWecFuhkgXgSfRxf7DVUHcYGa5phUnSaP",
-    "collectionMint": "14h5eSaJVtRvkKo7hsCdg5zq43gMagio7Ve53fi5B9ZE"
+    "candyMachineCreator": "2eoeC4DaQrwUyeoEhP8g5gAaTxUMVZPHfSMieSgj5jbx",
+    "collectionMint": "H15XiBanrGeVdKdjGZUH9k84GeQ1Xmgj1JMgMxqsKW8E"
   },
   "items": {
     "-1": {
       "name": "Studious AMI Collection",
       "image_hash": "ca0ad95eaef9283c23fac0c1dec7b7ebc8ca53c7e354c10836276138fbc9b99f",
-      "image_link": "https://arweave.net/0Bd5i9bhpc460ZpEHSl25Fv_RMPYssWv4v5BdVF5tgQ?ext=png",
+      "image_link": "https://arweave.net/yIA3uqm9tkwL11V8FMe_zH5SdB8CwI6hT9Xwpz62wEo?ext=png",
       "metadata_hash": "b7f42a563a04b8de94b507106de081d15f702dc4f65fc9250f1505d89b11440a",
-      "metadata_link": "https://arweave.net/VHcgTNg5O70gNl_r1VUUqABw1LiPR_NezVpfZzBLWj4",
+      "metadata_link": "https://arweave.net/UwpjKs3E2rKHvuxoMLeo4fomjNIr-LQdLYKr8gdMZ4U",
       "onChain": true
     },
     "0": {
       "name": "AMI big stomach#0",
       "image_hash": "8ab29648e0b1d2769bcbecef9961858f61fce42521dba3e2e5fadaa5b77b1c71",
-      "image_link": "https://arweave.net/6lRMjPSS6Ra4j2TDtUwh1kACvUN2Kx_gSxZlfvRtkBo?ext=png",
-      "metadata_hash": "929b9e11b0249af4ab53f72f339a63b29ad9c085e776a0b1f33bdb3daf4eb0ae",
-      "metadata_link": "https://arweave.net/FQGzT7UsoVoA-bzOwIOy-d-bNOhtSrKsXWBoDwS_HT4",
+      "image_link": "https://arweave.net/Qd3KRNWQRMBaSLbKXq6pLgQJHhzXlDFbq8WO3RmPaxs?ext=png",
+      "metadata_hash": "25e680a66c21b63737438eb5593e7dcd9ae817af8f10986c105e5d2d4031c612",
+      "metadata_link": "https://arweave.net/47tBwohfehJtcXNCI9I3iKD6lgNiCj6JuaBstx20WwQ",
       "onChain": true
     },
     "1": {
       "name": "AMI big stomach#0",
       "image_hash": "7c024444de8343da595b051bf3f3dc32890c878d7cc2596548b0540419a4c85c",
-      "image_link": "https://arweave.net/4YLHf8O2BezSh6ccGEib699MM6rFGgJyKgTcTW8VSiQ?ext=png",
-      "metadata_hash": "80692aa40dee034c056ddf4c635d90752564d15e67c135856b558840b7b056b7",
-      "metadata_link": "https://arweave.net/AIgkNMgw0swV9Nx_lshvr3bqU6BwT15MuVlpwbigY5Y",
+      "image_link": "https://arweave.net/6DcmQlX2A0h1jU7YzzinYPbyoVxReP-sdhOnwpuOTGI?ext=png",
+      "metadata_hash": "ebd86d40a31ee189aaee64f1bddd1bcf92a9b423ad309443562b5b26ccba0577",
+      "metadata_link": "https://arweave.net/YCn6GS1tEJAYO4rRWvggacmN2DZDTSWmbZGFgFZo5bo",
       "onChain": true
     },
     "2": {
       "name": "AMI big stomach#0",
       "image_hash": "d0f3310da2f15ae6b5355aba8369ef19f2a7a35ebafdc1149920b3fb8131b5fa",
-      "image_link": "https://arweave.net/EgWDsNkOz7zeacxBOE2phWJ8gLemUzIwi7Vd1ZgT_ec?ext=png",
-      "metadata_hash": "3469326875d7a59a5e503564e98f363119438cf79ae3a13347a629feaac3812e",
-      "metadata_link": "https://arweave.net/fPN-gzPkG8ww_n_zYWV7Xr7DJdYKE8VMw8EUYYZdT1c",
+      "image_link": "https://arweave.net/mpyLyPSpYDls9CA8CXGU1vqdkOytPSVw8nuvG5Y75Kw?ext=png",
+      "metadata_hash": "de92908de30daa1fe4d1f49e3b0e7f7b0469bd60e40d7d2b623dfa3b35a2d2b9",
+      "metadata_link": "https://arweave.net/PAMKjRt9EMP5BlD8dhnPPpmHjvArT_UOiSbU6s2k9mE",
       "onChain": true
     },
     "3": {
       "name": "AMI big stomach#0",
       "image_hash": "ea9ca44873e10fb5f5d1075d18bfa200494de887f3d8cc5a7cd806e59d47352c",
-      "image_link": "https://arweave.net/RBbBsQ0K-bXBVOjHxOlEX_Ip-tG9vq95jYwkpIHVlwU?ext=png",
-      "metadata_hash": "79eae29ff49e998637eb0c53fb659b0ed5b36ecdf4caf03b6c5321baafb671c4",
-      "metadata_link": "https://arweave.net/oECEvvmKjedwiIN_n2WErCUmYIGz9vzUCQRIQIpvrgs",
+      "image_link": "https://arweave.net/_0SSRWNY38Nh8mWXeA7o67sfX2xENzccGKCvuPumPS4?ext=png",
+      "metadata_hash": "c0f246709e76b124b698cb41d0fad5d08cb3c8f62095e114fb48dc34a5ac3070",
+      "metadata_link": "https://arweave.net/6DCf-ltpRk3l3n2A7TDwtmQlgwswZw5gYgW0VqpqZrQ",
       "onChain": true
     },
     "4": {
       "name": "AMI big stomach#0",
       "image_hash": "f03e1cef70bc07151180555697b12779926ba6629cddbe9bbf2a96b229e13cfa",
-      "image_link": "https://arweave.net/-TVs9bNhpfcrSTQu4T9rmmjDgMzu8rBGTAupyjI4VSc?ext=png",
-      "metadata_hash": "18caf29677d716e6e0a3aba184ae7208a5eee8715311a34bd19e13f2773cf6f3",
-      "metadata_link": "https://arweave.net/sDnKgZYvW3KRJwgMWTAXam82McPka5GGSZmMIXfWMWI",
+      "image_link": "https://arweave.net/0_mmp4IMlTxU3PEoe4MAUEAKvL11ahZZZUFJwiXD2Jk?ext=png",
+      "metadata_hash": "209206262df241bc771c2ad35edca147f5260ef86a1b5a6e4f937cc1a966878f",
+      "metadata_link": "https://arweave.net/ZYUl1zLKdHukeJOUSc5bHw6CWmj2DSTHKWpc_SwsKfw",
       "onChain": true
     }
   }

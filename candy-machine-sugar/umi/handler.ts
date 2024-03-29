@@ -1,5 +1,7 @@
 import {
   CandyGuard,
+  DefaultGuardSet,
+  GuardGroupArgs,
   addConfigLines,
   create,
   fetchAllocationTracker,
@@ -19,6 +21,7 @@ import {
 import {
   TokenStandard,
   createNft,
+  mintArgs,
 } from "@metaplex-foundation/mpl-token-metadata";
 import {
   AccountNotFoundError,
@@ -36,7 +39,7 @@ import {
   transactionBuilder,
 } from "@metaplex-foundation/umi";
 import base58 from "bs58";
-import { allowListWL } from "../const/const";
+import { IConfigLines, ICreateCandyMachine, allowListWL } from "../const/const";
 import fs from "fs";
 import path from "path";
 import { getImageMimeType, isImageFile } from "../util/util";
@@ -58,7 +61,7 @@ export async function createCollection(umi: Umi, mySigner: KeypairSigner) {
     authority: mySigner,
     name: "Kyupad Collection NFT",
     symbol: "KYUPAD",
-    uri: "https://bafybeifpyhhx4tufmzikpyty3dvi4veh5xgx4zk47iago524b4h45oxoke.ipfs.nftstorage.link/1.json",
+    uri: "https://arweave.net/47tBwohfehJtcXNCI9I3iKD6lgNiCj6JuaBstx20WwQ",
     sellerFeeBasisPoints: percentAmount(0),
     isCollection: true,
   }).sendAndConfirm(umi);
@@ -67,9 +70,9 @@ export async function createCollection(umi: Umi, mySigner: KeypairSigner) {
     `✅ - Minted Collection NFT: ${base58.encode(collection.signature)}`
   );
   console.log(
-    `     https://explorer.solana.com/address/${base58.encode(
+    `     https://explorer.solana.com/tx/${base58.encode(
       collection.signature
-    )}`
+    )}?cluster=${process.env.KYUPAD_PUBLIC_RPC_CLUSTER}`
   );
   return collectionMint.publicKey;
 }
@@ -78,45 +81,62 @@ export async function createMachine(
   umi: Umi,
   collectionMint: string,
   collectionUpdateAuthority: KeypairSigner,
-  itemsAvailable = 10
+  data: ICreateCandyMachine
 ) {
-  // Create the Candy Machine.
-  const candyMachine = generateSigner(umi);
-  (
-    await create(umi, {
-      candyMachine,
-      collectionMint: publicKey(collectionMint),
-      collectionUpdateAuthority: collectionUpdateAuthority,
-      tokenStandard: TokenStandard.NonFungible,
-      sellerFeeBasisPoints: percentAmount(9.99, 2), // 9.99%
-      itemsAvailable: itemsAvailable,
-      maxEditionSupply: 10,
-      creators: [
-        {
-          address: umi.identity.publicKey,
-          verified: true,
-          percentageShare: 100,
-        },
-      ],
-      configLineSettings: some({
-        prefixName: "",
-        nameLength: 32,
-        prefixUri: "",
-        uriLength: 200,
-        isSequential: false,
-      }),
+  const groups: any[] = [];
+
+  data.groups.forEach((item, idx) => {
+    let group = {
+      label: item.label,
       guards: {
-        botTax: some({ lamports: sol(0.01), lastInstruction: true }),
         solPayment: some({
-          lamports: sol(1),
+          lamports: sol(item.sol_payment.lamports),
           destination: umi.identity.publicKey,
         }),
-        startDate: { date: dateTime("2024-03-30T17:00:00Z") },
-        mintLimit: some({ id: 1, limit: 1 }),
-        allocation: some({ id: 1, limit: 100 }),
+        startDate: { date: dateTime(item.start_date) },
+        end_date: { date: dateTime(item.end_date) },
+        mintLimit: some({ id: idx + 1, limit: item.min_limit.limit }),
+        allocation: some({ id: idx + 1, limit: item.allocation.limit }),
+        allowList: some({ merkleRoot: item.allow_list }),
       },
-    })
-  ).sendAndConfirm(umi);
+    };
+
+    groups.push(group);
+  });
+
+  const candyMachine = generateSigner(umi);
+
+  let dataAdd = {
+    candyMachine,
+    collectionMint: publicKey(collectionMint),
+    collectionUpdateAuthority: collectionUpdateAuthority,
+    tokenStandard: TokenStandard.NonFungible,
+    sellerFeeBasisPoints: percentAmount(9.99, 2),
+    itemsAvailable: data.item_available,
+    maxEditionSupply: 10,
+    creators: [
+      {
+        address: umi.identity.publicKey,
+        verified: true,
+        percentageShare: 100,
+      },
+    ],
+    groups: groups,
+    ...(data.config_line_settings
+      ? {
+          configLineSettings: some({
+            prefixName: data.config_line_settings.prefix_name,
+            nameLength: data.config_line_settings.name_length,
+            prefixUri: data.config_line_settings.prefix_uri,
+            uriLength: data.config_line_settings.uri_length,
+            isSequential: data.config_line_settings.is_sequential,
+          }),
+        }
+      : {}),
+  };
+
+  // Create the Candy Machine.
+  (await create(umi, dataAdd)).sendAndConfirm(umi);
 
   console.log(
     `✅ - Created Candy Machine: ${candyMachine.publicKey.toString()}`
@@ -127,35 +147,21 @@ export async function createMachine(
 export async function insertItems(
   umi: Umi,
   candyMachinePk: string,
-  from: number,
-  to: number,
-  batch = 10,
-  startIndex = from,
-  name: string
+  configLines: IConfigLines[]
 ) {
   const candyMachinePublicKey = publicKey(candyMachinePk);
   const candyMachine = await fetchCandyMachine(umi, candyMachinePublicKey);
-  const items = [];
-  for (let i = from; i < to; i++) {
-    const tokenId = i + 1;
-    items.push({
-      name: name,
-      uri: `${tokenId}`,
-    });
-  }
-  for (let i = 0; i < items.length; i += batch) {
-    const sliceItem = items.slice(i, i + batch);
-    console.log("sliceItem", sliceItem);
-    const rsp = await addConfigLines(umi, {
-      candyMachine: candyMachine.publicKey,
-      index: i + startIndex,
-      configLines: sliceItem,
-    }).sendAndConfirm(umi);
-    console.log(`✅ - Items added to Candy Machine: ${candyMachinePk}`);
-    console.log(
-      `     https://explorer.solana.com/tx/${base58.encode(rsp.signature)}`
-    );
-  }
+  const rsp = await addConfigLines(umi, {
+    candyMachine: candyMachine.publicKey,
+    index: candyMachine.itemsLoaded,
+    configLines: configLines,
+  }).sendAndConfirm(umi);
+  console.log(`✅ - Items added to Candy Machine: ${candyMachinePk}`);
+  console.log(
+    `     https://explorer.solana.com/tx/${base58.encode(
+      rsp.signature
+    )}?cluster=${process.env.KYUPAD_PUBLIC_RPC_CLUSTER}`
+  );
 }
 
 // run doesn't success
@@ -204,6 +210,10 @@ export async function fetchCandyGuardData(umi: Umi, mintAuthority: PublicKey) {
   return candy_guard;
 }
 
+export async function getAllowList(projectId: string, poolId: string) {
+  return;
+}
+
 //Update function
 export async function updateCandyMachineData(umi: Umi, candyMachinePk: string) {
   console.log("candyMachineUpdate", candyMachinePk);
@@ -214,17 +224,7 @@ export async function updateCandyMachineData(umi: Umi, candyMachinePk: string) {
     candyMachine: candyMachine.publicKey,
     data: {
       ...candyMachine.data,
-      hiddenSettings: none(),
       symbol: "KYUPAD",
-      configLineSettings: some({
-        prefixName: "KYUPAD #$ID+1$",
-        nameLength: 0,
-        symbol: "KYUPAD",
-        prefixUri:
-          "https://bafybeifpyhhx4tufmzikpyty3dvi4veh5xgx4zk47iago524b4h45oxoke.ipfs.nftstorage.link/$ID+1$.json",
-        uriLength: 0,
-        isSequential: false,
-      }),
     },
   }).sendAndConfirm(umi);
 
@@ -237,7 +237,7 @@ export async function updateCandyMachineData(umi: Umi, candyMachinePk: string) {
 export async function updateGuard(
   umi: Umi,
   candy_guard: CandyGuard,
-  allowList: string[]
+  allowList: Uint8Array
 ) {
   console.log("updateGuard");
   try {
@@ -245,7 +245,7 @@ export async function updateGuard(
       candyGuard: candy_guard.publicKey,
       guards: {
         ...candy_guard.guards,
-        allowList: some({ merkleRoot: getMerkleRoot(allowList) }),
+        allowList: some({ merkleRoot: allowList }),
         mintLimit: some({ id: 1, limit: 5 }),
         startDate: some({ date: dateTime("2023-03-28T17:00:00Z") }),
         endDate: some({ date: dateTime("2023-03-30T17:00:00Z") }),
@@ -262,8 +262,9 @@ export async function updateGuard(
 // Delete function
 
 // Common Function
-async function checkEligible(
+export async function checkEligible(
   umi: Umi,
+  label: string,
   pk: string,
   candyMachinePk: string,
   connection: Connection,
@@ -271,13 +272,12 @@ async function checkEligible(
 ) {
   const user = publicKey(pk);
   const candyMachinePublicKey = publicKey(candyMachinePk);
-  const candyMachine = await fetchCandyMachineData(umi, candyMachinePublicKey);
-  const candyGuard = await fetchCandyGuardData(umi, candyMachine.mintAuthority);
-  // const g = candyGuard.groups.find((g) => g.label === label)!;
-  const g = candyGuard.guards;
+  const candyMachine = await fetchCandyMachine(umi, candyMachinePublicKey);
+  const candyGuard = await fetchCandyGuard(umi, candyMachine.mintAuthority);
+  const g = candyGuard.groups.find((g) => g.label === label)!;
 
   //check allow list
-  if (g.allowList.__option === "Some") {
+  if (g.guards.allowList.__option === "Some") {
     if (!allowListWL) throw new Error("allowListWL required");
     const allowList = getMerkleTree(allowListWL);
     const validMerkleProof = getMerkleProof(allowListWL, user);
@@ -303,10 +303,10 @@ async function checkEligible(
   }
 
   //check sol balance
-  if (g.solPayment.__option === "Some") {
+  if (g.guards.solPayment.__option === "Some") {
     let balance = await connection.getBalance(new W3Publickey(pk));
     console.log(`Balance: ${balance / LAMPORTS_PER_SOL} SOL`);
-    const solPayment = Number(g.solPayment.value.lamports.basisPoints);
+    const solPayment = Number(g.guards.solPayment.value.lamports.basisPoints);
     console.log(`Required: ${solPayment / LAMPORTS_PER_SOL} SOL`);
 
     const gas = 20000000; // 0.02 in decimals 9
@@ -316,29 +316,29 @@ async function checkEligible(
   }
 
   //check allocation
-  if (g.allocation.__option === "Some") {
+  if (g.guards.allocation.__option === "Some") {
     const pda = findAllocationTrackerPda(umi, {
-      id: g.allocation.value.id,
+      id: g.guards.allocation.value.id,
       candyGuard: candyGuard.publicKey,
       candyMachine: candyMachine.publicKey,
     });
     const { count } = await fetchAllocationTracker(umi, pda);
-    console.log(`Allocation ${count}/${g.allocation.value.limit}`);
-    if (count >= g.allocation.value.limit) {
+    console.log(`Allocation ${count}/${g.guards.allocation.value.limit}`);
+    if (count >= g.guards.allocation.value.limit) {
       throw new Error("Allocation limit reached");
     }
   }
 
   //check mint limit
-  if (g.mintLimit.__option === "Some") {
+  if (g.guards.mintLimit.__option === "Some") {
     const counterPda = findMintCounterPda(umi, {
-      id: g.mintLimit.value.id,
+      id: g.guards.mintLimit.value.id,
       user,
       candyGuard: candyGuard.publicKey,
       candyMachine: candyMachinePublicKey,
     });
     try {
-      const limit = g.mintLimit.value.limit;
+      const limit = g.guards.mintLimit.value.limit;
       const { count } = await fetchMintCounter(umi, counterPda);
       console.log(`MintLimit ${count}/${limit}`);
       if (count >= limit) throw new Error("Limit reached");
@@ -354,12 +354,14 @@ async function checkEligible(
 export async function mintWL(
   umi: Umi,
   candyMachinePk: string,
+  label: string,
   mySigner: KeypairSigner,
-  allowList: string[]
+  mintArgs: any
 ) {
-  const candyMachinePublicKey = publicKey(candyMachinePk);
   console.log("umi identity", umi.identity.publicKey.toString());
-  const candyMachine = await fetchCandyMachine(umi, candyMachinePublicKey);
+
+  const candyMachine = await fetchCandyMachineData(umi, candyMachinePk);
+  const candyGuard = await fetchCandyGuardData(umi, candyMachine.mintAuthority);
   const nftMint = generateSigner(umi);
 
   return await transactionBuilder()
@@ -368,11 +370,12 @@ export async function mintWL(
       route(umi, {
         candyMachine: publicKey(candyMachinePk),
         guard: "allowList",
+        group: some(label),
         routeArgs: {
           path: "proof",
-          merkleRoot: getMerkleRoot(allowList),
+          merkleRoot: getMerkleRoot(allowListWL),
           merkleProof: getMerkleProof(
-            allowList,
+            allowListWL,
             umi.identity.publicKey.toString()
           ),
         },
@@ -381,27 +384,13 @@ export async function mintWL(
     .add(
       mintV2(umi, {
         candyMachine: candyMachine.publicKey,
+        candyGuard: candyGuard.publicKey,
         nftMint,
         collectionMint: candyMachine.collectionMint,
         collectionUpdateAuthority: mySigner.publicKey,
         tokenStandard: candyMachine.tokenStandard,
-        group: some("wl"),
-        mintArgs: {
-          solPayment: some({
-            lamports: sol(1.1),
-            destination: mySigner.publicKey,
-          }),
-          allocation: some({
-            id: 2,
-            limit: 2700,
-          }),
-          mintLimit: some({ id: 3, limit: 2 }),
-          allowList: some({ merkleRoot: getMerkleRoot(allowListWL) }),
-          botTax: some({
-            lamports: sol(0.01),
-            lastInstruction: true,
-          }),
-        },
+        group: some(label),
+        mintArgs: mintArgs,
       })
     )
 

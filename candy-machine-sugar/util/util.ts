@@ -20,3 +20,7 @@ export function getImageMimeType(filename: string): string {
       return "";
   }
 }
+
+export function delay(seconds: number, callback: () => void): void {
+  setTimeout(callback, seconds * 1000);
+}

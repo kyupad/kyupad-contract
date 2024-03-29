@@ -1,11 +1,8 @@
 import { PublicKey } from "@solana/web3.js";
 
 export const allowListWL = [
-  "BaNS3Sx6MAg8QFu1yXi1Ftt5pjJPMR2vyrQHqaHwGL7r",
-  "7UvSycMiBikyErLyCGrTcAECDrCwghikvD7PunVDh2DS",
-  "G78qwbjfetiHGHhjKpPLxWrUq4eJqkLotS6CVQ2BQ2ZA",
-  "85XUKZ77v3ADNw1QZeLhGSWi1gz1NwbnwqA8QDeQCeRf",
   "A75CR9bxnUGqZ4xjCLT2ts7kFvNJ6t93GXZWUaBaJbzv",
+  "7ZZH7kusCmj6uTGKPX74iyBRYTWqKPWyJhrnVKZUWtTp",
 ];
 
 export interface IConfigLineSettings {
@@ -35,29 +32,35 @@ export interface ICreators {
   percentage_share: number;
 }
 
+export interface IConfigLines {
+  name: string;
+  uri: string;
+}
+
+export interface IGuard {
+  label: string;
+  sol_payment: {
+    lamports: number;
+  };
+  start_date: string;
+  end_date: string;
+  min_limit: {
+    limit: number;
+  };
+  allocation: {
+    limit: number;
+  };
+  allow_list: Uint8Array;
+}
+
 export interface ICreateCandyMachine {
   collection_mint_pk: string;
   item_available: number;
   config_line_settings: IConfigLineSettings | null;
-  hidden_settings: IHiddenSetting | null;
-  max_edition_supply: number;
-  creators: ICreators[];
-  guards: {
-    box_tax?: {
-      lamports: number;
-      last_instruction: boolean;
-    };
-    sol_payment?: {
-      lamports: number;
-    };
-    start_date?: string;
-    end_date?: string;
-    min_limit?: {
-      id: number;
-      limit: number;
-    };
-    allow_list?: Uint8Array;
-  };
+  // hidden_settings: IHiddenSetting | null;
+  // max_edition_supply: number;
+  // creators: ICreators[];
+  groups: IGuard[];
 }
 
 export interface IUpdateCandyMachine {

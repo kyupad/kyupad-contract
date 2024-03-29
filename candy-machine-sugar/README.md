@@ -126,9 +126,9 @@ https://developers.metaplex.com/candy-machine/guards/allow-list#overview
 ## One Collection Multiple Candy Machine
 
 ```
-sugar upload --config config/madlads.json --cache cache/madlads.json -l debug -r https://api.devnet.solana.com assets
-sugar deploy --config config/madlads.json --cache cache/madlads.json -l debug -r https://api.devnet.solana.com
-sugar guard add --config config/madlads.json --cache cache/madlads.json --candy-machine candyMachine
+sugar upload --config config/madlads.json --cache cache/madlads.json -k owner.json -l debug -r https://api.devnet.solana.com assets
+sugar deploy --config config/madlads.json --cache cache/madlads.json -k owner.json -l debug -r https://api.devnet.solana.com
+sugar guard add --config config/madlads.json -k owner.json --cache cache/madlads.json --candy-machine candyMachine
 ```
 
 Bỏ 2 file collection.json và collection.png ra khỏi thư mục assets trước khi chạy các câu lệnh dưới đây
