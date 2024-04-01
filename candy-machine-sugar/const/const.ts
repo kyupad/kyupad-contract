@@ -3,6 +3,7 @@ import { PublicKey } from "@solana/web3.js";
 export const allowListWL = [
   "A75CR9bxnUGqZ4xjCLT2ts7kFvNJ6t93GXZWUaBaJbzv",
   "7ZZH7kusCmj6uTGKPX74iyBRYTWqKPWyJhrnVKZUWtTp",
+  "G83FA8sL8gGT2PhyeZ3fVhq1CfQvenfkRNm2cRdL5UQf",
 ];
 
 export interface IConfigLineSettings {

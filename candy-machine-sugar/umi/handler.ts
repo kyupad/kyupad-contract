@@ -162,14 +162,19 @@ export async function insertItems(
   );
 }
 
-export async function uploadFileJsonMetadata(umi: Umi, directoryPath: string) {
-  const jsonMetadata: IConfigLines[] = [];
-  fs.readdir(directoryPath, (err, files) => {
+export async function uploadFileJsonMetadata(
+  umi: Umi,
+  candyMachinePk: string,
+  directoryPath: string
+) {
+  const configLines: IConfigLines[] = [];
+
+  fs.readdir(directoryPath, async (err, files) => {
     if (err) {
       throw new Error(`❌ - uploadFileJsonMetadata failed: ${err}`);
     }
 
-    files.forEach(async (file, idx) => {
+    for (const [idx, file] of files.entries()) {
       const filePath = path.join(directoryPath, file);
       if (isImageFile(filePath)) {
         const data = fs.readFileSync(filePath);
@@ -210,16 +215,14 @@ export async function uploadFileJsonMetadata(umi: Umi, directoryPath: string) {
         });
 
         console.log(`✅ - Upload the JSON metadata success: ${uri}`);
-        jsonMetadata.push({
+        configLines.push({
           name: `AMI big stomach#${idx + 1}`,
           uri: uri,
         });
       }
-    });
+    }
+    await insertItems(umi, candyMachinePk, configLines);
   });
-  console.log(jsonMetadata);
-
-  return jsonMetadata;
 }
 
 // Read function

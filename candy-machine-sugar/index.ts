@@ -74,7 +74,7 @@ const main = async () => {
             lamports: 0.01,
           },
           start_date: "2024-03-20T17:00:00Z",
-          end_date: "2024-04-01T17:00:00Z",
+          end_date: "2024-04-20T17:00:00Z",
           min_limit: {
             limit: 1,
           },
@@ -114,10 +114,8 @@ const main = async () => {
   //   console.log(error);
   // }
 
-  delay(45, () => {
-    uploadFileJsonMetadata(umi, "assets").then((configLines) => {
-      insertItems(umi, candyMachinePk, configLines);
-    });
+  delay(45, async () => {
+    await uploadFileJsonMetadata(umi, candyMachinePk, "assets");
   });
 
   delay(60, async () => {
