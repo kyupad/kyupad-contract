@@ -24,7 +24,7 @@ import {
   uploadFileJsonMetadata,
 } from "./umi/handler";
 import { nftStorageUploader } from "@metaplex-foundation/umi-uploader-nft-storage";
-import { Connection } from "@solana/web3.js";
+import { Connection, PublicKey } from "@solana/web3.js";
 import { IConfigLines, ICreateCandyMachine, allowListWL } from "./const/const";
 import { delay } from "./util/util";
 
@@ -53,10 +53,9 @@ const connection = new Connection(process.env.KYUPAD_PUBLIC_RPC_ENDPOINT);
 const main = async () => {
   const madladAllowList = getMerkleRoot(allowListWL);
   const smbAllowList = getMerkleRoot(allowListWL);
-
   const collectionMint = await createCollection(umi, mySigner);
-
   let candyMachinePk = "";
+
   delay(15, async () => {
     let dataCreateMachine: ICreateCandyMachine = {
       collection_mint_pk: collectionMint,
@@ -97,7 +96,6 @@ const main = async () => {
         },
       ],
     };
-
     candyMachinePk = await createMachine(
       umi,
       collectionMint,
@@ -106,33 +104,23 @@ const main = async () => {
     );
   });
 
-  delay(30, async () => {
-    const configLines: IConfigLines[] = [
-      {
-        name: "AMI big stomach#0",
-        uri: "https://arweave.net/4DIZoYIPlO6E1_EkPDtZ-0saQbEK_AOAEi_LZckzGoU",
-      },
-      {
-        name: "AMI big stomach#1",
-        uri: "https://arweave.net/wYPxwUlO4CDfDIwmQ6zq_0cIlTHi8-U-XT2pkXvkZR0",
-      },
-      {
-        name: "AMI big stomach#2",
-        uri: "https://arweave.net/85fTj6OmGtqayXRPTs2J4WsmvN5lKdRrKrPSmpYtcVY",
-      },
-      {
-        name: "AMI big stomach#3",
-        uri: "https://arweave.net/xctPweqDqioRCewTixlAGbNH7163wP01d-_Ls6cRUOY",
-      },
-      {
-        name: "AMI big stomach#4",
-        uri: "https://arweave.net/DzFBF9WhFs1qZ0p28M6E_PxjaOzuZpZUrmeCLa1qikw",
-      },
-    ];
-    await insertItems(umi, candyMachinePk, configLines);
+  // khong tim thay account voi commitment la confirmed
+  // try {
+  //   const accountAddress = new PublicKey(candyMachinePk);
+  //   const accountInfo = connection.getAccountInfo(accountAddress, {
+  //     commitment: "confirmed",
+  //   });
+  // } catch (error) {
+  //   console.log(error);
+  // }
+
+  delay(45, () => {
+    uploadFileJsonMetadata(umi, "assets").then((configLines) => {
+      insertItems(umi, candyMachinePk, configLines);
+    });
   });
 
-  delay(45, async () => {
+  delay(60, async () => {
     const mintArgs = {
       solPayment: some({
         lamports: sol(0.01),

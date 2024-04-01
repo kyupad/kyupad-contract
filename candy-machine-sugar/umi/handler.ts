@@ -1,7 +1,5 @@
 import {
   CandyGuard,
-  DefaultGuardSet,
-  GuardGroupArgs,
   addConfigLines,
   create,
   fetchAllocationTracker,
@@ -164,8 +162,8 @@ export async function insertItems(
   );
 }
 
-// run doesn't success
 export async function uploadFileJsonMetadata(umi: Umi, directoryPath: string) {
+  const jsonMetadata: IConfigLines[] = [];
   fs.readdir(directoryPath, (err, files) => {
     if (err) {
       throw new Error(`❌ - uploadFileJsonMetadata failed: ${err}`);
@@ -183,15 +181,45 @@ export async function uploadFileJsonMetadata(umi: Umi, directoryPath: string) {
         const asset = await createGenericFileFromBrowserFile(imageFile);
         const [fileUri] = await umi.uploader.upload([asset]);
         const uri = await umi.uploader.uploadJson({
-          name: `AMI NFT #${idx + 1}`,
-          description: "My description",
+          name: `AMI big stomach#${idx + 1}`,
+          symbol: "CAT",
+          description: "The Studious AMI are smart and productive cat.",
           image: fileUri,
+          attributes: [
+            {
+              trait_type: "cute ami",
+              value: "pencil",
+            },
+            {
+              trait_type: "cute ami",
+              value: "clipboard",
+            },
+            {
+              trait_type: "cat",
+              value: "purple",
+            },
+          ],
+          properties: {
+            files: [
+              {
+                uri: fileUri,
+                type: "image/png",
+              },
+            ],
+          },
         });
 
         console.log(`✅ - Upload the JSON metadata success: ${uri}`);
+        jsonMetadata.push({
+          name: `AMI big stomach#${idx + 1}`,
+          uri: uri,
+        });
       }
     });
   });
+  console.log(jsonMetadata);
+
+  return jsonMetadata;
 }
 
 // Read function
