@@ -1,0 +1,13 @@
+use anchor_lang::error_code;
+
+#[error_code]
+pub enum KyuPadError {
+    #[msg("Could not save guard to account")]
+    InvalidAccountSize,
+
+    #[msg("This wallet is't supported to mint")]
+    InvalidWallet,
+
+    #[msg("The merkle root input not in the groups config")]
+    InvalidMekleRoot,
+}
