@@ -1,5 +1,9 @@
 use anchor_lang::solana_program;
 use anchor_lang::{prelude::*, system_program::CreateAccount};
+use solana_program::program_memory::sol_memcmp;
+use solana_program::pubkey::PUBKEY_BYTES;
+
+use crate::errors::KyuPadError;
 
 pub fn verify(proof: &[[u8; 32]], root: &[u8; 32], leaf: &[u8; 32]) -> bool {
     let mut computed_hash = *leaf;
@@ -24,7 +28,7 @@ pub fn create_account<'info>(
     to: AccountInfo<'info>,
     seeds: &[&[u8]],
     bump: u8,
-    space: usize,
+    space: u64,
     owner: &Pubkey,
 ) -> Result<()> {
     let seeds_signer = &mut seeds.to_vec();
@@ -34,8 +38,28 @@ pub fn create_account<'info>(
     // signer seeds must equal seeds of to address
     anchor_lang::system_program::create_account(
         CpiContext::new(system_program, CreateAccount { from, to }).with_signer(&[seeds_signer]),
-        Rent::get()?.minimum_balance(space),
-        space.try_into().unwrap(),
+        Rent::get()?.minimum_balance(space.try_into().unwrap()),
+        space,
         owner,
     )
+}
+
+pub fn cmp_pubkeys(a: &Pubkey, b: &Pubkey) -> bool {
+    sol_memcmp(a.as_ref(), b.as_ref(), PUBKEY_BYTES) == 0
+}
+
+pub fn assert_keys_equal(key1: &Pubkey, key2: &Pubkey) -> Result<()> {
+    if !cmp_pubkeys(key1, key2) {
+        err!(KyuPadError::PublicKeyMismatch)
+    } else {
+        Ok(())
+    }
+}
+
+pub fn assert_owned_by(account: &AccountInfo, owner: &Pubkey) -> Result<()> {
+    if !cmp_pubkeys(account.owner, owner) {
+        err!(KyuPadError::IncorrectOwner)
+    } else {
+        Ok(())
+    }
 }

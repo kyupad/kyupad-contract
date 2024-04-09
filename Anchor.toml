@@ -5,7 +5,7 @@ seeds = false
 skip-lint = false
 
 [programs.devnet]
-kyupad_smart_contract = "9iTeQZ4NqQRWcLcii1z1UxpAgBz9UXq8674g3B7biWNm"
+kyupad_smart_contract = "6CEvPSYN2YpLT4nJd1DFJRQDXkVgsBqq5Bt8bGhkuXWr"
 
 [registry]
 url = "https://api.apr.dev"

@@ -10,4 +10,16 @@ pub enum KyuPadError {
 
     #[msg("The merkle root input not in the groups config")]
     InvalidMekleRoot,
+
+    #[msg("Pool's supply has run out")]
+    PoolSupplyRunOut,
+
+    #[msg("Not enough sol to mint")]
+    NotEnoughSOL,
+
+    PublicKeyMismatch,
+
+    IncorrectOwner,
+
+    AllowedMintLimitReached
 }

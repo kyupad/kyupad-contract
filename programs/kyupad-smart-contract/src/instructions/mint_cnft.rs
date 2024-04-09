@@ -1,8 +1,11 @@
 use crate::errors::KyuPadError;
-use crate::utils::verify;
-use crate::Groups;
+use crate::state::*;
+use crate::utils::*;
+use crate::PoolMinted;
+use crate::Pools;
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program;
+use mint_counter::MintCounter;
 use mpl_bubblegum::cpi::accounts::MintToCollectionV1;
 use mpl_bubblegum::cpi::mint_to_collection_v1;
 use mpl_bubblegum::MetadataArgs;
@@ -10,23 +13,34 @@ use mpl_bubblegum::TreeConfig;
 use spl_account_compression::program::SplAccountCompression;
 use spl_account_compression::Noop;
 
-pub fn mint_cft(
-    ctx: Context<MintcNFT>,
+pub fn mint_cft<'c: 'info, 'info>(
+    ctx: Context<'_, '_, 'c, 'info, MintcNFT<'info>>,
     merkle_proof: Vec<[u8; 32]>,
     merkle_root: Vec<u8>,
     data: Vec<u8>,
 ) -> Result<()> {
     let minter = &ctx.accounts.minter;
-    let groups = &ctx.accounts.groups;
-    let groups_config = &groups.groups_config;
+    let pools = &ctx.accounts.pools;
+    let pools_config = &pools.pools_config;
+    let pool_minted = &ctx.accounts.pool_minted;
+    let system_program = &ctx.accounts.system_program;
 
     let mut valid_merke_root = false;
 
-    for gc in groups_config.iter() {
-        if gc.merkle_root == merkle_root {
+    let mint_counter = &ctx.remaining_accounts[0];
+
+    for pool_config in pools_config.iter() {
+        if pool_config.merkle_root == merkle_root {
+
+            // Check to see if the pool's supply has run out
+            if pool_minted.remaining_assets <= 0  {
+                return Err(KyuPadError::PoolSupplyRunOut.into());
+            }
+
             valid_merke_root = true;
             let leaf = solana_program::keccak::hashv(&[minter.key().to_string().as_bytes()]);
 
+            // check if this address is allow to mint
             let verify_minter = verify(
                 &merkle_proof[..],
                 merkle_root.as_slice().try_into().unwrap(),
@@ -34,14 +48,20 @@ pub fn mint_cft(
             );
 
             if verify_minter {
+                // Check if counter mint for minter
+                MintCounter::validate(mint_counter, minter.to_account_info(), pools.to_account_info(), pool_config.id.clone(), pool_config.total_mint_per_wallet)?;
+
+                // Check enough lamport to mint
+                // PoolConfig::validate(pool_config, minter.to_account_info())?;
+
                 let mint_cnft_accounts = MintToCollectionV1 {
                     tree_authority: ctx.accounts.tree_authority.to_account_info(),
-                    leaf_owner: ctx.accounts.leaf_owner.clone(),
-                    leaf_delegate: ctx.accounts.leaf_delegate.clone(),
+                    leaf_owner: ctx.accounts.minter.to_account_info(),
+                    leaf_delegate: ctx.accounts.minter.to_account_info(),
                     merkle_tree: ctx.accounts.merkle_tree.to_account_info(),
-                    payer: ctx.accounts.payer.clone(),
-                    tree_delegate: ctx.accounts.tree_delegate.clone(),
-                    collection_authority: ctx.accounts.collection_authority.clone(),
+                    payer: ctx.accounts.minter.to_account_info(),
+                    tree_delegate: ctx.accounts.minter.to_account_info(),
+                    collection_authority: ctx.accounts.collection_authority.to_account_info(),
                     collection_authority_record_pda: ctx
                         .accounts
                         .collection_authority_record_pda
@@ -65,8 +85,14 @@ pub fn mint_cft(
 
                 let metadata_args = MetadataArgs::try_from_slice(&data).unwrap();
 
-                mint_to_collection_v1(mint_cnft_context, metadata_args).unwrap();
+                // Call mint_to_collection_v1 and handle the result
+                mint_to_collection_v1(mint_cnft_context, metadata_args)?;
 
+                // increase mint counter
+                MintCounter::increase(mint_counter, minter.to_account_info(), pools.to_account_info(), system_program.to_account_info(), pool_config.id.clone())?;
+
+                // // Pay for the mint
+                // PoolConfig::actions(pool_config, minter.to_account_info(), destination, system_program.to_account_info());
             } else {
                 return Err(KyuPadError::InvalidWallet.into());
             }
@@ -87,34 +113,26 @@ pub struct MintcNFT<'info> {
     pub minter: Signer<'info>,
 
     #[account(
-        seeds=[b"groups", collection_authority.key().as_ref(), collection_mint.key().as_ref()], 
+        seeds=[Pools::PREFIX_SEED, minter.key().as_ref(), collection_mint.key().as_ref()], 
         bump
     )]
-    pub groups: Account<'info, Groups>,
+    pub pools: Account<'info, Pools>,
 
-    // #[account(
-    //     mut,
-    //     seeds=[TmpGroupData::SEED, groups.key().as_ref()], 
-    //     bump
-    // )]
-    // pub groups_follow: AccountInfo<'info>,
+    #[account(
+        mut,
+        // seeds=[PoolMinted::PREFIX_SEED, pools.key().as_ref(), merkle_root.as_ref()], 
+        // bump
+    )]
+    pub pool_minted: Account<'info, PoolMinted>,
 
     #[account(mut)]
     pub tree_authority: Account<'info, TreeConfig>,
-    /// CHECK:
-    pub leaf_owner: AccountInfo<'info>,
-    /// CHECK:
-    pub leaf_delegate: AccountInfo<'info>,
 
     #[account(mut)]
     /// CHECK: unsafe
     pub merkle_tree: UncheckedAccount<'info>,
     /// CHECK:
-    pub payer: AccountInfo<'info>,
-    /// CHECK:
-    pub tree_delegate: AccountInfo<'info>,
-    /// CHECK:
-    pub collection_authority: AccountInfo<'info>,
+    pub collection_authority: Signer<'info>,
     /// CHECK: Optional collection authority record PDA.
     /// If there is no collecton authority record PDA then
     /// this must be the Bubblegum program address.
@@ -134,3 +152,4 @@ pub struct MintcNFT<'info> {
     pub token_metadata_program: AccountInfo<'info>,
     pub system_program: Program<'info, System>,
 }
+
