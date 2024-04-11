@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::{state::{BpfWriter, PoolConfig}, utils::{assert_keys_equal, create_account}, ID};
+use crate::{state::{BpfWriter, PoolConfig}, utils::create_account, ID};
 
 pub fn init_collection_config<'c: 'info, 'info>(    
     ctx: Context<'_, '_, 'c, 'info, InitCollectionConfig<'info>>,
@@ -11,7 +11,7 @@ pub fn init_collection_config<'c: 'info, 'info>(
     let pools = &mut ctx.accounts.pools;
     let system_program = &ctx.accounts.system_program;
     let creator = &ctx.accounts.creator;
-    
+     
     let remaining_accounts_iter = &mut ctx.remaining_accounts.iter();
     for pca in vec_pools_args.iter() {
        let new_group_config = PoolConfig {
