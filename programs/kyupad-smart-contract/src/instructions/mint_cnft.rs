@@ -76,7 +76,7 @@ pub fn mint_cft<'c: 'info, 'info>(
                 .merkle_tree(&ctx.accounts.merkle_tree.to_account_info())
                 .payer(&ctx.accounts.minter.to_account_info())
                 .system_program(&ctx.accounts.system_program.to_account_info())
-                .tree_creator_or_delegate(&ctx.accounts.minter.to_account_info())
+                .tree_creator_or_delegate(&ctx.accounts.collection_authority.to_account_info())
                 .token_metadata_program(&ctx.accounts.token_metadata_program.clone())
                 .tree_config(&ctx.accounts.tree_authority.to_account_info())
                 .metadata(metadata_args)
