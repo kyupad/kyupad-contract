@@ -30,7 +30,11 @@ pub mod kyupad_smart_contract {
         instructions::init_collection_config(ctx, vec_groups_args)
     }
 
-    pub fn create_collection(ctx: Context<CreateCollection>, data: Vec<u8>,  max_depth: u32, max_buffer_size: u32, public: Option<bool>, tree_space: u32) -> Result<()> {
-        instructions::create_collection(ctx, data, max_depth, max_buffer_size, public, tree_space)
+    pub fn create_collection(ctx: Context<CreateCollection>, data: Vec<u8>) -> Result<()> {
+        instructions::create_collection(ctx, data)
+    }
+
+    pub fn create_tree_config(ctx: Context<CreateTree>, max_depth: u32, max_buffer_size: u32, public: Option<bool>, tree_space: u32) -> Result<()> {
+        instructions::create_tree_config(ctx, max_depth, max_buffer_size, public, tree_space)
     }
 }

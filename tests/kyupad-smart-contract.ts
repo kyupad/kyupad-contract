@@ -16,6 +16,7 @@ import {
   mintTo,
   tokenGroupUpdateGroupAuthority,
   getOrCreateAssociatedTokenAccount,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
 import { setCollectionSize } from '@metaplex-foundation/mpl-token-metadata';
 import {
@@ -65,24 +66,20 @@ describe('kyupad-smart-contract', () => {
   const minter = anchorProvider.wallet.publicKey;
 
   const collectionMint = new PublicKey(
-    '2a81q5T129qDNQyzaAscvRgXZX92PCJSwX3S4ZzNxMCg'
+    '37XKddjgakwyfrhgWAFo6sTL3T22Jm9Wd2fFrabWqDJK'
   );
 
   const collectionMetadata = new PublicKey(
-    'B7nB7vqhr5f1f3x1JhQ5KycLDEYs4mN7AvGB1gNTw6zZ'
+    'kDtRxVfnVY81T8CBGwtsruVGeo4eLqDnRqMWmFdD1X4'
   );
 
   const collectionMasterEditionAccount = new PublicKey(
-    'DyRRPoQoyxNyYDwWSjHkuKQLxbFubyR2LoHUCmRgRPcL'
+    'GC92QH5RuXvvAfmQxeTLtg9gTarK3AwFy2vxL9okU3FR'
   );
 
   const [poolsPDA] = PublicKey.findProgramAddressSync(
     [Buffer.from('pools'), minter.toBuffer(), collectionMint.toBuffer()],
     program.programId
-  );
-
-  const server = Keypair.fromSecretKey(
-    new Uint8Array(bs58.decode(process.env.PRIVATE_KEY!))
   );
 
   const [collectionAuthority] = PublicKey.findProgramAddressSync(
@@ -94,173 +91,178 @@ describe('kyupad-smart-contract', () => {
     'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s'
   );
 
-  it('Create collection', async () => {
-    const mint = await createMint(
-      anchorProvider.connection,
-      server,
-      collectionAuthority,
-      collectionAuthority,
-      0
-    );
+  // it('Create collection', async () => {
+  //   const mint = Keypair.generate();
 
-    const ata = await getOrCreateAssociatedTokenAccount(
-      anchorProvider.connection,
-      server,
-      mint,
-      collectionAuthority,
-      true
-    );
+  //   const ata = getAssociatedTokenAddressSync(
+  //     mint.publicKey,
+  //     collectionAuthority,
+  //     true
+  //   );
 
-    const [metadataAccount] = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from('metadata', 'utf8'),
-        TOKEN_METADATA_PROGRAM_ID.toBuffer(),
-        mint.toBuffer(),
-      ],
-      TOKEN_METADATA_PROGRAM_ID
-    );
+  //   const [metadataAccount] = PublicKey.findProgramAddressSync(
+  //     [
+  //       Buffer.from('metadata', 'utf8'),
+  //       TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+  //       mint.publicKey.toBuffer(),
+  //     ],
+  //     TOKEN_METADATA_PROGRAM_ID
+  //   );
 
-    const [masterEditionAccount] = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from('metadata', 'utf8'),
-        TOKEN_METADATA_PROGRAM_ID.toBuffer(),
-        mint.toBuffer(),
-        Buffer.from('edition', 'utf8'),
-      ],
-      TOKEN_METADATA_PROGRAM_ID
-    );
+  //   const [masterEditionAccount] = PublicKey.findProgramAddressSync(
+  //     [
+  //       Buffer.from('metadata', 'utf8'),
+  //       TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+  //       mint.publicKey.toBuffer(),
+  //       Buffer.from('edition', 'utf8'),
+  //     ],
+  //     TOKEN_METADATA_PROGRAM_ID
+  //   );
 
-    const metadata: DataV2Args = {
-      name: 'KyuPad',
-      symbol: 'KPC',
-      uri: 'https://pbs.twimg.com/profile_images/1769690947384750081/d02M-XJA_400x400.jpg',
-      sellerFeeBasisPoints: 100,
-      creators: null,
-      collection: null,
-      uses: null,
-    };
+  //   const metadata: DataV2Args = {
+  //     name: 'KyuPad',
+  //     symbol: 'KPC',
+  //     uri: 'https://pbs.twimg.com/profile_images/1769690947384750081/d02M-XJA_400x400.jpg',
+  //     sellerFeeBasisPoints: 100,
+  //     creators: null,
+  //     collection: null,
+  //     uses: null,
+  //   };
 
-    const serialize = getDataV2Serializer();
-    const data = serialize.serialize(metadata);
+  //   const serialize = getDataV2Serializer();
+  //   const data = serialize.serialize(metadata);
 
-    const space = getMerkleTreeSize(14, 64);
+  //   const space = getMerkleTreeSize(14, 64);
 
-    const treeKeypair = Keypair.generate();
+  //   const treeKeypair = Keypair.generate();
 
-    const [treeConfig, _bump] = PublicKey.findProgramAddressSync(
-      [treeKeypair.publicKey.toBuffer()],
-      new PublicKey('BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY')
-    );
+  //   const [treeConfig, _bump] = PublicKey.findProgramAddressSync(
+  //     [treeKeypair.publicKey.toBuffer()],
+  //     new PublicKey('BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY')
+  //   );
 
-    const createTreeIx = SystemProgram.createAccount({
-      fromPubkey: server.publicKey,
-      newAccountPubkey: treeKeypair.publicKey,
-      lamports:
-        await anchorProvider.connection.getMinimumBalanceForRentExemption(
-          space
-        ),
-      space: space,
-      programId: new PublicKey('cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK'),
-    });
+  //   const createTreeAccountIx = SystemProgram.createAccount({
+  //     fromPubkey: anchorProvider.wallet.publicKey,
+  //     newAccountPubkey: treeKeypair.publicKey,
+  //     lamports:
+  //       await anchorProvider.connection.getMinimumBalanceForRentExemption(
+  //         space
+  //       ),
+  //     space: space,
+  //     programId: new PublicKey('cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK'),
+  //   });
 
-    let tx1 = new Transaction().add(createTreeIx);
-    tx1.feePayer = server.publicKey;
-    console.log(2);
+  //   const createTreeConfigIx = await program.methods
+  //     .createTreeConfig(14, 64, true, space)
+  //     .accounts({
+  //       creator: minter,
+  //       merkleTree: treeKeypair.publicKey,
+  //       treeConfig: treeConfig,
+  //       mplBubbleGumProgram: MPL_BUBBLEGUM_PROGRAM_ID,
+  //       compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+  //       logWrapper: SPL_NOOP_PROGRAM_ID,
+  //       updateAuthority: collectionAuthority,
+  //       systemProgram: SystemProgram.programId,
+  //     })
+  //     .instruction();
 
-    await sendAndConfirmTransaction(
-      anchorProvider.connection,
-      tx1,
-      [server, treeKeypair],
-      {
-        commitment: 'confirmed',
-        skipPreflight: true,
+  //   let tx_create_tree = new Transaction()
+  //     .add(createTreeAccountIx)
+  //     .add(createTreeConfigIx);
+  //   tx_create_tree.feePayer = anchorProvider.wallet.publicKey;
+
+  //   const signature = await anchorProvider.sendAndConfirm(
+  //     tx_create_tree,
+  //     [treeKeypair],
+  //     {
+  //       skipPreflight: true,
+  //     }
+  //   );
+
+  //   console.log('Your transaction create merkle tree', signature);
+
+  //   const tx = await program.methods
+  //     .createCollection(Buffer.from(data))
+  //     .accounts({
+  //       creator: minter,
+  //       collectionTokenAccount: ata,
+  //       metadata: metadataAccount,
+  //       masterEdition: masterEditionAccount,
+  //       tokenProgram: TOKEN_PROGRAM_ID,
+  //       mint: mint.publicKey,
+  //       updateAuthority: collectionAuthority,
+  //       tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+  //       systemProgram: SystemProgram.programId,
+  //       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+  //     })
+  //     .signers([mint])
+  //     .rpc({
+  //       skipPreflight: true,
+  //       commitment: 'confirmed',
+  //     });
+
+  //   console.log('Your transaction create collection', tx);
+  // });
+
+  it('init_collection_config', async () => {
+    const arrayGroupConfigArgs: Array<PoolConfigArgs> = [];
+    const numberOfPools = 3;
+
+    const remainingAccounts: Array<AccountMeta> = [];
+
+    for (let i = 0; i < numberOfPools; i++) {
+      let arrayWallet: string[] = [];
+      if (i == 2) {
+        arrayWallet = whiteList;
+      } else {
+        arrayWallet = generateWhiteList(10);
       }
-    );
+
+      const leafNode = arrayWallet.map((addr) => keccak256(addr));
+      const merkleTree = new MerkleTree(leafNode, keccak256, {
+        sortPairs: true,
+      });
+
+      const merkle_root = merkleTree.getRoot();
+
+      const groupConfigArgs: PoolConfigArgs = {
+        id: i.toString(),
+        startDate: new BN(Math.floor(Date.now() / 1000)),
+        endDate: new BN(Math.floor(Date.now() / 1000) + 3000),
+        merkleRoot: merkle_root,
+        totalMintPerWallet: 1,
+        payment: new BN(100000000),
+        boxTax: 0.01,
+        poolSupply: 5,
+        lamports: new BN(100000000),
+      };
+
+      arrayGroupConfigArgs.push(groupConfigArgs);
+
+      const [poolMinted] = PublicKey.findProgramAddressSync(
+        [Buffer.from('pool_minted'), poolsPDA.toBuffer(), merkle_root],
+        program.programId
+      );
+
+      remainingAccounts.push({
+        pubkey: poolMinted,
+        isWritable: true,
+        isSigner: false,
+      });
+    }
 
     const tx = await program.methods
-      .createCollection(Buffer.from(data), 14, 64, true, space)
+      .initCollectionConfig(arrayGroupConfigArgs)
       .accounts({
         creator: minter,
-        merkleTree: treeKeypair.publicKey,
-        treeConfig: treeConfig,
-        mplBubbleGumProgram: MPL_BUBBLEGUM_PROGRAM_ID,
-        compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
-        logWrapper: SPL_NOOP_PROGRAM_ID,
-        collectionTokenAccount: ata.address,
-        metadata: metadataAccount,
-        masterEdition: masterEditionAccount,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        mint: mint,
-        updateAuthority: collectionAuthority,
-        tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+        collectionMint: collectionMint,
+        pools: poolsPDA,
       })
-      .rpc({
-        skipPreflight: true,
-        commitment: 'confirmed',
-      });
+      .remainingAccounts(remainingAccounts)
+      .rpc({ skipPreflight: true });
 
     console.log('Your transaction signature', tx);
   });
-
-  // it('init_collection_config', async () => {
-  //   const arrayGroupConfigArgs: Array<PoolConfigArgs> = [];
-  //   const numberOfPools = 3;
-
-  //   const remainingAccounts: Array<AccountMeta> = [];
-
-  //   for (let i = 0; i < numberOfPools; i++) {
-  //     let arrayWallet: string[] = [];
-  //     if (i == 2) {
-  //       arrayWallet = whiteList;
-  //     } else {
-  //       arrayWallet = generateWhiteList(10);
-  //     }
-
-  //     const leafNode = arrayWallet.map((addr) => keccak256(addr));
-  //     const merkleTree = new MerkleTree(leafNode, keccak256, {
-  //       sortPairs: true,
-  //     });
-
-  //     const merkle_root = merkleTree.getRoot();
-
-  //     const groupConfigArgs: PoolConfigArgs = {
-  //       id: i.toString(),
-  //       startDate: new BN(Math.floor(Date.now() / 1000)),
-  //       endDate: new BN(Math.floor(Date.now() / 1000) + 3000),
-  //       merkleRoot: merkle_root,
-  //       totalMintPerWallet: 1,
-  //       payment: new BN(100000000),
-  //       boxTax: 0.01,
-  //       poolSupply: 5,
-  //       lamports: new BN(100000000),
-  //     };
-
-  //     arrayGroupConfigArgs.push(groupConfigArgs);
-
-  //     const [poolMinted] = PublicKey.findProgramAddressSync(
-  //       [Buffer.from('pool_minted'), poolsPDA.toBuffer(), merkle_root],
-  //       program.programId
-  //     );
-
-  //     remainingAccounts.push({
-  //       pubkey: poolMinted,
-  //       isWritable: true,
-  //       isSigner: false,
-  //     });
-  //   }
-
-  //   const tx = await program.methods
-  //     .initCollectionConfig(arrayGroupConfigArgs)
-  //     .accounts({
-  //       creator: minter,
-  //       collectionMint: collectionMint,
-  //       pools: poolsPDA,
-  //     })
-  //     .remainingAccounts(remainingAccounts)
-  //     .rpc({ skipPreflight: true });
-
-  //   console.log('Your transaction signature', tx);
-  // });
 
   it('mint cNFT', async () => {
     // Add your test here.
@@ -296,7 +298,7 @@ describe('kyupad-smart-contract', () => {
     const data = serializer.serialize(nftArgs);
 
     const treeAddress = new PublicKey(
-      'BUBPuxzUMrTmGQKK7r9s14x2WRUwbvzyrw9Mai8adv9h'
+      '84PTNzRtDo2LRC2bQGqYyU8jMu2ATnUe1rUMZomAFCrA'
     );
 
     const MPL_BUBBLEGUM_PROGRAM_ID = new PublicKey(

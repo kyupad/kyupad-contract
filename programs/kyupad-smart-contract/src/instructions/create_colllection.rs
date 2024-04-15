@@ -1,17 +1,12 @@
-use anchor_lang::prelude::*;
+use anchor_lang::{prelude::*, system_program::{create_account, CreateAccount}};
 use mpl_token_metadata::{instructions::{CreateMasterEditionV3CpiBuilder, CreateMetadataAccountV3CpiBuilder, SetCollectionSizeCpiBuilder}, types::{DataV2, SetCollectionSizeArgs},
 };
-
-use mpl_bubblegum::instructions::CreateTreeConfigCpiBuilder;
-use spl_account_compression::{program::SplAccountCompression, Noop};
-
-
 use crate::ID;
 
-use spl_token::{instruction::mint_to, solana_program::program::invoke_signed};
+use spl_token::{instruction::{mint_to, initialize_mint2}, solana_program::program::invoke_signed};
+use spl_associated_token_account::instruction::create_associated_token_account;
 
-
-pub fn create_collection(ctx: Context<CreateCollection>, data: Vec<u8>, max_depth: u32, max_buffer_size: u32, public: Option<bool>, _tree_space: u32) -> Result<()> {
+pub fn create_collection(ctx: Context<CreateCollection>, data: Vec<u8>) -> Result<()> {
     let metadata = DataV2::try_from_slice(&data).unwrap();
     let seeds: &[&[u8]] = &[b"update_authority"];
 
@@ -20,23 +15,41 @@ pub fn create_collection(ctx: Context<CreateCollection>, data: Vec<u8>, max_dept
     let seeds_signer = &mut seeds.to_vec();
     let binding = [bump];
     seeds_signer.push(&binding);
-    
-    CreateTreeConfigCpiBuilder::new(&ctx.accounts.mpl_bubble_gum_program)
-    .compression_program(&ctx.accounts.compression_program)
-    .log_wrapper(&ctx.accounts.log_wrapper)
-    .merkle_tree(&ctx.accounts.merkle_tree)
-    .tree_config(&ctx.accounts.tree_config)
-    .payer(&ctx.accounts.creator)
-    .system_program(&ctx.accounts.system_program)
-    .tree_creator(&ctx.accounts.update_authority)
-    .max_depth(max_depth)
-    .max_buffer_size(max_buffer_size)
-    .public(
-        match public {
-        Some(_) =>  true,
-        None => false
-    }).invoke_signed(&[seeds_signer])?;
 
+    // create account mint
+
+    create_account(CpiContext::new(ctx.accounts.system_program.to_account_info(), CreateAccount {from: ctx.accounts.creator.to_account_info(), to: ctx.accounts.mint.to_account_info().clone()}), 
+    1461600, 82, &ctx.accounts.token_program.key).unwrap();
+
+    // initial mint
+    let initial_mint_ints = initialize_mint2(&ctx.accounts.token_program.key, 
+        &ctx.accounts.mint.key, 
+        &ctx.accounts.update_authority.key, 
+        Some(&ctx.accounts.update_authority.key), 0).unwrap();
+
+    invoke_signed(&initial_mint_ints, 
+        &[
+            ctx.accounts.mint.to_account_info().clone(),
+        ], &[seeds_signer]).unwrap();
+
+    // create associated token account
+    let create_ata_ins = create_associated_token_account(&ctx.accounts.creator.key, 
+        &ctx.accounts.update_authority.key, 
+        &ctx.accounts.mint.key, 
+        &ctx.accounts.token_program.key);
+
+    invoke_signed(&create_ata_ins, 
+        &[
+            ctx.accounts.token_program.clone(),
+            ctx.accounts.mint.to_account_info().clone(),
+            ctx.accounts.update_authority.clone(),
+            ctx.accounts.creator.to_account_info().clone(),
+            ctx.accounts.collection_token_account.clone(),
+            ctx.accounts.system_program.to_account_info().clone()
+        ], 
+        &[seeds_signer]).unwrap();
+
+    // mint collection to update_authority
     let mint_to_ins = mint_to(&ctx.accounts.token_program.key(), 
     &ctx.accounts.mint.key, 
     &ctx.accounts.collection_token_account.key, 
@@ -47,7 +60,7 @@ pub fn create_collection(ctx: Context<CreateCollection>, data: Vec<u8>, max_dept
         &mint_to_ins, 
         &[
             ctx.accounts.token_program.clone(),
-            ctx.accounts.mint.clone(),
+            ctx.accounts.mint.to_account_info().clone(),
             ctx.accounts.update_authority.clone(),
             ctx.accounts.collection_token_account.clone(),
             ctx.accounts.creator.to_account_info().clone()
@@ -55,7 +68,7 @@ pub fn create_collection(ctx: Context<CreateCollection>, data: Vec<u8>, max_dept
         &[seeds_signer]
     )?;
     
-
+    // create collection metadata
     CreateMetadataAccountV3CpiBuilder::new(&ctx.accounts.token_metadata_program)
         .metadata(&ctx.accounts.metadata)
         .mint(&ctx.accounts.mint)
@@ -75,7 +88,7 @@ pub fn create_collection(ctx: Context<CreateCollection>, data: Vec<u8>, max_dept
         .is_mutable(false)
         .invoke_signed(&[seeds_signer])?;
 
-
+    // create master edition 
     CreateMasterEditionV3CpiBuilder::new(&ctx.accounts.token_metadata_program)
     .edition(&ctx.accounts.master_edition)
     .mint(&ctx.accounts.mint)
@@ -88,6 +101,7 @@ pub fn create_collection(ctx: Context<CreateCollection>, data: Vec<u8>, max_dept
     .max_supply(0)
     .invoke_signed(&[seeds_signer])?;
 
+    // set collection size
     SetCollectionSizeCpiBuilder::new(&ctx.accounts.token_metadata_program)
     .collection_metadata(&ctx.accounts.metadata)
     .collection_authority(&ctx.accounts.update_authority)
@@ -97,11 +111,11 @@ pub fn create_collection(ctx: Context<CreateCollection>, data: Vec<u8>, max_dept
     })
     .invoke_signed(&[seeds_signer])?;
     
+    // try to find out collection size is
     Ok(())
 }
 
 #[derive(Accounts)]
-#[instruction(_tree_space: u32)]
 pub struct CreateCollection<'info> {
     #[account(mut)]
     pub creator: Signer<'info>,
@@ -110,17 +124,9 @@ pub struct CreateCollection<'info> {
     /// CHECK:
     pub metadata: AccountInfo<'info>,
 
-    #[account(mut)]
-    /// CHECK:
-    pub merkle_tree: AccountInfo<'info>,
-
-    #[account(mut)]
-    /// CHECK:
-    pub tree_config: AccountInfo<'info>,
-
     /// CHECK:
     #[account(mut)]
-    pub mint: AccountInfo<'info>,
+    pub mint: Signer<'info>,
 
     /// CHECK:
     #[account(mut)]
@@ -146,10 +152,8 @@ pub struct CreateCollection<'info> {
     pub token_metadata_program: AccountInfo<'info>,
 
     /// CHECK:
-    pub mpl_bubble_gum_program: AccountInfo<'info>,
-    pub compression_program: Program<'info, SplAccountCompression>,
-    pub log_wrapper: Program<'info, Noop>,
+    pub token_program: AccountInfo<'info>,
 
     /// CHECK:
-    pub token_program: AccountInfo<'info>,
+    pub associated_token_program: AccountInfo<'info>
 }

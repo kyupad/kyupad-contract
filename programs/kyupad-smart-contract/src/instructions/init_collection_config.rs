@@ -63,13 +63,12 @@ pub struct Pools {
     pub collection_mint: Pubkey,
     #[max_len(5)]
     pub author: Vec<Pubkey>,
-    #[max_len(10)]
+    #[max_len(50)]
     pub pools_config: Vec<PoolConfig>,
 }
 
 impl Pools {
-    pub const PREFIX_SEED: &'static [u8; 5] = b"pools";
-    
+    pub const PREFIX_SEED: &'static [u8; 5] = b"pools";    
 }
 
 #[derive(Debug, AnchorSerialize, AnchorDeserialize, Clone)]
@@ -86,7 +85,7 @@ pub struct PoolConfigArgs {
 }
 
 #[account]
-#[derive(Debug)]
+#[derive(Debug, InitSpace)]
 pub struct PoolMinted {
     pub remaining_assets: u16,
 }
@@ -120,7 +119,7 @@ impl PoolMinted {
         let seeds: &[&[u8]] = &[Self::PREFIX_SEED, pools.key.as_ref(), merkle_root.as_ref()];
 
         let (_, bump) = Pubkey::find_program_address(seeds, &ID);
-        let space: u64 =  (8 + 2 + (4 + 33 * remaining_assets)).into();
+        let space: u64 = 8 + 2;
 
         create_account(system_program, payer.clone(), tmp_group_data.clone(), seeds, bump, space, &ID)?;
 
