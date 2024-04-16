@@ -7,7 +7,7 @@ pub mod instructions;
 pub mod pda;
 pub mod state;
 pub mod utils;
-declare_id!("2GVTtVTDpEsgdUVWk9rx4miziEgkZ4C9oTaFd81zwJmW");
+declare_id!("3LJYEwPqJ5Lk5B9GXYsmadymm7p6hhCKzBeSMBGXJa9L");
 
 #[program]
 pub mod kyupad_smart_contract {
@@ -17,10 +17,10 @@ pub mod kyupad_smart_contract {
     pub fn mint_cnft<'c: 'info, 'info>(
         ctx: Context<'_, '_, 'c, 'info, MintcNFT<'info>>,
         merkle_proof: Vec<[u8; 32]>,
-        merkle_root: Vec<u8>,
+        pool_id: String,
         data: Vec<u8>,
     ) -> Result<()> {
-        instructions::mint_cft(ctx, merkle_proof, merkle_root, data)
+        instructions::mint_cft(ctx, merkle_proof, pool_id, data)
     }
 
     pub fn init_collection_config<'c: 'info, 'info>(

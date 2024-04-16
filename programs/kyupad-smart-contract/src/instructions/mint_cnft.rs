@@ -15,7 +15,7 @@ use spl_account_compression::Noop;
 pub fn mint_cft<'c: 'info, 'info>(
     ctx: Context<'_, '_, 'c, 'info, MintcNFT<'info>>,
     merkle_proof: Vec<[u8; 32]>,
-    merkle_root: Vec<u8>,
+    pool_id: String,
     data: Vec<u8>,
 ) -> Result<()> {
     let minter = &ctx.accounts.minter;
@@ -26,10 +26,12 @@ pub fn mint_cft<'c: 'info, 'info>(
 
     let mut valid_merke_root = false;
 
-    let mint_counter = &ctx.remaining_accounts[0];
+    let remaining_accounts_iter = &mut ctx.remaining_accounts.iter();
+
+    let mint_counter = next_account_info(remaining_accounts_iter)?;
 
     for pool_config in pools_config.iter() {
-        if pool_config.merkle_root == merkle_root {
+        if pool_config.id == pool_id {
 
             // Check to see if the pool's supply has run out
             if pool_minted.remaining_assets <= 0  {
@@ -42,7 +44,7 @@ pub fn mint_cft<'c: 'info, 'info>(
             // check if this address is allow to mint
             let verify_minter = verify(
                 &merkle_proof[..],
-                merkle_root.as_slice().try_into().unwrap(),
+                pool_config.merkle_root.as_slice().try_into().unwrap(),
                 &leaf.0,
             );
 
@@ -52,6 +54,39 @@ pub fn mint_cft<'c: 'info, 'info>(
 
                 // Check enough lamport to mint
                 // PoolConfig::validate(pool_config, minter.to_account_info())?;
+
+                // // Check if in the time allow
+                // let clock = Clock::get()?;
+                // let current_timestamp = clock.unix_timestamp;
+                // if current_timestamp < pool_config.start_date || current_timestamp > pool_config.end_date {
+                //     return Err(KyuPadError::NotMintTime.into());
+                // }
+                
+                //  Check if have exclusion_pools
+                match &pool_config.exclusion_pools {
+                    Some(exclusion_pools) => {
+                        for pool_id in exclusion_pools {
+                            let seeds: &[&[u8]] = &[
+                                MintCounter::PREFIX_SEED,
+                                pool_id.as_ref(),
+                                minter.key.as_ref(),
+                                pools.to_account_info().key.as_ref(),
+                            ];
+                            
+                            let (pda, _) = Pubkey::find_program_address(&seeds, &ID);
+                             
+                            let another_minter = next_account_info(remaining_accounts_iter)?;
+                            assert_keys_equal(&pda, &another_minter.key)?;
+
+                            // check if this account is already exist
+                            if **another_minter.try_borrow_lamports()? > 0 {
+                                return Err(KyuPadError::AllowedMintLimitReached.into());
+                            }
+                        }
+                    },
+                    None => {},
+                }
+
                 let metadata_args = MetadataArgs::try_from_slice(&data).unwrap();
 
                  let seeds: &[&[u8]] = &[b"update_authority"];

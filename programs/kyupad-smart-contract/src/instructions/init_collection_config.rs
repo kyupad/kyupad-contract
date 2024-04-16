@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::{state::{BpfWriter, PoolConfig}, utils::create_account, ID};
+use crate::{state::{BpfWriter, PoolConfig}, utils::{assert_keys_equal, create_account}, ID};
 
 pub fn init_collection_config<'c: 'info, 'info>(    
     ctx: Context<'_, '_, 'c, 'info, InitCollectionConfig<'info>>,
@@ -24,10 +24,11 @@ pub fn init_collection_config<'c: 'info, 'info>(
             payment: pca.payment,
             box_tax: pca.box_tax,
             pool_supply: pca.pool_supply,
-            lamports: pca.lamports
+            lamports: pca.lamports,
+            exclusion_pools: pca.exclusion_pools.clone(),
         };
 
-        PoolMinted::initialize(creator.to_account_info(), pools.to_account_info(), next_account_info(remaining_accounts_iter)?, system_program.to_account_info(), pca.merkle_root.clone(), pca.pool_supply)?;
+        PoolMinted::initialize(creator.to_account_info(), pools.to_account_info(), next_account_info(remaining_accounts_iter)?, system_program.to_account_info(), pca.id.clone(), pca.pool_supply)?;
         
         vec_pools.push(new_group_config);
     }
@@ -74,14 +75,15 @@ impl Pools {
 #[derive(Debug, AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct PoolConfigArgs {
     id: String,
-    start_date: u64,
-    end_date: u64,
+    start_date: i64,
+    end_date: i64,
     merkle_root: Vec<u8>,
     total_mint_per_wallet: u8,
     payment: u64,
     box_tax: Option<f32>,
     pool_supply: u16,
     lamports: u64,
+    exclusion_pools: Option<Vec<String>>,
 }
 
 #[account]
@@ -111,22 +113,25 @@ impl PoolMinted {
     pub fn initialize<'info>(
         payer: AccountInfo<'info>,
         pools: AccountInfo<'info>,
-        tmp_group_data: &'info AccountInfo<'info>,
+        pool_minted_account: &'info AccountInfo<'info>,
         system_program: AccountInfo<'info>,
-        merkle_root: Vec<u8>,
+        id: String,
         remaining_assets: u16,
     ) -> Result<()> {
-        let seeds: &[&[u8]] = &[Self::PREFIX_SEED, pools.key.as_ref(), merkle_root.as_ref()];
+        let seeds: &[&[u8]] = &[Self::PREFIX_SEED, pools.key.as_ref(), id.as_bytes()];
 
-        let (_, bump) = Pubkey::find_program_address(seeds, &ID);
-        let space: u64 = 8 + 2;
+        let (pda, bump) = Pubkey::find_program_address(seeds, &ID);
 
-        create_account(system_program, payer.clone(), tmp_group_data.clone(), seeds, bump, space, &ID)?;
+        assert_keys_equal(&pda, &pool_minted_account.key)?;
 
-        let mut tmp_group_data_ser = PoolMinted::from(&tmp_group_data);
-        tmp_group_data_ser.create(remaining_assets)?;
+        let space: u64 = (8 + PoolMinted::INIT_SPACE).try_into().unwrap();
 
-        tmp_group_data_ser.serialize(tmp_group_data.to_account_info())?;
+        create_account(system_program, payer.clone(), pool_minted_account.clone(), seeds, bump, space, &ID)?;
+
+        let mut pool_minted_account_ser = PoolMinted::from(&pool_minted_account);
+        pool_minted_account_ser.create(remaining_assets)?;
+
+        pool_minted_account_ser.serialize(pool_minted_account_ser.to_account_info())?;
         Ok(())
     }
 }

@@ -5,7 +5,7 @@ seeds = false
 skip-lint = false
 
 [programs.devnet]
-kyupad_smart_contract = "2GVTtVTDpEsgdUVWk9rx4miziEgkZ4C9oTaFd81zwJmW"
+kyupad_smart_contract = "3LJYEwPqJ5Lk5B9GXYsmadymm7p6hhCKzBeSMBGXJa9L"
 
 [registry]
 url = "https://devnet.helius-rpc.com/?api-key=7b857a49-a695-4d15-8b64-869d6fa1134e"
