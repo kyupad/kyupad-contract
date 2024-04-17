@@ -40,9 +40,8 @@ impl MintCounter {
         ];
 
         let (pda, _) = Pubkey::find_program_address(&seeds, &ID);
-
         assert_keys_equal(&mint_counter.key, &pda)?;
-
+        msg!("0");
         if !mint_counter.data_is_empty() {
             // check the owner of the account
             assert_owned_by(&mint_counter, &crate::ID)?;

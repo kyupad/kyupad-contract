@@ -51,7 +51,6 @@ pub fn mint_cft<'c: 'info, 'info>(
             if verify_minter {
                 // Check if counter mint for minter
                 MintCounter::validate(mint_counter, minter.to_account_info(), pools.to_account_info(), pool_config.id.clone(), pool_config.total_mint_per_wallet)?;
-
                 // Check enough lamport to mint
                 // PoolConfig::validate(pool_config, minter.to_account_info())?;
 

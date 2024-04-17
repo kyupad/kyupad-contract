@@ -4,36 +4,35 @@ use crate::{state::{BpfWriter, PoolConfig}, utils::{assert_keys_equal, create_ac
 
 pub fn init_collection_config<'c: 'info, 'info>(    
     ctx: Context<'_, '_, 'c, 'info, InitCollectionConfig<'info>>,
-    vec_pools_args: Vec<PoolConfigArgs>,
+    // vec_pools_args: Vec<PoolConfigArgs>,
 ) -> Result<()> {
-    let mut vec_pools: Vec<PoolConfig> = vec![];
+    
     let collection_mint = &ctx.accounts.collection_mint;
     let pools = &mut ctx.accounts.pools;
-    let system_program = &ctx.accounts.system_program;
-    let creator = &ctx.accounts.creator;
-     
-    let remaining_accounts_iter = &mut ctx.remaining_accounts.iter();
-    for pca in vec_pools_args.iter() {
-       let new_group_config = PoolConfig {
-            id: pca.id.clone(),
-            start_date: pca.start_date,
-            end_date: pca.end_date,
-            merkle_root: pca.merkle_root.clone(), 
-            total_mint_per_wallet: pca.total_mint_per_wallet,
-            destination: collection_mint.key.clone(),
-            payment: pca.payment,
-            box_tax: pca.box_tax,
-            pool_supply: pca.pool_supply,
-            lamports: pca.lamports,
-            exclusion_pools: pca.exclusion_pools.clone(),
-        };
+    // let system_program = &ctx.accounts.system_program;
+    // let creator = &ctx.accounts.creator;
+    // let mut vec_pools: Vec<PoolConfig> = vec![];
+    // let remaining_accounts_iter = &mut ctx.remaining_accounts.iter();
+    // for pca in vec_pools_args.iter() {
+    //    let new_group_config = PoolConfig {
+    //         id: pca.id.clone(),
+    //         start_date: pca.start_date,
+    //         end_date: pca.end_date,
+    //         merkle_root: pca.merkle_root.clone(), 
+    //         total_mint_per_wallet: pca.total_mint_per_wallet,
+    //         destination: collection_mint.key.clone(),
+    //         payment: pca.payment,
+    //         pool_supply: pca.pool_supply,
+    //         exclusion_pools: pca.exclusion_pools.clone(),
+    //     };
 
-        PoolMinted::initialize(creator.to_account_info(), pools.to_account_info(), next_account_info(remaining_accounts_iter)?, system_program.to_account_info(), pca.id.clone(), pca.pool_supply)?;
+    //     PoolMinted::initialize(creator.to_account_info(), pools.to_account_info(), next_account_info(remaining_accounts_iter)?, system_program.to_account_info(), pca.id.clone(), pca.pool_supply)?;
         
-        vec_pools.push(new_group_config);
-    }
+    //     vec_pools.push(new_group_config);
+    // }
+    // pools.pools_config = vec_pools;
     pools.collection_mint = collection_mint.key.clone();
-    pools.pools_config = vec_pools;
+   
     Ok(())
 }
 
@@ -69,21 +68,20 @@ pub struct Pools {
 }
 
 impl Pools {
-    pub const PREFIX_SEED: &'static [u8; 5] = b"pools";    
+    pub const PREFIX_SEED: &'static [u8; 5] = b"pools";
+    pub const HAHA: usize = Pools::INIT_SPACE;    
 }
 
 #[derive(Debug, AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct PoolConfigArgs {
-    id: String,
-    start_date: i64,
-    end_date: i64,
-    merkle_root: Vec<u8>,
-    total_mint_per_wallet: u8,
-    payment: u64,
-    box_tax: Option<f32>,
-    pool_supply: u16,
-    lamports: u64,
-    exclusion_pools: Option<Vec<String>>,
+    pub id: String,
+    pub start_date: i64,
+    pub end_date: i64,
+    pub merkle_root: Vec<u8>,
+    pub total_mint_per_wallet: u8,
+    pub payment: f32,
+    pub pool_supply: u16,
+    pub exclusion_pools: Option<Vec<String>>,
 }
 
 #[account]
