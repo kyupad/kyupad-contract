@@ -8,17 +8,12 @@ pub fn add_pool_config<'c: 'info, 'info>(
 ) -> Result<()> {
     let pools = &mut ctx.accounts.pools;
     let collection_mint = &ctx.accounts.collection_mint;
-    let mut pool_already_exists = false;
+    let pool_minted = &mut ctx.accounts.pool_minted;
 
     for pool_config in &pools.pools_config {
         if pool_config.id == pool_config_args.id {
-            pool_already_exists = true;
-            break;
+            return Err(KyuPadError::CannotAddPoolConfig.into());
         }
-    }
-
-    if pool_already_exists {
-        return Err(KyuPadError::NotEnoughSOL.into());
     }
 
     let new_group_config = PoolConfig {
@@ -32,6 +27,8 @@ pub fn add_pool_config<'c: 'info, 'info>(
         pool_supply: pool_config_args.pool_supply,
         exclusion_pools: pool_config_args.exclusion_pools.clone(),
     };
+
+    pool_minted.remaining_assets = pool_config_args.pool_supply;
 
     pools.pools_config.push(new_group_config);
 

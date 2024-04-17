@@ -25,4 +25,7 @@ pub enum KyuPadError {
 
     #[msg("Mint time is too early or expired")]
     NotMintTime,
+
+    #[msg("This pool config is already in pools")]
+    CannotAddPoolConfig
 }

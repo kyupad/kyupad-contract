@@ -35,6 +35,7 @@ pub fn mint_cft<'c: 'info, 'info>(
 
             // Check to see if the pool's supply has run out
             if pool_minted.remaining_assets <= 0  {
+                msg!("{}",  pool_minted.remaining_assets);
                 return Err(KyuPadError::PoolSupplyRunOut.into());
             }
 
@@ -135,7 +136,7 @@ pub fn mint_cft<'c: 'info, 'info>(
 }
 
 #[derive(Accounts)]
-#[instruction(merkle_root: Vec<u8>)]
+// #[instruction(pool_id: String)]
 pub struct MintcNFT<'info> {
     #[account(mut)]
     pub minter: Signer<'info>,
@@ -148,7 +149,7 @@ pub struct MintcNFT<'info> {
 
     #[account(
         mut,
-        // seeds=[PoolMinted::PREFIX_SEED, pools.key().as_ref(), merkle_root.as_ref()], 
+        // seeds=[PoolMinted::PREFIX_SEED, pools.key().as_ref(), id.as_bytes()], 
         // bump
     )]
     pub pool_minted: Account<'info, PoolMinted>,
