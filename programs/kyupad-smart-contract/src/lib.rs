@@ -14,6 +14,10 @@ pub mod kyupad_smart_contract {
 
     use super::*;
 
+    pub fn init_admin(ctx: Context<InitAdmin>) -> Result<()> {
+        instructions::init_admin(ctx)
+    }
+
     pub fn mint_cnft<'c: 'info, 'info>(
         ctx: Context<'_, '_, 'c, 'info, MintcNFT<'info>>,
         merkle_proof: Vec<[u8; 32]>,
