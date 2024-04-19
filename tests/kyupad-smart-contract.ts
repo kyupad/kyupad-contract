@@ -70,7 +70,7 @@ describe('kyupad-smart-contract', () => {
   );
 
   const collectionMint = new PublicKey(
-    'Ekd7w4N34uCSz4qK7nSgh8TgcAyZiBZDWbLYZbRqUZ3B'
+    'AvC38KakmtgqaH5o9ySpENYaVcE2F2gRZToE19PVAAbK'
   );
 
   const [collectionMetadata] = PublicKey.findProgramAddressSync(
