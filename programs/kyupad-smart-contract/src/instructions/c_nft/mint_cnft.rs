@@ -142,7 +142,7 @@ pub struct MintcNFT<'info> {
     pub minter: Signer<'info>,
 
     #[account(
-        seeds=[Pools::PREFIX_SEED, minter.key().as_ref(), collection_mint.key().as_ref()], 
+        seeds=[Pools::PREFIX_SEED, collection_mint.key().as_ref()], 
         bump
     )]
     pub pools: Account<'info, Pools>,

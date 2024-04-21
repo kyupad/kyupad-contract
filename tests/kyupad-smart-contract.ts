@@ -70,7 +70,7 @@ describe('kyupad-smart-contract', () => {
   );
 
   const collectionMint = new PublicKey(
-    'AvC38KakmtgqaH5o9ySpENYaVcE2F2gRZToE19PVAAbK'
+    '5352LHAfK2jkJ4ejPsg7pVju4DCUY2t5x3fKp8F84XLS'
   );
 
   const [collectionMetadata] = PublicKey.findProgramAddressSync(
@@ -245,74 +245,81 @@ describe('kyupad-smart-contract', () => {
   //   console.log('Your transaction create collection', tx);
   // });
 
-  // it('init_collection_config', async () => {
-  //   const numberOfPools = 10;
+  it('init_collection_config', async () => {
+    const numberOfPools = 10;
 
-  //   const tx = await program.methods
-  //     .initCollectionConfig()
-  //     .accounts({
-  //       creator: minter,
-  //       collectionMint: collectionMint,
-  //       pools: poolsPDA,
-  //     })
-  //     .rpc({ skipPreflight: true });
+    const [adminPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('admin'), minter.toBuffer()],
+      program.programId
+    );
 
-  //   console.log('Init collection config: ', tx);
+    const tx = await program.methods
+      .initCollectionConfig()
+      .accounts({
+        creator: minter,
+        collectionMint: collectionMint,
+        pools: poolsPDA,
+        adminPda: adminPda,
+      })
+      .rpc({ skipPreflight: true });
 
-  //   for (let i = 0; i < numberOfPools; i++) {
-  //     let arrayWallet: string[] = [];
-  //     if (i == numberOfPools - 1) {
-  //       arrayWallet = whiteList;
-  //     } else {
-  //       arrayWallet = generateWhiteList(10);
-  //     }
+    console.log('Init collection config: ', tx);
 
-  //     const leafNode = arrayWallet.map((addr) => keccak256(addr));
-  //     const merkleTree = new MerkleTree(leafNode, keccak256, {
-  //       sortPairs: true,
-  //     });
+    for (let i = 0; i < numberOfPools; i++) {
+      let arrayWallet: string[] = [];
+      if (i == numberOfPools - 1) {
+        arrayWallet = whiteList;
+      } else {
+        arrayWallet = generateWhiteList(10);
+      }
 
-  //     const merkle_root = merkleTree.getRoot();
+      const leafNode = arrayWallet.map((addr) => keccak256(addr));
+      const merkleTree = new MerkleTree(leafNode, keccak256, {
+        sortPairs: true,
+      });
 
-  //     const groupConfigArgs: PoolConfigArgs = {
-  //       id: i.toString(),
-  //       startDate: new BN(Math.floor(Date.now() / 1000)),
-  //       endDate: new BN(Math.floor(Date.now() / 1000) + 3000),
-  //       merkleRoot: merkle_root,
-  //       totalMintPerWallet: 1,
-  //       payment: 0.1,
-  //       poolSupply: 5,
-  //       exclusionPools: null,
-  //     };
+      const merkle_root = merkleTree.getRoot();
 
-  //     if (i == 2) {
-  //       groupConfigArgs.exclusionPools = ['1', '2'];
-  //     }
+      const groupConfigArgs: PoolConfigArgs = {
+        id: i.toString(),
+        startDate: new BN(Math.floor(Date.now() / 1000)),
+        endDate: new BN(Math.floor(Date.now() / 1000) + 3000),
+        merkleRoot: merkle_root,
+        totalMintPerWallet: 1,
+        payment: 0.1,
+        poolSupply: 5,
+        exclusionPools: null,
+      };
 
-  //     const [poolMinted] = PublicKey.findProgramAddressSync(
-  //       [
-  //         Buffer.from('pool_minted'),
-  //         poolsPDA.toBuffer(),
-  //         Buffer.from(i.toString()),
-  //       ],
-  //       program.programId
-  //     );
+      if (i == 2) {
+        groupConfigArgs.exclusionPools = ['1', '2'];
+      }
 
-  //     const txAddPoolConfig = await program.methods
-  //       .addPoolConfig(groupConfigArgs)
-  //       .accounts({
-  //         creator: minter,
-  //         collectionMint: collectionMint,
-  //         pools: poolsPDA,
-  //         poolMinted: poolMinted,
-  //       })
-  //       .rpc({
-  //         skipPreflight: true,
-  //       });
+      const [poolMinted] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from('pool_minted'),
+          poolsPDA.toBuffer(),
+          Buffer.from(i.toString()),
+        ],
+        program.programId
+      );
 
-  //     console.log('Add pool config: ', txAddPoolConfig);
-  //   }
-  // });
+      const txAddPoolConfig = await program.methods
+        .addPoolConfig(groupConfigArgs)
+        .accounts({
+          creator: minter,
+          collectionMint: collectionMint,
+          pools: poolsPDA,
+          poolMinted: poolMinted,
+          adminPda: adminPda,
+        })
+        .rpc({
+          skipPreflight: true,
+        });
+
+      console.log('Add pool config: ', txAddPoolConfig);
+    }
+  });
 
   // it('mint cNFT', async () => {
   //   // Add your test here.

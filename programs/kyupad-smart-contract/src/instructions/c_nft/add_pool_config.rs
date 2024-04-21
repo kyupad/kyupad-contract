@@ -52,7 +52,7 @@ pub struct AddPoolConfig<'info> {
 
     #[account(
         mut,
-        seeds=[b"pools", creator.key().as_ref(), collection_mint.key.as_ref()], 
+        seeds=[b"pools", collection_mint.key().as_ref()], 
         bump
     )]
     pub pools: Account<'info, Pools>,
