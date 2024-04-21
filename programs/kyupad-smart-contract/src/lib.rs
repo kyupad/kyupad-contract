@@ -7,15 +7,15 @@ pub mod instructions;
 pub mod pda;
 pub mod state;
 pub mod utils;
-declare_id!("3LJYEwPqJ5Lk5B9GXYsmadymm7p6hhCKzBeSMBGXJa9L");
+declare_id!("FHPbXuECjkYGrJHnwU2ozrm7TYzoo2c43CZTo3nJEzs");
 
 #[program]
 pub mod kyupad_smart_contract {
 
     use super::*;
 
-    pub fn init_admin(ctx: Context<InitAdmin>) -> Result<()> {
-        instructions::init_admin(ctx)
+    pub fn init_admin(ctx: Context<InitAdmin>, address: Pubkey) -> Result<()> {
+        instructions::init_admin(ctx, address)
     }
 
     pub fn mint_cnft<'c: 'info, 'info>(

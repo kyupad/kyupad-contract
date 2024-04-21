@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 
-use crate::{state::{BpfWriter, PoolConfig}, utils::{assert_keys_equal, create_account}, ID};
+use crate::{state::{BpfWriter, PoolConfig}, utils::{assert_keys_equal, create_account}, Admin, ID};
+
 
 pub fn init_collection_config<'c: 'info, 'info>(    
     ctx: Context<'_, '_, 'c, 'info, InitCollectionConfig<'info>>,
@@ -19,6 +20,12 @@ pub struct InitCollectionConfig<'info> {
     #[account(mut)]
     pub creator: Signer<'info>,
 
+    #[account(
+        seeds=[b"admin", creator.key().as_ref()],  
+        bump
+    )]
+    pub admin_pda: Account<'info, Admin>,
+
     /// CHECK:
     pub collection_mint: AccountInfo<'info>,
 
@@ -26,7 +33,7 @@ pub struct InitCollectionConfig<'info> {
         init_if_needed,
         payer = creator, 
         space = 8 + Pools::INIT_SPACE, 
-        seeds=[b"pools", creator.key().as_ref(), collection_mint.key.as_ref()], 
+        seeds=[b"pools", collection_mint.key.as_ref()], 
         bump
     )]
     pub pools: Account<'info, Pools>,

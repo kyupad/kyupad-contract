@@ -5,10 +5,10 @@ seeds = false
 skip-lint = false
 
 [programs.devnet]
-kyupad_smart_contract = "3LJYEwPqJ5Lk5B9GXYsmadymm7p6hhCKzBeSMBGXJa9L"
+kyupad_smart_contract = "FHPbXuECjkYGrJHnwU2ozrm7TYzoo2c43CZTo3nJEzs"
 
 [registry]
-url = "https://devnet.helius-rpc.com/?api-key=7b857a49-a695-4d15-8b64-869d6fa1134e"
+url = "https://api.apr.dev"
 
 [provider]
 cluster = "Devnet"

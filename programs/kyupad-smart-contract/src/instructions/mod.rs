@@ -1,13 +1,10 @@
-pub use create_colllection::*;
-pub use init_collection_config::*;
-pub use mint_cnft::*;
-pub use create_tree_config::*;
-pub use add_pool_config::*;
-pub use init_admin::*;
-
-pub mod create_colllection;
-pub mod create_tree_config;
-pub mod init_collection_config;
-pub mod mint_cnft;
-pub mod add_pool_config;
+pub mod c_nft;
 pub mod init_admin;
+
+pub use c_nft::add_pool_config::*;
+pub use c_nft::create_colllection::*;
+pub use c_nft::create_tree_config::*;
+pub use c_nft::init_collection_config::*;
+pub use  c_nft::mint_cnft::*;
+
+pub use init_admin::*;

@@ -1,7 +1,7 @@
 use anchor_lang::{prelude::*, system_program::{create_account, CreateAccount}};
 use mpl_token_metadata::{instructions::{CreateMasterEditionV3CpiBuilder, CreateMetadataAccountV3CpiBuilder, SetCollectionSizeCpiBuilder}, types::{DataV2, SetCollectionSizeArgs},
 };
-use crate::ID;
+use crate::{Admin, ID};
 
 use spl_token::{instruction::{mint_to, initialize_mint2}, solana_program::program::invoke_signed};
 use spl_associated_token_account::instruction::create_associated_token_account;
@@ -119,6 +119,12 @@ pub fn create_collection(ctx: Context<CreateCollection>, data: Vec<u8>) -> Resul
 pub struct CreateCollection<'info> {
     #[account(mut)]
     pub creator: Signer<'info>,
+
+    #[account(
+        seeds=[b"admin", creator.key().as_ref()],  
+        bump
+    )]
+    pub admin_pda: Account<'info, Admin>,
 
     #[account(mut)]
     /// CHECK:
