@@ -102,144 +102,148 @@ describe('kyupad-smart-contract', () => {
     program.programId
   );
 
-  // it('Init admin', async () => {
+  it('Init admin', async () => {
+    const adminPubkey = new PublicKey(
+      'CY92ruXbHmeaNiGqaZ9mXnXFPTjgfq2pHDuoM5VgWY1V'
+    );
+
+    const [adminPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('admin'), adminPubkey.toBuffer()],
+      program.programId
+    );
+
+    const tx = await program.methods
+      .initAdmin(adminPubkey)
+      .accounts({
+        signer: minter,
+        adminPda: adminPda,
+      })
+      .rpc({
+        skipPreflight: true,
+      });
+
+    console.log('Init admin', tx);
+  });
+
+  // it('Create collection', async () => {
+  //   const mint = Keypair.generate();
+
+  //   const ata = getAssociatedTokenAddressSync(
+  //     mint.publicKey,
+  //     collectionAuthority,
+  //     true
+  //   );
+
+  //   const [metadataAccount] = PublicKey.findProgramAddressSync(
+  //     [
+  //       Buffer.from('metadata', 'utf8'),
+  //       TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+  //       mint.publicKey.toBuffer(),
+  //     ],
+  //     TOKEN_METADATA_PROGRAM_ID
+  //   );
+
+  //   const [masterEditionAccount] = PublicKey.findProgramAddressSync(
+  //     [
+  //       Buffer.from('metadata', 'utf8'),
+  //       TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+  //       mint.publicKey.toBuffer(),
+  //       Buffer.from('edition', 'utf8'),
+  //     ],
+  //     TOKEN_METADATA_PROGRAM_ID
+  //   );
+
+  //   const metadata: DataV2Args = {
+  //     name: 'KyuPad',
+  //     symbol: 'KPC',
+  //     uri: 'https://pbs.twimg.com/profile_images/1769690947384750081/d02M-XJA_400x400.jpg',
+  //     sellerFeeBasisPoints: 100,
+  //     creators: null,
+  //     collection: null,
+  //     uses: null,
+  //   };
+
+  //   const serialize = getDataV2Serializer();
+  //   const data = serialize.serialize(metadata);
+
+  //   const space = getMerkleTreeSize(14, 64);
+
+  //   const treeKeypair = Keypair.generate();
+
+  //   const [treeConfig, _bump] = PublicKey.findProgramAddressSync(
+  //     [treeKeypair.publicKey.toBuffer()],
+  //     new PublicKey('BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY')
+  //   );
+
+  //   const createTreeAccountIx = SystemProgram.createAccount({
+  //     fromPubkey: anchorProvider.wallet.publicKey,
+  //     newAccountPubkey: treeKeypair.publicKey,
+  //     lamports:
+  //       await anchorProvider.connection.getMinimumBalanceForRentExemption(
+  //         space
+  //       ),
+  //     space: space,
+  //     programId: new PublicKey('cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK'),
+  //   });
+
   //   const [adminPda] = PublicKey.findProgramAddressSync(
   //     [Buffer.from('admin'), minter.toBuffer()],
   //     program.programId
   //   );
 
-  //   const tx = await program.methods
-  //     .initAdmin(minter)
+  //   const createTreeConfigIx = await program.methods
+  //     .createTreeConfig(14, 64, true, space)
   //     .accounts({
-  //       signer: minter,
+  //       creator: minter,
   //       adminPda: adminPda,
+  //       merkleTree: treeKeypair.publicKey,
+  //       treeConfig: treeConfig,
+  //       mplBubbleGumProgram: MPL_BUBBLEGUM_PROGRAM_ID,
+  //       compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+  //       logWrapper: SPL_NOOP_PROGRAM_ID,
+  //       updateAuthority: collectionAuthority,
+  //       systemProgram: SystemProgram.programId,
   //     })
+  //     .instruction();
+
+  //   let tx_create_tree = new Transaction()
+  //     .add(createTreeAccountIx)
+  //     .add(createTreeConfigIx);
+  //   tx_create_tree.feePayer = anchorProvider.wallet.publicKey;
+
+  //   const signature = await anchorProvider.sendAndConfirm(
+  //     tx_create_tree,
+  //     [treeKeypair],
+  //     {
+  //       skipPreflight: true,
+  //     }
+  //   );
+
+  //   console.log('Your transaction create merkle tree', signature);
+
+  //   const tx = await program.methods
+  //     .createCollection(Buffer.from(data))
+  //     .accounts({
+  //       creator: minter,
+  //       adminPda: adminPda,
+  //       collectionTokenAccount: ata,
+  //       metadata: metadataAccount,
+  //       masterEdition: masterEditionAccount,
+  //       tokenProgram: TOKEN_PROGRAM_ID,
+  //       mint: mint.publicKey,
+  //       updateAuthority: collectionAuthority,
+  //       tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+  //       systemProgram: SystemProgram.programId,
+  //       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+  //     })
+  //     .signers([mint])
   //     .rpc({
   //       skipPreflight: true,
+  //       commitment: 'confirmed',
   //     });
 
-  //   console.log('Init admin', tx);
+  //   console.log('Your transaction create collection', tx);
   // });
-
-  it('Create collection', async () => {
-    const mint = Keypair.generate();
-
-    const ata = getAssociatedTokenAddressSync(
-      mint.publicKey,
-      collectionAuthority,
-      true
-    );
-
-    const [metadataAccount] = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from('metadata', 'utf8'),
-        TOKEN_METADATA_PROGRAM_ID.toBuffer(),
-        mint.publicKey.toBuffer(),
-      ],
-      TOKEN_METADATA_PROGRAM_ID
-    );
-
-    const [masterEditionAccount] = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from('metadata', 'utf8'),
-        TOKEN_METADATA_PROGRAM_ID.toBuffer(),
-        mint.publicKey.toBuffer(),
-        Buffer.from('edition', 'utf8'),
-      ],
-      TOKEN_METADATA_PROGRAM_ID
-    );
-
-    const metadata: DataV2Args = {
-      name: 'KyuPad',
-      symbol: 'KPC',
-      uri: 'https://pbs.twimg.com/profile_images/1769690947384750081/d02M-XJA_400x400.jpg',
-      sellerFeeBasisPoints: 100,
-      creators: null,
-      collection: null,
-      uses: null,
-    };
-
-    const serialize = getDataV2Serializer();
-    const data = serialize.serialize(metadata);
-
-    const space = getMerkleTreeSize(14, 64);
-
-    const treeKeypair = Keypair.generate();
-
-    const [treeConfig, _bump] = PublicKey.findProgramAddressSync(
-      [treeKeypair.publicKey.toBuffer()],
-      new PublicKey('BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY')
-    );
-
-    const createTreeAccountIx = SystemProgram.createAccount({
-      fromPubkey: anchorProvider.wallet.publicKey,
-      newAccountPubkey: treeKeypair.publicKey,
-      lamports:
-        await anchorProvider.connection.getMinimumBalanceForRentExemption(
-          space
-        ),
-      space: space,
-      programId: new PublicKey('cmtDvXumGCrqC1Age74AVPhSRVXJMd8PJS91L8KbNCK'),
-    });
-
-    const [adminPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from('admin'), minter.toBuffer()],
-      program.programId
-    );
-
-    const createTreeConfigIx = await program.methods
-      .createTreeConfig(14, 64, true, space)
-      .accounts({
-        creator: minter,
-        adminPda: adminPda,
-        merkleTree: treeKeypair.publicKey,
-        treeConfig: treeConfig,
-        mplBubbleGumProgram: MPL_BUBBLEGUM_PROGRAM_ID,
-        compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
-        logWrapper: SPL_NOOP_PROGRAM_ID,
-        updateAuthority: collectionAuthority,
-        systemProgram: SystemProgram.programId,
-      })
-      .instruction();
-
-    let tx_create_tree = new Transaction()
-      .add(createTreeAccountIx)
-      .add(createTreeConfigIx);
-    tx_create_tree.feePayer = anchorProvider.wallet.publicKey;
-
-    const signature = await anchorProvider.sendAndConfirm(
-      tx_create_tree,
-      [treeKeypair],
-      {
-        skipPreflight: true,
-      }
-    );
-
-    console.log('Your transaction create merkle tree', signature);
-
-    const tx = await program.methods
-      .createCollection(Buffer.from(data))
-      .accounts({
-        creator: minter,
-        adminPda: adminPda,
-        collectionTokenAccount: ata,
-        metadata: metadataAccount,
-        masterEdition: masterEditionAccount,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        mint: mint.publicKey,
-        updateAuthority: collectionAuthority,
-        tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
-        systemProgram: SystemProgram.programId,
-        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-      })
-      .signers([mint])
-      .rpc({
-        skipPreflight: true,
-        commitment: 'confirmed',
-      });
-
-    console.log('Your transaction create collection', tx);
-  });
 
   // it('init_collection_config', async () => {
   //   const numberOfPools = 10;

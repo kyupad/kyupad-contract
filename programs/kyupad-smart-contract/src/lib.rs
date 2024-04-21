@@ -53,4 +53,6 @@ pub mod kyupad_smart_contract {
     ) -> Result<()> {
         instructions::add_pool_config(ctx, pool_config_args)
     }
+
+    
 }

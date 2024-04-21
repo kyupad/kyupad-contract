@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::{errors::KyuPadError, state::PoolConfig, PoolConfigArgs, PoolMinted, Pools};
+use crate::{errors::KyuPadError, state::PoolConfig, Admin, PoolConfigArgs, PoolMinted, Pools};
 
 pub fn add_pool_config<'c: 'info, 'info>(
     ctx: Context<'_, '_, 'c, 'info, AddPoolConfig<'info>>,
@@ -40,6 +40,12 @@ pub fn add_pool_config<'c: 'info, 'info>(
 pub struct AddPoolConfig<'info> {
     #[account(mut)]
     pub creator: Signer<'info>,
+
+    #[account(
+        seeds=[b"admin", creator.key().as_ref()],  
+        bump
+    )]
+    pub admin_pda: Account<'info, Admin>,
 
     /// CHECK:
     pub collection_mint: AccountInfo<'info>,
