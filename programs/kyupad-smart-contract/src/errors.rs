@@ -31,4 +31,10 @@ pub enum KyuPadError {
 
     #[msg("This destination address doesn't not match with pools config")]
     DestinationIsInvalid,
+
+    #[msg("This signer is now allow to init another signer")]
+    InvalidSigner,
+
+    #[msg("Error unknown")]
+    ErrorUnknown,
 }
