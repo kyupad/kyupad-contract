@@ -27,5 +27,8 @@ pub enum KyuPadError {
     NotMintTime,
 
     #[msg("This pool config is already in pools")]
-    CannotAddPoolConfig
+    CannotAddPoolConfig,
+
+    #[msg("This destination address doesn't not match with pools config")]
+    DestinationIsInvalid,
 }

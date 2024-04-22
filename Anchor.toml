@@ -8,7 +8,7 @@ skip-lint = false
 kyupad_smart_contract = "FHPbXuECjkYGrJHnwU2ozrm7TYzoo2c43CZTo3nJEzs"
 
 [registry]
-url = "https://api.apr.dev"
+url = "https://kathlin-5yytwf-fast-devnet.helius-rpc.com"
 
 [provider]
 cluster = "Devnet"

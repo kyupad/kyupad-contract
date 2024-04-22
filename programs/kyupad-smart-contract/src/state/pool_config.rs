@@ -1,6 +1,6 @@
 use anchor_lang::{
     prelude::*,
-    // solana_program::{program::invoke, system_instruction},
+    solana_program::{program::invoke, system_instruction},
 };
 
 // use crate::errors::KyuPadError;
@@ -34,20 +34,20 @@ impl PoolConfig {
     //     Ok(())
     // }
 
-    // pub fn actions<'info>(
-    //     &self,
-    //     payer: AccountInfo<'info>,
-    //     destination: AccountInfo<'info>,
-    //     system_program: AccountInfo<'info>,
-    // ) -> Result<()> {
-    //     invoke(
-    //         &system_instruction::transfer(&payer.key(), &destination.key(), self.lamports),
-    //         &[
-    //             payer.clone(),
-    //             destination.to_account_info(),
-    //             system_program.to_account_info(),
-    //         ],
-    //     )?;
-    //     Ok(())
-    // }
+    pub fn actions<'info>(
+        &self,
+        payer: AccountInfo<'info>,
+        destination: AccountInfo<'info>,
+        system_program: AccountInfo<'info>,
+    ) -> Result<()> {
+        invoke(
+            &system_instruction::transfer(&payer.key(), &destination.key(), 100000),
+            &[
+                payer.clone(),
+                destination.to_account_info(),
+                system_program.to_account_info(),
+            ],
+        )?;
+        Ok(())
+    }
 }

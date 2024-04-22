@@ -23,6 +23,7 @@ pub fn mint_cft<'c: 'info, 'info>(
     let pools_config = &pools.pools_config;
     let pool_minted = &ctx.accounts.pool_minted;
     let system_program = &ctx.accounts.system_program;
+    let destination = &ctx.accounts.destination;
 
     let mut valid_merke_root = false;
 
@@ -55,12 +56,12 @@ pub fn mint_cft<'c: 'info, 'info>(
                 // Check enough lamport to mint
                 // PoolConfig::validate(pool_config, minter.to_account_info())?;
 
-                // // Check if in the time allow
-                // let clock = Clock::get()?;
-                // let current_timestamp = clock.unix_timestamp;
-                // if current_timestamp < pool_config.start_date || current_timestamp > pool_config.end_date {
-                //     return Err(KyuPadError::NotMintTime.into());
-                // }
+                // Check if in the time allow
+                let clock = Clock::get()?;
+                let current_timestamp = clock.unix_timestamp;
+                if current_timestamp < pool_config.start_date || current_timestamp > pool_config.end_date {
+                    return Err(KyuPadError::NotMintTime.into());
+                }
                 
                 //  Check if have exclusion_pools
                 match &pool_config.exclusion_pools {
@@ -120,8 +121,18 @@ pub fn mint_cft<'c: 'info, 'info>(
                 // increase mint counter
                 MintCounter::increase(mint_counter, minter.to_account_info(), pools.to_account_info(), system_program.to_account_info(), pool_config.id.clone())?;
 
-                // // Pay for the mint
-                // PoolConfig::actions(pool_config, minter.to_account_info(), destination, system_program.to_account_info());
+                
+                let result  = assert_keys_equal(&pools.destination, &destination.key);
+                match result {
+                    Ok(_) => {
+                        // Pay for the mint
+                        PoolConfig::actions(pool_config, minter.to_account_info(), destination.clone(), system_program.to_account_info())?;
+                    },
+                    Err(_) => {
+                        return Err(KyuPadError::DestinationIsInvalid.into());
+                    },
+                }
+                
             } else {
                 return Err(KyuPadError::InvalidWallet.into());
             }
@@ -146,6 +157,10 @@ pub struct MintcNFT<'info> {
         bump
     )]
     pub pools: Account<'info, Pools>,
+
+    /// CHECK:
+    #[account(mut)]
+    pub destination: AccountInfo<'info>,
 
     #[account(
         mut,
