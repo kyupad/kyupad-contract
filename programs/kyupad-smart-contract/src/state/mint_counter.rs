@@ -97,3 +97,13 @@ impl MintCounter {
         Ok(())
     }
 }
+
+#[account]
+#[derive(Debug, InitSpace)]
+pub struct MintCounterCollection {
+    pub count: u8,
+}
+
+impl MintCounterCollection {
+    pub const PREFIX_SEED: &'static [u8] = b"mint_counter_collection";
+}

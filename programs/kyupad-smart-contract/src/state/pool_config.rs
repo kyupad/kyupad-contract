@@ -41,7 +41,11 @@ impl PoolConfig {
         system_program: AccountInfo<'info>,
     ) -> Result<()> {
         invoke(
-            &system_instruction::transfer(&payer.key(), &destination.key(), 100000),
+            &system_instruction::transfer(
+                &payer.key(),
+                &destination.key(),
+                sol_to_lamports(self.payment),
+            ),
             &[
                 payer.clone(),
                 destination.to_account_info(),
@@ -50,4 +54,12 @@ impl PoolConfig {
         )?;
         Ok(())
     }
+}
+
+fn sol_to_lamports(sol_amount: f32) -> u64 {
+    const LAMPORTS_PER_SOL: u64 = 1_000_000_000;
+
+    let lamports = (sol_amount * LAMPORTS_PER_SOL as f32) as u64;
+
+    lamports
 }

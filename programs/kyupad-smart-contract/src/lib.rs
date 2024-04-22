@@ -29,8 +29,9 @@ pub mod kyupad_smart_contract {
 
     pub fn init_collection_config<'c: 'info, 'info>(
         ctx: Context<'_, '_, 'c, 'info, InitCollectionConfig<'info>>,
+        init_collection_config_args: InitCollectionConfigArgs,
     ) -> Result<()> {
-        instructions::init_collection_config(ctx)
+        instructions::init_collection_config(ctx, init_collection_config_args)
     }
 
     pub fn create_collection(ctx: Context<CreateCollection>, data: Vec<u8>) -> Result<()> {

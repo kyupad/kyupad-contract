@@ -5,6 +5,7 @@ use crate::{state::{BpfWriter, PoolConfig}, utils::{assert_keys_equal, create_ac
 
 pub fn init_collection_config<'c: 'info, 'info>(    
     ctx: Context<'_, '_, 'c, 'info, InitCollectionConfig<'info>>,
+    init_collection_config_args: InitCollectionConfigArgs,
 ) -> Result<()> {
     
     let collection_mint = &ctx.accounts.collection_mint;
@@ -13,6 +14,7 @@ pub fn init_collection_config<'c: 'info, 'info>(
 
     pools.collection_mint = collection_mint.key.clone();
     pools.destination = destination.key();
+    pools.max_mint_of_wallet = init_collection_config_args.max_mint_of_wallet;
    
     Ok(())
 }
@@ -47,13 +49,22 @@ pub struct InitCollectionConfig<'info> {
     pub system_program: Program<'info, System>,
 }
 
+#[derive(Debug, AnchorSerialize, AnchorDeserialize, Clone)]
+pub struct InitCollectionConfigArgs {
+    pub max_mint_of_wallet: u8,
+}
+
 #[account]
 #[derive(Debug, InitSpace)]
 pub struct Pools {
     pub collection_mint: Pubkey,
+
     #[max_len(50)]
     pub pools_config: Vec<PoolConfig>,
+
     pub destination: Pubkey,
+
+    pub max_mint_of_wallet: u8,
 }
 
 impl Pools {

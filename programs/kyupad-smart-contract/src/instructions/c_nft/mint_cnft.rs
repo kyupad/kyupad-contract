@@ -24,6 +24,12 @@ pub fn mint_cft<'c: 'info, 'info>(
     let pool_minted = &ctx.accounts.pool_minted;
     let system_program = &ctx.accounts.system_program;
     let destination = &ctx.accounts.destination;
+    let mint_counter_collection = &mut ctx.accounts.mint_counter_collection;
+
+    // Check if user is allow mint is reached
+    if mint_counter_collection.count >= pools.max_mint_of_wallet {
+        return Err(KyuPadError::AllowedMintLimitReached.into())
+    }
 
     let mut valid_merke_root = false;
 
@@ -53,8 +59,6 @@ pub fn mint_cft<'c: 'info, 'info>(
             if verify_minter {
                 // Check if counter mint for minter
                 MintCounter::validate(mint_counter, minter.to_account_info(), pools.to_account_info(), pool_config.id.clone(), pool_config.total_mint_per_wallet)?;
-                // Check enough lamport to mint
-                // PoolConfig::validate(pool_config, minter.to_account_info())?;
 
                 // Check if in the time allow
                 let clock = Clock::get()?;
@@ -132,6 +136,10 @@ pub fn mint_cft<'c: 'info, 'info>(
                         return Err(KyuPadError::DestinationIsInvalid.into());
                     },
                 }
+
+                msg!("{}", mint_counter_collection.count);
+
+                mint_counter_collection.count += 1;
                 
             } else {
                 return Err(KyuPadError::InvalidWallet.into());
@@ -157,6 +165,15 @@ pub struct MintcNFT<'info> {
         bump
     )]
     pub pools: Account<'info, Pools>,
+
+    #[account(
+        init_if_needed, 
+        payer = minter, 
+        space = 8 + MintCounterCollection::INIT_SPACE, 
+        seeds=[MintCounterCollection::PREFIX_SEED, minter.key().as_ref(), collection_mint.key().as_ref()], 
+        bump
+    )]
+    pub mint_counter_collection: Account<'info, MintCounterCollection>,
 
     /// CHECK:
     #[account(mut)]
