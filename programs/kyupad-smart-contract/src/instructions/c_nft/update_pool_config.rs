@@ -16,7 +16,12 @@ pub fn update_pool_config(
         if pool_config.id == args.pool_id {
             valid_pool_id = true;
             pool_config.merkle_root = args.merkle_root.clone();
-            pool_config.pool_supply = args.total_pool_supply;
+            match args.total_pool_supply {
+                Some(pool_supply) => {
+                    pool_config.pool_supply = pool_supply;
+                }
+                None => {}
+            }
         }
     }
 
@@ -30,7 +35,7 @@ pub fn update_pool_config(
 pub struct UpdatePoolConfigArgs {
     pub pool_id: String,
     pub merkle_root: Vec<u8>,
-    pub total_pool_supply: u16,
+    pub total_pool_supply: Option<u16>,
 }
 
 #[derive(Accounts)]

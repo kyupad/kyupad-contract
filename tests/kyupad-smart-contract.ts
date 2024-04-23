@@ -364,7 +364,7 @@ describe('kyupad-smart-contract', () => {
     const args: UpdatePoolConfigArgs = {
       poolId: '1',
       merkleRoot: merkleTree.getRoot(),
-      totalPoolSupply: 20,
+      totalPoolSupply: null,
     };
 
     const tx = await program.methods
