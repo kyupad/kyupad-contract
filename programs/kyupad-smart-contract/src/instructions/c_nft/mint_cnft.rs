@@ -126,7 +126,7 @@ pub fn mint_cft<'c: 'info, 'info>(
                 MintCounter::increase(mint_counter, minter.to_account_info(), pools.to_account_info(), system_program.to_account_info(), pool_config.id.clone())?;
 
                 
-                let result  = assert_keys_equal(&pools.destination, &destination.key);
+                let result  = assert_keys_equal(&pool_config.destination, &destination.key);
                 match result {
                     Ok(_) => {
                         // Pay for the mint

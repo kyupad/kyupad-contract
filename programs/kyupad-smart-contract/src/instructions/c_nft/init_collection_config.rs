@@ -10,10 +10,8 @@ pub fn init_collection_config<'c: 'info, 'info>(
     
     let collection_mint = &ctx.accounts.collection_mint;
     let pools = &mut ctx.accounts.pools;
-    let destination = &ctx.accounts.destination;
 
     pools.collection_mint = collection_mint.key.clone();
-    pools.destination = destination.key();
     pools.max_mint_of_wallet = init_collection_config_args.max_mint_of_wallet;
    
     Ok(())
@@ -43,9 +41,6 @@ pub struct InitCollectionConfig<'info> {
     )]
     pub pools: Account<'info, Pools>,
 
-    /// CHECK:
-    pub destination: UncheckedAccount<'info>,
-
     pub system_program: Program<'info, System>,
 }
 
@@ -61,8 +56,6 @@ pub struct Pools {
 
     #[max_len(50)]
     pub pools_config: Vec<PoolConfig>,
-
-    pub destination: Pubkey,
 
     pub max_mint_of_wallet: u8,
 }
