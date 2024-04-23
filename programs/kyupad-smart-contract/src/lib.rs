@@ -34,6 +34,13 @@ pub mod kyupad_smart_contract {
         instructions::init_collection_config(ctx, init_collection_config_args)
     }
 
+    pub fn update_pool_config(
+        ctx: Context<UpdatePoolConfig>,
+        args: UpdatePoolConfigArgs,
+    ) -> Result<()> {
+        instructions::update_pool_config(ctx, args)
+    }
+
     pub fn create_collection(ctx: Context<CreateCollection>, data: Vec<u8>) -> Result<()> {
         instructions::create_collection(ctx, data)
     }

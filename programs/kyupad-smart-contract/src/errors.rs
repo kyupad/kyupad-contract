@@ -8,7 +8,7 @@ pub enum KyuPadError {
     #[msg("This wallet is't supported to mint")]
     InvalidWallet,
 
-    #[msg("The merkle root input not in the groups config")]
+    #[msg("The merkle root is invalid")]
     InvalidMekleRoot,
 
     #[msg("Pool's supply has run out")]
@@ -37,4 +37,10 @@ pub enum KyuPadError {
 
     #[msg("Error unknown")]
     ErrorUnknown,
+
+    #[msg("Your pool id doesn't in pools config")]
+    PoolIdInvalid,
+
+    #[msg("Invalid merkle root")]
+    InvalidMerkeRoot,
 }
