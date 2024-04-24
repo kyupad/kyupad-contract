@@ -8,6 +8,7 @@ import {
   SystemProgram,
   Transaction,
   sendAndConfirmTransaction,
+  AddressLookupTableProgram,
 } from '@solana/web3.js';
 import {
   TOKEN_PROGRAM_ID,
@@ -42,14 +43,24 @@ import {
   getCreateTreeConfigInstructionDataSerializer,
   getMerkleTreeSize,
   MPL_BUBBLEGUM_PROGRAM_ID,
+  mintToCollectionV1,
 } from '@metaplex-foundation/mpl-bubblegum';
 
-import { PublicKey } from '@solana/web3.js';
+import {
+  PublicKey,
+  TransactionMessage,
+  VersionedTransaction,
+} from '@solana/web3.js';
 import { generateWhiteList } from './utils';
 import { BN, min } from 'bn.js';
 import bs58 from 'bs58';
 import dotenv from 'dotenv';
-import { isSigner, publicKey } from '@metaplex-foundation/umi';
+import {
+  Context,
+  createNullContext,
+  isSigner,
+  publicKey,
+} from '@metaplex-foundation/umi';
 dotenv.config();
 
 type PoolConfigArgs = anchor.IdlTypes<KyupadSmartContract>['PoolConfigArgs'];
@@ -74,11 +85,16 @@ describe('kyupad-smart-contract', () => {
   );
 
   const collectionMint = new PublicKey(
-    '7L4WKDUTxeihdeFXP3jdSB8UJxVdTtaz4nEsMeE4m8Fj'
+    '5oiybGN8GaHFpsJuWCKpCK6qPRgUP1fhX1n5boCk9u1F'
   );
 
   const treeAddress = new PublicKey(
-    '4AB9JRDeDGL1iz2jCsM8A8RwMCBrky4UxzrmD2Cm3FRP'
+    'J7LWpga2LQA1w6KDnDSapMVUT1pLs9C8ET38mi28xTz2'
+  );
+
+  const [treeAuthority, _bump] = PublicKey.findProgramAddressSync(
+    [treeAddress.toBuffer()],
+    new PublicKey(MPL_BUBBLEGUM_PROGRAM_ID.toString())
   );
 
   const [collectionMetadata] = PublicKey.findProgramAddressSync(
@@ -112,6 +128,11 @@ describe('kyupad-smart-contract', () => {
 
   const destination = new PublicKey(
     '5aMGztMuSVPAp4nm6vrkU25BAho6gGxpWHnnaKZfiUHP'
+  );
+
+  const [bgumSigner] = PublicKey.findProgramAddressSync(
+    [Buffer.from('collection_cpi', 'utf8')],
+    new PublicKey(MPL_BUBBLEGUM_PROGRAM_ID.toString())
   );
 
   it('Init admin', async () => {
@@ -280,7 +301,7 @@ describe('kyupad-smart-contract', () => {
   //     maxMintOfWallet: 2,
   //   };
 
-  //   const tx = await program.methods
+  //   const initCollectionConfigIns = await program.methods
   //     .initCollectionConfig(data)
   //     .accounts({
   //       creator: minter,
@@ -288,238 +309,298 @@ describe('kyupad-smart-contract', () => {
   //       pools: poolsPDA,
   //       adminPda: adminPda,
   //     })
-  //     .rpc({ skipPreflight: true });
+  //     .instruction();
 
-  //   console.log('Init collection config: ', tx);
+  //   // Init lookup table adđress
+  //   const slot = await anchorProvider.connection.getSlot();
 
-  //   for (let i = 0; i < numberOfPools; i++) {
-  //     let arrayWallet: string[] = [];
-  //     if (i == numberOfPools - 1) {
-  //       arrayWallet = whiteList;
-  //     } else {
-  //       arrayWallet = generateWhiteList(10);
-  //     }
-
-  //     const leafNode = arrayWallet.map((addr) => keccak256(addr));
-  //     const merkleTree = new MerkleTree(leafNode, keccak256, {
-  //       sortPairs: true,
+  //   // Add 2 instruction to create lookupTableAddress and saved lookupTableAddress
+  //   const [createLookupTableIns, lookupTableAddress] =
+  //     AddressLookupTableProgram.createLookupTable({
+  //       authority: minter,
+  //       payer: minter,
+  //       recentSlot: slot,
   //     });
 
-  //     const merkle_root = merkleTree.getRoot();
-
-  //     const groupConfigArgs: PoolConfigArgs = {
-  //       id: i.toString(),
-  //       startDate: new BN(Math.floor(Date.now() / 1000)),
-  //       endDate: new BN(Math.floor(Date.now() / 1000) + 3000),
-  //       merkleRoot: merkle_root,
-  //       totalMintPerWallet: 1,
-  //       payment: 0.01,
-  //       poolSupply: 10000,
-  //       exclusionPools: null,
-  //     };
-
-  //     if (i == 2) {
-  //       groupConfigArgs.exclusionPools = ['0', '1', '2'];
-  //     }
-
-  //     const [poolMinted] = PublicKey.findProgramAddressSync(
-  //       [
-  //         Buffer.from('pool_minted'),
-  //         poolsPDA.toBuffer(),
-  //         Buffer.from(i.toString()),
-  //       ],
-  //       program.programId
-  //     );
-
-  //     const txAddPoolConfig = await program.methods
-  //       .addPoolConfig(groupConfigArgs)
-  //       .accounts({
-  //         creator: minter,
-  //         collectionMint: collectionMint,
-  //         pools: poolsPDA,
-  //         poolMinted: poolMinted,
-  //         adminPda: adminPda,
-  //         destination: destination,
-  //       })
-  //       .rpc({
-  //         skipPreflight: true,
-  //       });
-
-  //     console.log('Add pool config: ', txAddPoolConfig);
-  //   }
-  // });
-
-  it('update_pool_config', async () => {
-    const [adminPda] = PublicKey.findProgramAddressSync(
-      [Buffer.from('admin'), minter.toBuffer()],
-      program.programId
-    );
-
-    let arrayWallet = generateWhiteList(20);
-    const leafNode = arrayWallet.map((addr) => keccak256(addr));
-    const merkleTree = new MerkleTree(leafNode, keccak256, {
-      sortPairs: true,
-    });
-
-    const args: UpdatePoolConfigArgs = {
-      poolId: '1',
-      merkleRoot: merkleTree.getRoot(),
-      totalPoolSupply: null,
-    };
-
-    const tx = await program.methods
-      .updatePoolConfig(args)
-      .accounts({
-        signer: minter,
-        adminPda: adminPda,
-        collectionMint: collectionMint,
-        pools: poolsPDA,
-      })
-      .rpc({
-        skipPreflight: true,
-      });
-
-    console.log('Update pool config: ', tx);
-  });
-
-  // it('mint cNFT', async () => {
-  //   // Add your test here.
-  //   const leafNode = whiteList.map((addr) => keccak256(addr));
-  //   const merkleTree = new MerkleTree(leafNode, keccak256, { sortPairs: true });
-
-  //   const getProof = merkleTree.getProof(keccak256(whiteList[3]));
-  //   const merkle_proof = getProof.map((item) => Array.from(item.data));
-
-  //   // Mint a compressed NFT
-  //   const nftArgs: MetadataArgsArgs = {
-  //     name: 'Compression Test',
-  //     symbol: 'COMP',
-  //     uri: 'https://arweave.net/gfO_TkYttQls70pTmhrdMDz9pfMUXX8hZkaoIivQjGs',
-  //     creators: [],
-  //     editionNonce: 253,
-  //     tokenProgramVersion: TokenProgramVersion.Original,
-  //     tokenStandard: TokenStandard.NonFungible,
-  //     uses: null,
-  //     primarySaleHappened: false,
-  //     sellerFeeBasisPoints: 0,
-  //     isMutable: false,
-  //     collection: {
-  //       verified: false,
-  //       key: publicKey(collectionMint.toString()),
-  //     },
-  //   };
-
-  //   const serializer = getMetadataArgsSerializer();
-
-  //   const data = serializer.serialize(nftArgs);
-
-  //   const MPL_BUBBLEGUM_PROGRAM_ID = new PublicKey(
-  //     'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY'
-  //   );
-
-  //   const [treeAuthority, _bump] = PublicKey.findProgramAddressSync(
-  //     [treeAddress.toBuffer()],
-  //     MPL_BUBBLEGUM_PROGRAM_ID
-  //   );
-
-  //   const [bgumSigner] = PublicKey.findProgramAddressSync(
-  //     [Buffer.from('collection_cpi', 'utf8')],
-  //     MPL_BUBBLEGUM_PROGRAM_ID
-  //   );
-
-  //   const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
-  //     'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s'
-  //   );
-
-  //   const pool_id = '3';
-
-  //   const [poolMinted] = PublicKey.findProgramAddressSync(
-  //     [Buffer.from('pool_minted'), poolsPDA.toBuffer(), Buffer.from(pool_id)],
-  //     program.programId
-  //   );
-
-  //   const [mintCounter] = PublicKey.findProgramAddressSync(
-  //     [
-  //       Buffer.from('mint_counter'),
-  //       Buffer.from(pool_id),
-  //       minter.toBuffer(),
-  //       poolsPDA.toBuffer(),
+  //   const extendInstruction = AddressLookupTableProgram.extendLookupTable({
+  //     payer: minter,
+  //     authority: minter,
+  //     lookupTable: lookupTableAddress,
+  //     addresses: [
+  //       new PublicKey(SPL_ACCOUNT_COMPRESSION_PROGRAM_ID.toString()),
+  //       new PublicKey(SPL_NOOP_PROGRAM_ID.toString()),
+  //       new PublicKey(MPL_BUBBLEGUM_PROGRAM_ID.toString()),
+  //       bgumSigner,
+  //       TOKEN_METADATA_PROGRAM_ID,
+  //       poolsPDA,
+  //       treeAddress,
+  //       treeAuthority,
+  //       collectionMetadata,
+  //       collectionMasterEditionAccount,
+  //       collectionMint,
   //     ],
-  //     program.programId
-  //   );
-
-  //   const pools_config_data: any[] = (
-  //     await program.account.pools.fetch(poolsPDA)
-  //   ).poolsConfig;
-
-  //   const remainingAccounts = [
-  //     {
-  //       pubkey: mintCounter,
-  //       isWritable: true,
-  //       isSigner: false,
-  //     },
-  //   ];
-
-  //   pools_config_data.forEach((pool_config) => {
-  //     if (pool_config.id === pool_id) {
-  //       if (pool_config.exclusionPools) {
-  //         pool_config.exclusionPools.forEach((pool_id_exl: string) => {
-  //           const [poolMintedPDA] = PublicKey.findProgramAddressSync(
-  //             [
-  //               Buffer.from('mint_counter'),
-  //               Buffer.from(pool_id_exl),
-  //               minter.toBuffer(),
-  //               poolsPDA.toBuffer(),
-  //             ],
-  //             program.programId
-  //           );
-
-  //           remainingAccounts.push({
-  //             pubkey: poolMintedPDA,
-  //             isWritable: false,
-  //             isSigner: false,
-  //           });
-  //         });
-  //       }
-  //     }
   //   });
 
-  //   const [mintCounterCollection] = PublicKey.findProgramAddressSync(
-  //     [
-  //       Buffer.from('mint_counter_collection'),
-  //       minter.toBuffer(),
-  //       collectionMint.toBuffer(),
-  //     ],
+  //   const tx = new Transaction().add(
+  //     initCollectionConfigIns,
+  //     createLookupTableIns,
+  //     extendInstruction
+  //   );
+
+  //   tx.feePayer = minter;
+  //   tx.recentBlockhash = (
+  //     await anchorProvider.connection.getLatestBlockhash()
+  //   ).blockhash;
+
+  //   const signedTxn = await anchorProvider.wallet.signTransaction(tx);
+
+  //   const sig = await anchorProvider.connection.sendRawTransaction(
+  //     signedTxn.serialize()
+  //   );
+
+  //   console.log('Init collection config: ', sig);
+
+  //   // for (let i = 0; i < numberOfPools; i++) {
+  //   //   let arrayWallet: string[] = [];
+  //   //   if (i == numberOfPools - 1) {
+  //   //     arrayWallet = whiteList;
+  //   //   } else {
+  //   //     arrayWallet = generateWhiteList(10);
+  //   //   }
+
+  //   //   const leafNode = arrayWallet.map((addr) => keccak256(addr));
+  //   //   const merkleTree = new MerkleTree(leafNode, keccak256, {
+  //   //     sortPairs: true,
+  //   //   });
+
+  //   //   const merkle_root = merkleTree.getRoot();
+
+  //   //   const groupConfigArgs: PoolConfigArgs = {
+  //   //     id: i.toString(),
+  //   //     startDate: new BN(Math.floor(Date.now() / 1000)),
+  //   //     endDate: new BN(Math.floor(Date.now() / 1000) + 3000),
+  //   //     merkleRoot: merkle_root,
+  //   //     totalMintPerWallet: 1,
+  //   //     payment: 0.01,
+  //   //     poolSupply: 10000,
+  //   //     exclusionPools: null,
+  //   //   };
+
+  //   //   if (i == 2) {
+  //   //     groupConfigArgs.exclusionPools = ['0', '1', '2'];
+  //   //   }
+
+  //   //   const [poolMinted] = PublicKey.findProgramAddressSync(
+  //   //     [
+  //   //       Buffer.from('pool_minted'),
+  //   //       poolsPDA.toBuffer(),
+  //   //       Buffer.from(i.toString()),
+  //   //     ],
+  //   //     program.programId
+  //   //   );
+
+  //   //   const txAddPoolConfig = await program.methods
+  //   //     .addPoolConfig(groupConfigArgs)
+  //   //     .accounts({
+  //   //       creator: minter,
+  //   //       collectionMint: collectionMint,
+  //   //       pools: poolsPDA,
+  //   //       poolMinted: poolMinted,
+  //   //       adminPda: adminPda,
+  //   //       destination: destination,
+  //   //     })
+  //   //     .rpc({
+  //   //       skipPreflight: true,
+  //   //     });
+
+  //   //   console.log('Add pool config: ', txAddPoolConfig);
+  //   // }
+  // });
+
+  // it('update_pool_config', async () => {
+  //   const [adminPda] = PublicKey.findProgramAddressSync(
+  //     [Buffer.from('admin'), minter.toBuffer()],
   //     program.programId
   //   );
 
+  //   let arrayWallet = generateWhiteList(20);
+  //   const leafNode = arrayWallet.map((addr) => keccak256(addr));
+  //   const merkleTree = new MerkleTree(leafNode, keccak256, {
+  //     sortPairs: true,
+  //   });
+
+  //   const args: UpdatePoolConfigArgs = {
+  //     poolId: '1',
+  //     merkleRoot: merkleTree.getRoot(),
+  //     totalPoolSupply: null,
+  //   };
+
   //   const tx = await program.methods
-  //     .mintCnft(merkle_proof, pool_id, Buffer.from(data))
+  //     .updatePoolConfig(args)
   //     .accounts({
-  //       minter: minter,
-  //       pools: poolsPDA,
-  //       mintCounterCollection: mintCounterCollection,
-  //       destination: destination,
-  //       poolMinted: poolMinted,
-  //       merkleTree: treeAddress,
-  //       treeAuthority,
-  //       compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
-  //       logWrapper: SPL_NOOP_PROGRAM_ID,
-  //       collectionAuthority: collectionAuthority,
-  //       collectionAuthorityRecordPda: MPL_BUBBLEGUM_PROGRAM_ID,
+  //       signer: minter,
+  //       adminPda: adminPda,
   //       collectionMint: collectionMint,
-  //       collectionMetadata: collectionMetadata,
-  //       editionAccount: collectionMasterEditionAccount,
-  //       bubblegumSigner: bgumSigner,
-  //       tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+  //       pools: poolsPDA,
   //     })
-  //     .remainingAccounts(remainingAccounts)
   //     .rpc({
   //       skipPreflight: true,
   //     });
 
-  //   console.log('Your transaction signature', tx);
+  //   console.log('Update pool config: ', tx);
   // });
+
+  it('mint cNFT', async () => {
+    // Add your test here.
+    const leafNode = whiteList.map((addr) => keccak256(addr));
+    const merkleTree = new MerkleTree(leafNode, keccak256, { sortPairs: true });
+
+    const getProof = merkleTree.getProof(keccak256(whiteList[3]));
+    const merkle_proof = getProof.map((item) => Array.from(item.data));
+
+    // Mint a compressed NFT
+    const nftArgs: MetadataArgsArgs = {
+      name: 'Compression Test',
+      symbol: 'COMP',
+      uri: 'https://arweave.net/gfO_TkYttQls70pTmhrdMDz9pfMUXX8hZkaoIivQjGs',
+      creators: [],
+      editionNonce: 253,
+      tokenProgramVersion: TokenProgramVersion.Original,
+      tokenStandard: TokenStandard.NonFungible,
+      uses: null,
+      primarySaleHappened: false,
+      sellerFeeBasisPoints: 0,
+      isMutable: false,
+      collection: {
+        verified: false,
+        key: publicKey(collectionMint.toString()),
+      },
+    };
+
+    const serializer = getMetadataArgsSerializer();
+
+    const data = serializer.serialize(nftArgs);
+    console.log(data.length);
+
+    const MPL_BUBBLEGUM_PROGRAM_ID = new PublicKey(
+      'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY'
+    );
+
+    const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
+      'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s'
+    );
+
+    const pool_id = '3';
+
+    const [poolMinted] = PublicKey.findProgramAddressSync(
+      [Buffer.from('pool_minted'), poolsPDA.toBuffer(), Buffer.from(pool_id)],
+      program.programId
+    );
+
+    const [mintCounter] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from('mint_counter'),
+        Buffer.from(pool_id),
+        minter.toBuffer(),
+        poolsPDA.toBuffer(),
+      ],
+      program.programId
+    );
+
+    const pools_config_data: any[] = (
+      await program.account.pools.fetch(poolsPDA)
+    ).poolsConfig;
+
+    const remainingAccounts = [
+      {
+        pubkey: mintCounter,
+        isWritable: true,
+        isSigner: false,
+      },
+    ];
+
+    pools_config_data.forEach((pool_config) => {
+      if (pool_config.id === pool_id) {
+        if (pool_config.exclusionPools) {
+          pool_config.exclusionPools.forEach((pool_id_exl: string) => {
+            const [poolMintedPDA] = PublicKey.findProgramAddressSync(
+              [
+                Buffer.from('mint_counter'),
+                Buffer.from(pool_id_exl),
+                minter.toBuffer(),
+                poolsPDA.toBuffer(),
+              ],
+              program.programId
+            );
+
+            remainingAccounts.push({
+              pubkey: poolMintedPDA,
+              isWritable: false,
+              isSigner: false,
+            });
+          });
+        }
+      }
+    });
+
+    const [mintCounterCollection] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from('mint_counter_collection'),
+        minter.toBuffer(),
+        collectionMint.toBuffer(),
+      ],
+      program.programId
+    );
+
+    const lookupTableAddress = new PublicKey(
+      '7E9QK9cgbQLr4LGTek3NpxNCcbdbkNCR3oT3JCwK5yHa'
+    );
+
+    // get the table from the cluster
+    const lookupTableAccount = (
+      await anchorProvider.connection.getAddressLookupTable(lookupTableAddress)
+    ).value;
+
+    const mintCnftIns = await program.methods
+      .mintCnft(merkle_proof, pool_id, Buffer.from(data))
+      .accounts({
+        minter: minter,
+        pools: poolsPDA,
+        mintCounterCollection: mintCounterCollection,
+        destination: destination,
+        poolMinted: poolMinted,
+        merkleTree: treeAddress,
+        treeAuthority,
+        compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+        logWrapper: SPL_NOOP_PROGRAM_ID,
+        collectionAuthority: collectionAuthority,
+        collectionAuthorityRecordPda: MPL_BUBBLEGUM_PROGRAM_ID,
+        collectionMint: collectionMint,
+        collectionMetadata: collectionMetadata,
+        editionAccount: collectionMasterEditionAccount,
+        bubblegumSigner: bgumSigner,
+        tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+      })
+      .remainingAccounts(remainingAccounts)
+      .instruction();
+
+    // construct a v0 compatible transaction `Message`
+    const messageV0 = new TransactionMessage({
+      payerKey: minter,
+      recentBlockhash: (await anchorProvider.connection.getLatestBlockhash())
+        .blockhash,
+      instructions: [mintCnftIns], // note this is an array of instructions
+    }).compileToV0Message([lookupTableAccount]);
+
+    const transactionV0 = new VersionedTransaction(messageV0);
+
+    const tx = await anchorProvider.wallet.signTransaction(transactionV0);
+
+    const sig = await anchorProvider.connection.sendTransaction(tx, {
+      skipPreflight: true,
+    });
+    console.log(sig);
+  });
 });
 
 const whiteList = [

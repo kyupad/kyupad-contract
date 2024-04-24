@@ -19,9 +19,9 @@ pub fn mint_cft<'c: 'info, 'info>(
     data: Vec<u8>,
 ) -> Result<()> {
     let minter = &ctx.accounts.minter;
-    let pools = &ctx.accounts.pools;
+    let pools = &mut ctx.accounts.pools;
     let pools_config = &pools.pools_config;
-    let pool_minted = &ctx.accounts.pool_minted;
+    let pool_minted = &mut ctx.accounts.pool_minted;
     let system_program = &ctx.accounts.system_program;
     let destination = &ctx.accounts.destination;
     let mint_counter_collection = &mut ctx.accounts.mint_counter_collection;
@@ -37,7 +37,7 @@ pub fn mint_cft<'c: 'info, 'info>(
 
     let mint_counter = next_account_info(remaining_accounts_iter)?;
 
-    for pool_config in pools_config.iter() {
+    for pool_config in pools_config {
         if pool_config.id == pool_id {
 
             // Check to see if the pool's supply has run out
@@ -45,6 +45,9 @@ pub fn mint_cft<'c: 'info, 'info>(
                 msg!("{}",  pool_minted.remaining_assets);
                 return Err(KyuPadError::PoolSupplyRunOut.into());
             }
+
+            // Remaining assets is minus 1
+            pool_minted.remaining_assets -= 1;
 
             valid_merke_root = true;
             let leaf = solana_program::keccak::hashv(&[minter.key().to_string().as_bytes()]);
@@ -140,6 +143,8 @@ pub fn mint_cft<'c: 'info, 'info>(
                 msg!("{}", mint_counter_collection.count);
 
                 mint_counter_collection.count += 1;
+
+                msg!("{}", mint_counter_collection.count);
                 
             } else {
                 return Err(KyuPadError::InvalidWallet.into());
