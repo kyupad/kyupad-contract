@@ -85,11 +85,11 @@ describe('kyupad-smart-contract', () => {
   );
 
   const collectionMint = new PublicKey(
-    '5oiybGN8GaHFpsJuWCKpCK6qPRgUP1fhX1n5boCk9u1F'
+    'GxqkJ9TcG7qzfRE61LZe53DJRgLapdaLNW4BqNNBauHH'
   );
 
   const treeAddress = new PublicKey(
-    'J7LWpga2LQA1w6KDnDSapMVUT1pLs9C8ET38mi28xTz2'
+    '45hUwqhpMwLvpBkhaTekvKiEzcPE2SePeLK3K2qpaYFE'
   );
 
   const [treeAuthority, _bump] = PublicKey.findProgramAddressSync(
@@ -341,80 +341,72 @@ describe('kyupad-smart-contract', () => {
   //     ],
   //   });
 
-  //   const tx = new Transaction().add(
-  //     initCollectionConfigIns,
-  //     createLookupTableIns,
-  //     extendInstruction
-  //   );
+  //   const tx = new Transaction()
+  //     .add(initCollectionConfigIns)
+  //     .add(createLookupTableIns)
+  //     .add(extendInstruction);
 
-  //   tx.feePayer = minter;
-  //   tx.recentBlockhash = (
-  //     await anchorProvider.connection.getLatestBlockhash()
-  //   ).blockhash;
-
-  //   const signedTxn = await anchorProvider.wallet.signTransaction(tx);
-
-  //   const sig = await anchorProvider.connection.sendRawTransaction(
-  //     signedTxn.serialize()
-  //   );
+  //   const sig = await anchorProvider.sendAndConfirm(tx, [], {
+  //     skipPreflight: true,
+  //   });
 
   //   console.log('Init collection config: ', sig);
 
-  //   // for (let i = 0; i < numberOfPools; i++) {
-  //   //   let arrayWallet: string[] = [];
-  //   //   if (i == numberOfPools - 1) {
-  //   //     arrayWallet = whiteList;
-  //   //   } else {
-  //   //     arrayWallet = generateWhiteList(10);
-  //   //   }
+  //   for (let i = 0; i < numberOfPools; i++) {
+  //     let arrayWallet: string[] = [];
+  //     if (i == numberOfPools - 1) {
+  //       arrayWallet = whiteList;
+  //     } else {
+  //       arrayWallet = generateWhiteList(10);
+  //     }
 
-  //   //   const leafNode = arrayWallet.map((addr) => keccak256(addr));
-  //   //   const merkleTree = new MerkleTree(leafNode, keccak256, {
-  //   //     sortPairs: true,
-  //   //   });
+  //     const leafNode = arrayWallet.map((addr) => keccak256(addr));
+  //     const merkleTree = new MerkleTree(leafNode, keccak256, {
+  //       sortPairs: true,
+  //     });
 
-  //   //   const merkle_root = merkleTree.getRoot();
+  //     const merkle_root = merkleTree.getRoot();
 
-  //   //   const groupConfigArgs: PoolConfigArgs = {
-  //   //     id: i.toString(),
-  //   //     startDate: new BN(Math.floor(Date.now() / 1000)),
-  //   //     endDate: new BN(Math.floor(Date.now() / 1000) + 3000),
-  //   //     merkleRoot: merkle_root,
-  //   //     totalMintPerWallet: 1,
-  //   //     payment: 0.01,
-  //   //     poolSupply: 10000,
-  //   //     exclusionPools: null,
-  //   //   };
+  //     const groupConfigArgs: PoolConfigArgs = {
+  //       id: i.toString(),
+  //       startDate: new BN(Math.floor(Date.now() / 1000)),
+  //       endDate: new BN(Math.floor(Date.now() / 1000) + 3000),
+  //       merkleRoot: merkle_root,
+  //       totalMintPerWallet: 1,
+  //       payment: 0.01,
+  //       poolSupply: 10000,
+  //       exclusionPools: null,
+  //     };
 
-  //   //   if (i == 2) {
-  //   //     groupConfigArgs.exclusionPools = ['0', '1', '2'];
-  //   //   }
+  //     if (i == numberOfPools - 1) {
+  //       groupConfigArgs.exclusionPools = ['0', '1', '2'];
+  //     }
 
-  //   //   const [poolMinted] = PublicKey.findProgramAddressSync(
-  //   //     [
-  //   //       Buffer.from('pool_minted'),
-  //   //       poolsPDA.toBuffer(),
-  //   //       Buffer.from(i.toString()),
-  //   //     ],
-  //   //     program.programId
-  //   //   );
+  //     const [poolMinted] = PublicKey.findProgramAddressSync(
+  //       [
+  //         Buffer.from('pool_minted'),
+  //         poolsPDA.toBuffer(),
+  //         Buffer.from(i.toString()),
+  //       ],
+  //       program.programId
+  //     );
 
-  //   //   const txAddPoolConfig = await program.methods
-  //   //     .addPoolConfig(groupConfigArgs)
-  //   //     .accounts({
-  //   //       creator: minter,
-  //   //       collectionMint: collectionMint,
-  //   //       pools: poolsPDA,
-  //   //       poolMinted: poolMinted,
-  //   //       adminPda: adminPda,
-  //   //       destination: destination,
-  //   //     })
-  //   //     .rpc({
-  //   //       skipPreflight: true,
-  //   //     });
+  //     const txAddPoolConfig = await program.methods
+  //       .addPoolConfig(groupConfigArgs)
+  //       .accounts({
+  //         creator: minter,
+  //         collectionMint: collectionMint,
+  //         pools: poolsPDA,
+  //         poolMinted: poolMinted,
+  //         adminPda: adminPda,
+  //         destination: destination,
+  //       })
+  //       .rpc({
+  //         skipPreflight: true,
+  //       });
 
-  //   //   console.log('Add pool config: ', txAddPoolConfig);
-  //   // }
+  //     console.log('Add pool config: ', txAddPoolConfig);
+  //   }
   // });
 
   // it('update_pool_config', async () => {
@@ -424,13 +416,14 @@ describe('kyupad-smart-contract', () => {
   //   );
 
   //   let arrayWallet = generateWhiteList(20);
+  //   arrayWallet.push(minter.toString());
   //   const leafNode = arrayWallet.map((addr) => keccak256(addr));
   //   const merkleTree = new MerkleTree(leafNode, keccak256, {
   //     sortPairs: true,
   //   });
 
   //   const args: UpdatePoolConfigArgs = {
-  //     poolId: '1',
+  //     poolId: '2',
   //     merkleRoot: merkleTree.getRoot(),
   //     totalPoolSupply: null,
   //   };
@@ -480,7 +473,6 @@ describe('kyupad-smart-contract', () => {
     const serializer = getMetadataArgsSerializer();
 
     const data = serializer.serialize(nftArgs);
-    console.log(data.length);
 
     const MPL_BUBBLEGUM_PROGRAM_ID = new PublicKey(
       'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY'
@@ -510,6 +502,8 @@ describe('kyupad-smart-contract', () => {
     const pools_config_data: any[] = (
       await program.account.pools.fetch(poolsPDA)
     ).poolsConfig;
+
+    console.log(pools_config_data);
 
     const remainingAccounts = [
       {
@@ -594,13 +588,195 @@ describe('kyupad-smart-contract', () => {
 
     const transactionV0 = new VersionedTransaction(messageV0);
 
-    const tx = await anchorProvider.wallet.signTransaction(transactionV0);
-
-    const sig = await anchorProvider.connection.sendTransaction(tx, {
+    const sig = await anchorProvider.sendAndConfirm(transactionV0, [], {
       skipPreflight: true,
     });
-    console.log(sig);
+
+    console.log('Mint cNFT: ', sig);
   });
+
+  // it('update_pool_config and try to mint', async () => {
+  //   const [adminPda] = PublicKey.findProgramAddressSync(
+  //     [Buffer.from('admin'), minter.toBuffer()],
+  //     program.programId
+  //   );
+
+  //   let arrayWallet = generateWhiteList(20);
+  //   arrayWallet.push(minter.toString());
+  //   const leafNode = arrayWallet.map((addr) => keccak256(addr));
+  //   const merkleTree = new MerkleTree(leafNode, keccak256, {
+  //     sortPairs: true,
+  //   });
+
+  //   const pool_id = '0';
+
+  //   const args: UpdatePoolConfigArgs = {
+  //     poolId: pool_id,
+  //     merkleRoot: merkleTree.getRoot(),
+  //     totalPoolSupply: null,
+  //   };
+
+  //   const tx = await program.methods
+  //     .updatePoolConfig(args)
+  //     .accounts({
+  //       signer: minter,
+  //       adminPda: adminPda,
+  //       collectionMint: collectionMint,
+  //       pools: poolsPDA,
+  //     })
+  //     .rpc({
+  //       skipPreflight: true,
+  //     });
+
+  //   console.log('Update pool config: ', tx);
+
+  //   const getProof = merkleTree.getProof(keccak256(minter.toString()));
+  //   const merkle_proof = getProof.map((item) => Array.from(item.data));
+
+  //   // Mint a compressed NFT
+  //   const nftArgs: MetadataArgsArgs = {
+  //     name: 'Compression Test',
+  //     symbol: 'COMP',
+  //     uri: 'https://arweave.net/gfO_TkYttQls70pTmhrdMDz9pfMUXX8hZkaoIivQjGs',
+  //     creators: [],
+  //     editionNonce: 253,
+  //     tokenProgramVersion: TokenProgramVersion.Original,
+  //     tokenStandard: TokenStandard.NonFungible,
+  //     uses: null,
+  //     primarySaleHappened: false,
+  //     sellerFeeBasisPoints: 0,
+  //     isMutable: false,
+  //     collection: {
+  //       verified: false,
+  //       key: publicKey(collectionMint.toString()),
+  //     },
+  //   };
+
+  //   const serializer = getMetadataArgsSerializer();
+
+  //   const data = serializer.serialize(nftArgs);
+
+  //   const MPL_BUBBLEGUM_PROGRAM_ID = new PublicKey(
+  //     'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY'
+  //   );
+
+  //   const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
+  //     'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s'
+  //   );
+
+  //   const [poolMinted] = PublicKey.findProgramAddressSync(
+  //     [Buffer.from('pool_minted'), poolsPDA.toBuffer(), Buffer.from(pool_id)],
+  //     program.programId
+  //   );
+
+  //   const [mintCounter] = PublicKey.findProgramAddressSync(
+  //     [
+  //       Buffer.from('mint_counter'),
+  //       Buffer.from(pool_id),
+  //       minter.toBuffer(),
+  //       poolsPDA.toBuffer(),
+  //     ],
+  //     program.programId
+  //   );
+
+  //   const pools_config_data: any[] = (
+  //     await program.account.pools.fetch(poolsPDA)
+  //   ).poolsConfig;
+
+  //   const remainingAccounts = [
+  //     {
+  //       pubkey: mintCounter,
+  //       isWritable: true,
+  //       isSigner: false,
+  //     },
+  //   ];
+
+  //   pools_config_data.forEach((pool_config) => {
+  //     if (pool_config.id === pool_id) {
+  //       if (pool_config.exclusionPools) {
+  //         pool_config.exclusionPools.forEach((pool_id_exl: string) => {
+  //           const [poolMintedPDA] = PublicKey.findProgramAddressSync(
+  //             [
+  //               Buffer.from('mint_counter'),
+  //               Buffer.from(pool_id_exl),
+  //               minter.toBuffer(),
+  //               poolsPDA.toBuffer(),
+  //             ],
+  //             program.programId
+  //           );
+
+  //           remainingAccounts.push({
+  //             pubkey: poolMintedPDA,
+  //             isWritable: false,
+  //             isSigner: false,
+  //           });
+  //         });
+  //       }
+  //     }
+  //   });
+
+  //   const [mintCounterCollection] = PublicKey.findProgramAddressSync(
+  //     [
+  //       Buffer.from('mint_counter_collection'),
+  //       minter.toBuffer(),
+  //       collectionMint.toBuffer(),
+  //     ],
+  //     program.programId
+  //   );
+
+  //   const lookupTableAddress = new PublicKey(
+  //     '7E9QK9cgbQLr4LGTek3NpxNCcbdbkNCR3oT3JCwK5yHa'
+  //   );
+
+  //   // get the table from the cluster
+  //   const lookupTableAccount = (
+  //     await anchorProvider.connection.getAddressLookupTable(lookupTableAddress)
+  //   ).value;
+
+  //   const mintCnftIns = await program.methods
+  //     .mintCnft(merkle_proof, pool_id, Buffer.from(data))
+  //     .accounts({
+  //       minter: minter,
+  //       pools: poolsPDA,
+  //       mintCounterCollection: mintCounterCollection,
+  //       destination: destination,
+  //       poolMinted: poolMinted,
+  //       merkleTree: treeAddress,
+  //       treeAuthority,
+  //       compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+  //       logWrapper: SPL_NOOP_PROGRAM_ID,
+  //       collectionAuthority: collectionAuthority,
+  //       collectionAuthorityRecordPda: MPL_BUBBLEGUM_PROGRAM_ID,
+  //       collectionMint: collectionMint,
+  //       collectionMetadata: collectionMetadata,
+  //       editionAccount: collectionMasterEditionAccount,
+  //       bubblegumSigner: bgumSigner,
+  //       tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+  //     })
+  //     .remainingAccounts(remainingAccounts)
+  //     .instruction();
+
+  //   // construct a v0 compatible transaction `Message`
+  //   const messageV0 = new TransactionMessage({
+  //     payerKey: minter,
+  //     recentBlockhash: (await anchorProvider.connection.getLatestBlockhash())
+  //       .blockhash,
+  //     instructions: [mintCnftIns], // note this is an array of instructions
+  //   }).compileToV0Message([lookupTableAccount]);
+
+  //   const transactionV0 = new VersionedTransaction(messageV0);
+
+  //   const sig = await anchorProvider.sendAndConfirm(transactionV0, [], {
+  //     skipPreflight: true,
+  //   });
+
+  //   // const tx2 = await anchorProvider.wallet.signTransaction(transactionV0);
+
+  //   // const sig = await anchorProvider.connection.sendTransaction(tx2, {
+  //   //   skipPreflight: true,
+  //   // });
+  //   console.log('Mint cNFT: ', sig);
+  // });
 });
 
 const whiteList = [

@@ -54,6 +54,7 @@ pub struct UpdatePoolConfig<'info> {
     pub collection_mint: AccountInfo<'info>,
 
     #[account(
+        mut,
         seeds=[b"pools", collection_mint.key.as_ref()], 
         bump,
     )]
