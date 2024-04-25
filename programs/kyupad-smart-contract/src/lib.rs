@@ -1,13 +1,20 @@
-use anchor_lang::prelude::*;
+#[macro_use]
+extern crate dotenv_codegen;
 
+use anchor_lang::prelude::*;
+use anchor_lang::solana_program::pubkey;
 use instructions::*;
+
+use const_str_to_pubkey::str_to_pubkey;
 
 pub mod errors;
 pub mod instructions;
 pub mod pda;
 pub mod state;
 pub mod utils;
-declare_id!("3LJYEwPqJ5Lk5B9GXYsmadymm7p6hhCKzBeSMBGXJa9L");
+
+const PROGRAM_ID: Pubkey = str_to_pubkey(dotenv!("PROGRAM_ID"));
+declare_id!(PROGRAM_ID);
 
 #[program]
 pub mod kyupad_smart_contract {
