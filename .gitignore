@@ -11,3 +11,4 @@ test-ledger
 solana*
 recover*
 Cargo.lock
+*.lock

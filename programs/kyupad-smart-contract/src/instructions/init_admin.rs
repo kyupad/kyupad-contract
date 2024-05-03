@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use crate::{errors::KyuPadError, utils::assert_keys_equal, ID};
 
-pub fn init_admin(ctx: Context<InitAdmin>, _address: Pubkey) -> Result<()> {
+pub fn init_admin(ctx: Context<InitAdmin>, _address: Pubkey, permissions: Vec<Permission>) -> Result<()> {
     let kyupad_program_data = &mut ctx.accounts.kyupad_program_data;
     let signer = &ctx.accounts.signer;
     let bpf_loader_upgradeable = &ctx.accounts.bpf_loader_upgradeable;
@@ -29,7 +29,7 @@ pub fn init_admin(ctx: Context<InitAdmin>, _address: Pubkey) -> Result<()> {
     }
 
     let admin_pda = &mut ctx.accounts.admin_pda;
-    admin_pda.is_admin = true;
+    admin_pda.permissions = permissions;
     Ok(())
 }
 
@@ -62,5 +62,14 @@ pub struct InitAdmin<'info> {
 #[account]
 #[derive(Debug, InitSpace)]
 pub struct Admin {
-    pub is_admin: bool    
+    #[max_len(10)]
+    pub permissions: Vec<Permission> 
 }
+
+#[derive(Debug, AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
+pub enum Permission {
+    IdoAdmin,
+    CNFTAdmin,
+}
+
+

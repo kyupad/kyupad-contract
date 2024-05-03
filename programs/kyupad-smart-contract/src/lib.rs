@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 
 use instructions::*;
+use state::*;
 
 pub mod errors;
 pub mod instructions;
@@ -11,11 +12,14 @@ declare_id!("FHPbXuECjkYGrJHnwU2ozrm7TYzoo2c43CZTo3nJEzs");
 
 #[program]
 pub mod kyupad_smart_contract {
-
     use super::*;
 
-    pub fn init_admin(ctx: Context<InitAdmin>, address: Pubkey) -> Result<()> {
-        instructions::init_admin(ctx, address)
+    pub fn init_admin(
+        ctx: Context<InitAdmin>,
+        address: Pubkey,
+        permissions: Vec<Permission>,
+    ) -> Result<()> {
+        instructions::init_admin(ctx, address, permissions)
     }
 
     pub fn mint_cnft<'c: 'info, 'info>(
@@ -61,4 +65,13 @@ pub mod kyupad_smart_contract {
     ) -> Result<()> {
         instructions::add_pool_config(ctx, pool_config_args)
     }
+
+    pub fn register_project(
+        ctx: Context<RegisterProject>,
+        project_config_args: ProjectConfigArgs,
+    ) -> Result<()> {
+        instructions::register_project(ctx, project_config_args)
+    }
+
+    
 }
