@@ -14,7 +14,7 @@ kyupad_smart_contract = "FHPbXuECjkYGrJHnwU2ozrm7TYzoo2c43CZTo3nJEzs"
 url = "https://api.mainnet-beta.solana.com"
 
 [provider]
-cluster = "mainnet"
+cluster = "devnet"
 wallet = "/Users/admin/.config/solana/id.json"
 
 [scripts]
