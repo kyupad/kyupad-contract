@@ -22,3 +22,5 @@ spl-account-compression = {version="0.3.0", features = ['cpi']}
 mpl-token-metadata = "4.1.2"
 spl-token = { version = "4.0.1", features = ["no-entrypoint"] }
 spl-associated-token-account = { version = "3.0.2", features = ["no-entrypoint"] }
+dotenv_codegen = "0.15.0"
+const_str_to_pubkey = "0.1.1"
