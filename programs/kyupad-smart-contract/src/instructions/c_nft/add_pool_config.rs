@@ -1,14 +1,14 @@
 use anchor_lang::prelude::*;
 
-use crate::{errors::KyuPadError, state::PoolConfig, PoolConfigArgs, PoolMinted, Pools};
+use crate::{errors::KyuPadError, state::PoolConfig, Admin, PoolConfigArgs, PoolMinted, Pools};
 
 pub fn add_pool_config<'c: 'info, 'info>(
     ctx: Context<'_, '_, 'c, 'info, AddPoolConfig<'info>>,
     pool_config_args: PoolConfigArgs,
 ) -> Result<()> {
     let pools = &mut ctx.accounts.pools;
-    let collection_mint = &ctx.accounts.collection_mint;
     let pool_minted = &mut ctx.accounts.pool_minted;
+    let destination = &ctx.accounts.destination;
 
     for pool_config in &pools.pools_config {
         if pool_config.id == pool_config_args.id {
@@ -22,7 +22,7 @@ pub fn add_pool_config<'c: 'info, 'info>(
         end_date: pool_config_args.end_date,
         merkle_root: pool_config_args.merkle_root.clone(),
         total_mint_per_wallet: pool_config_args.total_mint_per_wallet,
-        destination: collection_mint.key.clone(),
+        destination: destination.key.clone(),
         payment: pool_config_args.payment,
         pool_supply: pool_config_args.pool_supply,
         exclusion_pools: pool_config_args.exclusion_pools.clone(),
@@ -41,15 +41,24 @@ pub struct AddPoolConfig<'info> {
     #[account(mut)]
     pub creator: Signer<'info>,
 
+    #[account(
+        seeds=[b"admin", creator.key().as_ref()],  
+        bump
+    )]
+    pub admin_pda: Account<'info, Admin>,
+
     /// CHECK:
     pub collection_mint: AccountInfo<'info>,
 
     #[account(
         mut,
-        seeds=[b"pools", creator.key().as_ref(), collection_mint.key.as_ref()], 
+        seeds=[b"pools", collection_mint.key().as_ref()], 
         bump
     )]
     pub pools: Account<'info, Pools>,
+
+    /// CHECK:
+    pub destination: AccountInfo<'info>,
 
     #[account(
         init_if_needed,

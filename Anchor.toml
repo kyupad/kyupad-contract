@@ -4,12 +4,18 @@
 seeds = false
 skip-lint = false
 
+[programs.devnet]
+kyupad_smart_contract = "FHPbXuECjkYGrJHnwU2ozrm7TYzoo2c43CZTo3nJEzs"
+
+[programs.mainnet]
+kyupad_smart_contract = "FHPbXuECjkYGrJHnwU2ozrm7TYzoo2c43CZTo3nJEzs"
+
 [registry]
-url = "https://devnet.helius-rpc.com/?api-key=7b857a49-a695-4d15-8b64-869d6fa1134e"
+url = "https://api.mainnet-beta.solana.com"
 
 [provider]
-cluster = "Devnet"
-wallet = ".config/solana/id.json"
+cluster = "devnet"
+wallet = "/Users/admin/.config/solana/id.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"

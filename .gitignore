@@ -6,6 +6,8 @@ target
 node_modules
 test-ledger
 .yarn
+.env.local
 .env
-.idea
-.config
+solana*
+recover*
+Cargo.lock

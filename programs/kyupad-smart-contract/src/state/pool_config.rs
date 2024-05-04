@@ -1,6 +1,6 @@
 use anchor_lang::{
     prelude::*,
-    // solana_program::{program::invoke, system_instruction},
+    solana_program::{program::invoke, system_instruction},
 };
 
 // use crate::errors::KyuPadError;
@@ -34,20 +34,32 @@ impl PoolConfig {
     //     Ok(())
     // }
 
-    // pub fn actions<'info>(
-    //     &self,
-    //     payer: AccountInfo<'info>,
-    //     destination: AccountInfo<'info>,
-    //     system_program: AccountInfo<'info>,
-    // ) -> Result<()> {
-    //     invoke(
-    //         &system_instruction::transfer(&payer.key(), &destination.key(), self.lamports),
-    //         &[
-    //             payer.clone(),
-    //             destination.to_account_info(),
-    //             system_program.to_account_info(),
-    //         ],
-    //     )?;
-    //     Ok(())
-    // }
+    pub fn actions<'info>(
+        &self,
+        payer: AccountInfo<'info>,
+        destination: AccountInfo<'info>,
+        system_program: AccountInfo<'info>,
+    ) -> Result<()> {
+        invoke(
+            &system_instruction::transfer(
+                &payer.key(),
+                &destination.key(),
+                sol_to_lamports(self.payment),
+            ),
+            &[
+                payer.clone(),
+                destination.to_account_info(),
+                system_program.to_account_info(),
+            ],
+        )?;
+        Ok(())
+    }
+}
+
+fn sol_to_lamports(sol_amount: f32) -> u64 {
+    const LAMPORTS_PER_SOL: u64 = 1_000_000_000;
+
+    let lamports = (sol_amount * LAMPORTS_PER_SOL as f32) as u64;
+
+    lamports
 }

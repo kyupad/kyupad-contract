@@ -19,10 +19,17 @@ pub fn mint_cft<'c: 'info, 'info>(
     data: Vec<u8>,
 ) -> Result<()> {
     let minter = &ctx.accounts.minter;
-    let pools = &ctx.accounts.pools;
+    let pools = &mut ctx.accounts.pools;
     let pools_config = &pools.pools_config;
-    let pool_minted = &ctx.accounts.pool_minted;
+    let pool_minted = &mut ctx.accounts.pool_minted;
     let system_program = &ctx.accounts.system_program;
+    let destination = &ctx.accounts.destination;
+    let mint_counter_collection = &mut ctx.accounts.mint_counter_collection;
+
+    // Check if user is allow mint is reached
+    if mint_counter_collection.count >= pools.max_mint_of_wallet {
+        return Err(KyuPadError::AllowedMintLimitReached.into())
+    }
 
     let mut valid_merke_root = false;
 
@@ -30,7 +37,7 @@ pub fn mint_cft<'c: 'info, 'info>(
 
     let mint_counter = next_account_info(remaining_accounts_iter)?;
 
-    for pool_config in pools_config.iter() {
+    for pool_config in pools_config {
         if pool_config.id == pool_id {
 
             // Check to see if the pool's supply has run out
@@ -38,6 +45,9 @@ pub fn mint_cft<'c: 'info, 'info>(
                 msg!("{}",  pool_minted.remaining_assets);
                 return Err(KyuPadError::PoolSupplyRunOut.into());
             }
+
+            // Remaining assets is minus 1
+            pool_minted.remaining_assets -= 1;
 
             valid_merke_root = true;
             let leaf = solana_program::keccak::hashv(&[minter.key().to_string().as_bytes()]);
@@ -52,15 +62,13 @@ pub fn mint_cft<'c: 'info, 'info>(
             if verify_minter {
                 // Check if counter mint for minter
                 MintCounter::validate(mint_counter, minter.to_account_info(), pools.to_account_info(), pool_config.id.clone(), pool_config.total_mint_per_wallet)?;
-                // Check enough lamport to mint
-                // PoolConfig::validate(pool_config, minter.to_account_info())?;
 
-                // // Check if in the time allow
-                // let clock = Clock::get()?;
-                // let current_timestamp = clock.unix_timestamp;
-                // if current_timestamp < pool_config.start_date || current_timestamp > pool_config.end_date {
-                //     return Err(KyuPadError::NotMintTime.into());
-                // }
+                // Check if in the time allow
+                let clock = Clock::get()?;
+                let current_timestamp = clock.unix_timestamp;
+                if current_timestamp < pool_config.start_date || current_timestamp > pool_config.end_date {
+                    return Err(KyuPadError::NotMintTime.into());
+                }
                 
                 //  Check if have exclusion_pools
                 match &pool_config.exclusion_pools {
@@ -120,8 +128,24 @@ pub fn mint_cft<'c: 'info, 'info>(
                 // increase mint counter
                 MintCounter::increase(mint_counter, minter.to_account_info(), pools.to_account_info(), system_program.to_account_info(), pool_config.id.clone())?;
 
-                // // Pay for the mint
-                // PoolConfig::actions(pool_config, minter.to_account_info(), destination, system_program.to_account_info());
+                
+                let result  = assert_keys_equal(&pool_config.destination, &destination.key);
+                match result {
+                    Ok(_) => {
+                        // Pay for the mint
+                        PoolConfig::actions(pool_config, minter.to_account_info(), destination.clone(), system_program.to_account_info())?;
+                    },
+                    Err(_) => {
+                        return Err(KyuPadError::DestinationIsInvalid.into());
+                    },
+                }
+
+                msg!("{}", mint_counter_collection.count);
+
+                mint_counter_collection.count += 1;
+
+                msg!("{}", mint_counter_collection.count);
+                
             } else {
                 return Err(KyuPadError::InvalidWallet.into());
             }
@@ -142,10 +166,23 @@ pub struct MintcNFT<'info> {
     pub minter: Signer<'info>,
 
     #[account(
-        seeds=[Pools::PREFIX_SEED, minter.key().as_ref(), collection_mint.key().as_ref()], 
+        seeds=[Pools::PREFIX_SEED, collection_mint.key().as_ref()], 
         bump
     )]
     pub pools: Account<'info, Pools>,
+
+    #[account(
+        init_if_needed, 
+        payer = minter, 
+        space = 8 + MintCounterCollection::INIT_SPACE, 
+        seeds=[MintCounterCollection::PREFIX_SEED, minter.key().as_ref(), collection_mint.key().as_ref()], 
+        bump
+    )]
+    pub mint_counter_collection: Account<'info, MintCounterCollection>,
+
+    /// CHECK:
+    #[account(mut)]
+    pub destination: AccountInfo<'info>,
 
     #[account(
         mut,

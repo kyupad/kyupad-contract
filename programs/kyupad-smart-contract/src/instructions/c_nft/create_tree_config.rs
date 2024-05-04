@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use mpl_bubblegum::instructions::CreateTreeConfigCpiBuilder;
 use spl_account_compression::{program::SplAccountCompression, Noop};
 
-use crate::ID;
+use crate::{Admin, ID};
 
 pub fn create_tree_config(ctx: Context<CreateTree>, max_depth: u32, max_buffer_size: u32, public: Option<bool>, _tree_space: u32) -> Result<()> {
     let seeds: &[&[u8]] = &[b"update_authority"];
@@ -39,6 +39,11 @@ pub struct CreateTree<'info> {
     #[account(mut)]
     pub creator: Signer<'info>,
 
+    #[account(
+        seeds=[b"admin", creator.key().as_ref()],  
+        bump
+    )]
+    pub admin_pda: Account<'info, Admin>,
 
     #[account(mut)]
     /// CHECK:

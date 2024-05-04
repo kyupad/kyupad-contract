@@ -2,7 +2,6 @@
 extern crate dotenv_codegen;
 
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::pubkey;
 use instructions::*;
 
 use const_str_to_pubkey::str_to_pubkey;
@@ -21,6 +20,10 @@ pub mod kyupad_smart_contract {
 
     use super::*;
 
+    pub fn init_admin(ctx: Context<InitAdmin>, address: Pubkey) -> Result<()> {
+        instructions::init_admin(ctx, address)
+    }
+
     pub fn mint_cnft<'c: 'info, 'info>(
         ctx: Context<'_, '_, 'c, 'info, MintcNFT<'info>>,
         merkle_proof: Vec<[u8; 32]>,
@@ -32,8 +35,16 @@ pub mod kyupad_smart_contract {
 
     pub fn init_collection_config<'c: 'info, 'info>(
         ctx: Context<'_, '_, 'c, 'info, InitCollectionConfig<'info>>,
+        init_collection_config_args: InitCollectionConfigArgs,
     ) -> Result<()> {
-        instructions::init_collection_config(ctx)
+        instructions::init_collection_config(ctx, init_collection_config_args)
+    }
+
+    pub fn update_pool_config(
+        ctx: Context<UpdatePoolConfig>,
+        args: UpdatePoolConfigArgs,
+    ) -> Result<()> {
+        instructions::update_pool_config(ctx, args)
     }
 
     pub fn create_collection(ctx: Context<CreateCollection>, data: Vec<u8>) -> Result<()> {

@@ -1,14 +1,18 @@
 use anchor_lang::prelude::*;
 
-use crate::{state::{BpfWriter, PoolConfig}, utils::{assert_keys_equal, create_account}, ID};
+use crate::{state::{BpfWriter, PoolConfig}, utils::{assert_keys_equal, create_account}, Admin, ID};
+
 
 pub fn init_collection_config<'c: 'info, 'info>(    
     ctx: Context<'_, '_, 'c, 'info, InitCollectionConfig<'info>>,
+    init_collection_config_args: InitCollectionConfigArgs,
 ) -> Result<()> {
     
     let collection_mint = &ctx.accounts.collection_mint;
     let pools = &mut ctx.accounts.pools;
+
     pools.collection_mint = collection_mint.key.clone();
+    pools.max_mint_of_wallet = init_collection_config_args.max_mint_of_wallet;
    
     Ok(())
 }
@@ -19,6 +23,12 @@ pub struct InitCollectionConfig<'info> {
     #[account(mut)]
     pub creator: Signer<'info>,
 
+    #[account(
+        seeds=[b"admin", creator.key().as_ref()],  
+        bump
+    )]
+    pub admin_pda: Account<'info, Admin>,
+
     /// CHECK:
     pub collection_mint: AccountInfo<'info>,
 
@@ -26,7 +36,7 @@ pub struct InitCollectionConfig<'info> {
         init_if_needed,
         payer = creator, 
         space = 8 + Pools::INIT_SPACE, 
-        seeds=[b"pools", creator.key().as_ref(), collection_mint.key.as_ref()], 
+        seeds=[b"pools", collection_mint.key.as_ref()], 
         bump
     )]
     pub pools: Account<'info, Pools>,
@@ -34,14 +44,20 @@ pub struct InitCollectionConfig<'info> {
     pub system_program: Program<'info, System>,
 }
 
+#[derive(Debug, AnchorSerialize, AnchorDeserialize, Clone)]
+pub struct InitCollectionConfigArgs {
+    pub max_mint_of_wallet: u8,
+}
+
 #[account]
 #[derive(Debug, InitSpace)]
 pub struct Pools {
     pub collection_mint: Pubkey,
-    #[max_len(5)]
-    pub author: Vec<Pubkey>,
+
     #[max_len(50)]
     pub pools_config: Vec<PoolConfig>,
+
+    pub max_mint_of_wallet: u8,
 }
 
 impl Pools {
