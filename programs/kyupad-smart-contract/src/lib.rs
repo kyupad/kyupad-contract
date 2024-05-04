@@ -3,6 +3,7 @@ extern crate dotenv_codegen;
 
 use anchor_lang::prelude::*;
 use instructions::*;
+use state::*;
 
 use const_str_to_pubkey::str_to_pubkey;
 
@@ -17,11 +18,14 @@ declare_id!(PROGRAM_ID);
 
 #[program]
 pub mod kyupad_smart_contract {
-
     use super::*;
 
-    pub fn init_admin(ctx: Context<InitAdmin>, address: Pubkey) -> Result<()> {
-        instructions::init_admin(ctx, address)
+    pub fn init_admin(
+        ctx: Context<InitAdmin>,
+        address: Pubkey,
+        permissions: Vec<Permission>,
+    ) -> Result<()> {
+        instructions::init_admin(ctx, address, permissions)
     }
 
     pub fn mint_cnft<'c: 'info, 'info>(
@@ -67,4 +71,13 @@ pub mod kyupad_smart_contract {
     ) -> Result<()> {
         instructions::add_pool_config(ctx, pool_config_args)
     }
+
+    pub fn register_project(
+        ctx: Context<RegisterProject>,
+        project_config_args: ProjectConfigArgs,
+    ) -> Result<()> {
+        instructions::register_project(ctx, project_config_args)
+    }
+
+    
 }

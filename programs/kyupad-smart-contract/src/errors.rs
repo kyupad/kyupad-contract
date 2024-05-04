@@ -43,4 +43,7 @@ pub enum KyuPadError {
 
     #[msg("Invalid merkle root")]
     InvalidMerkeRoot,
+
+    #[msg("Dont have right to do this action")]
+    DontHaveRight
 }
