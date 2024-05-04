@@ -12,6 +12,8 @@ pub struct ProjectConfig {
     pub destination: Pubkey,
     pub token_address: Pubkey,
     pub ticket_size: f32,
+    pub token_offered: u32,
+    pub invest_total: u32
 }
 
 impl ProjectConfig {
@@ -29,4 +31,6 @@ pub struct ProjectConfigArgs {
     pub destination: Pubkey,
     pub token_address: Pubkey,
     pub ticket_size: f32,
+    pub token_offered: u32,
+    pub invest_total: u32
 }

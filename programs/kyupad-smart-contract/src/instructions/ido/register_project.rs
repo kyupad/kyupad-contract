@@ -27,7 +27,12 @@ pub fn register_project(
     project.merkle_root = project_config_args.merkle_root;
     project.destination = project_config_args.destination;
     project.token_address = project_config_args.token_address;
-    project.ticket_size = project.ticket_size;
+    project.ticket_size = project_config_args.ticket_size;
+    project.token_offered = project_config_args.token_offered;
+    project.invest_total = project_config_args.invest_total;
+
+    let project_counter = &mut ctx.accounts.project_counter;
+    project_counter.remainning = project_config_args.invest_total;
 
     Ok(())
 }
@@ -52,6 +57,15 @@ pub struct RegisterProject<'info> {
         bump
     )]
     pub project: Account<'info, ProjectConfig>,
+
+    #[account(
+        init_if_needed,
+        payer = creator,
+        space = 8 + ProjectCounter::INIT_SPACE,
+        seeds = [ProjectConfig::PREFIX_SEED, project.key().as_ref()],
+        bump
+    )]
+    pub project_counter: Account<'info, ProjectCounter>,
 
     pub system_program: Program<'info, System>,
 }

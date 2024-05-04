@@ -45,5 +45,8 @@ pub enum KyuPadError {
     InvalidMerkeRoot,
 
     #[msg("Dont have right to do this action")]
-    DontHaveRight
+    DontHaveRight,
+
+    #[msg("The investment is reach limit")]
+    AllowedInvestLimitReached,
 }
