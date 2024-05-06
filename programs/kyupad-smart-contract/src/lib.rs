@@ -13,8 +13,7 @@ pub mod pda;
 pub mod state;
 pub mod utils;
 
-const PROGRAM_ID: Pubkey = str_to_pubkey(dotenv!("PROGRAM_ID"));
-declare_id!(PROGRAM_ID);
+declare_id!("7xxCydutAXo4eicZXAN3JZmFCGg2dLqesGkrd8jAobxZ");
 
 #[program]
 pub mod kyupad_smart_contract {
@@ -79,5 +78,7 @@ pub mod kyupad_smart_contract {
         instructions::ido::register_project(ctx, project_config_args)
     }
 
-    
+    pub fn invest(ctx: Context<Invest>, invest_args: InvestArgs) -> Result<()> {
+        instructions::ido::invest(ctx, invest_args)
+    }
 }

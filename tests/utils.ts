@@ -13,6 +13,22 @@ export const generateWhiteList = (size: number) => {
   return arrayWallet;
 };
 
+export const generateWhiteListInvest = (size: number) => {
+  const arrayWallet: string[] = [];
+
+  let investTotal = 0;
+
+  for (let i = 0; i < size; i++) {
+    const randomNumber = Math.floor(Math.random() * 3) + 1;
+    investTotal += randomNumber;
+
+    arrayWallet.push(
+      Keypair.generate().publicKey.toString() + '_' + randomNumber.toString()
+    );
+  }
+
+  return { arrayWallet, investTotal };
+};
 
 export const generateRandomObjectId = () => {
   const objectId = new ObjectId();

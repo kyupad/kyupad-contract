@@ -37,7 +37,7 @@
 
 // const test = async () => {
 //   const programId = new PublicKey(
-//     'FHPbXuECjkYGrJHnwU2ozrm7TYzoo2c43CZTo3nJEzs'
+//     '7xxCydutAXo4eicZXAN3JZmFCGg2dLqesGkrd8jAobxZ'
 //   );
 
 //   const connection = new Connection(
@@ -105,7 +105,7 @@
 //   );
 
 //   const programId = new PublicKey(
-//     'FHPbXuECjkYGrJHnwU2ozrm7TYzoo2c43CZTo3nJEzs'
+//     '7xxCydutAXo4eicZXAN3JZmFCGg2dLqesGkrd8jAobxZ'
 //   );
 
 //   const connection = new Connection(

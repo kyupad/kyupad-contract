@@ -11,9 +11,9 @@ pub struct ProjectConfig {
     pub merkle_root: Vec<u8>,
     pub destination: Pubkey,
     pub token_address: Pubkey,
-    pub ticket_size: f32,
+    pub ticket_size: u64,
     pub token_offered: u32,
-    pub invest_total: u32
+    pub invest_total: u32,
 }
 
 impl ProjectConfig {
@@ -30,7 +30,7 @@ pub struct ProjectConfigArgs {
     pub merkle_root: Vec<u8>,
     pub destination: Pubkey,
     pub token_address: Pubkey,
-    pub ticket_size: f32,
+    pub ticket_size: u64,
     pub token_offered: u32,
-    pub invest_total: u32
+    pub invest_total: u32,
 }

@@ -47,6 +47,12 @@ pub enum KyuPadError {
     #[msg("Dont have right to do this action")]
     DontHaveRight,
 
-    #[msg("The investment is reach limit")]
-    AllowedInvestLimitReached,
+    #[msg("Projet is out of tickets to buy")]
+    ProjectOutOfTicket,
+
+    #[msg("Invest total is invalid")]
+    InvestTotalInvalid,
+
+    #[msg("Not enough tickets")]
+    NotEnoughTicket
 }

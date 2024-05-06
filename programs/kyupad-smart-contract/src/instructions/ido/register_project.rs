@@ -62,7 +62,7 @@ pub struct RegisterProject<'info> {
         init_if_needed,
         payer = creator,
         space = 8 + ProjectCounter::INIT_SPACE,
-        seeds = [ProjectConfig::PREFIX_SEED, project.key().as_ref()],
+        seeds = [ProjectCounter::PREFIX_SEED, project.key().as_ref()],
         bump
     )]
     pub project_counter: Account<'info, ProjectCounter>,

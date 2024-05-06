@@ -22,12 +22,30 @@ pub fn invest(ctx: Context<Invest>, invest_args: InvestArgs) -> Result<()> {
 
     // check if have enough ticket to invest
     if project_counter.remainning <= 0 {
-        return Err(KyuPadError::AllowedInvestLimitReached.into());
+        return Err(KyuPadError::ProjectOutOfTicket.into());
     }
 
+    let binding = investor_counter.to_account_info();
+    let mut __data: &[u8] = &binding.try_borrow_data()?;
+    let mut __disc_bytes = [0u8; 8];
+    __disc_bytes.copy_from_slice(&__data[..8]);
+    let __discriminator = u64::from_le_bytes(__disc_bytes);
+
     // check if user is enough ticket to invest
-    if invest_args.invest_total > investor_counter.remainning {
-        return Err(KyuPadError::AllowedInvestLimitReached.into());
+    if __discriminator != 0 {
+        msg!(
+            "{} {}",
+            invest_args.invest_total,
+            investor_counter.remainning
+        );
+        if invest_args.invest_total > investor_counter.remainning {
+            return Err(KyuPadError::NotEnoughTicket.into());
+        }
+    } else {
+        investor_counter.remainning = invest_args.invest_max_total;
+        if invest_args.invest_total > invest_args.invest_max_total {
+            return Err(KyuPadError::InvestTotalInvalid.into());
+        }
     }
 
     // check if user have right to invest
@@ -54,12 +72,21 @@ pub fn invest(ctx: Context<Invest>, invest_args: InvestArgs) -> Result<()> {
                 &destination.key(),
                 investor.key,
                 &[],
-                project.ticket_size as u64,
+                project.ticket_size,
                 mint.decimals,
             )
             .unwrap();
 
-            invoke(&transfer_ins, &[])?;
+            invoke(
+                &transfer_ins,
+                &[
+                    token_program.to_account_info(),
+                    source.to_account_info(),
+                    mint.to_account_info(),
+                    destination.to_account_info(),
+                    investor.to_account_info(),
+                ],
+            )?;
         }
     };
 
@@ -80,7 +107,7 @@ pub struct Invest<'info> {
 
     #[account(
         mut,
-        seeds = [ProjectConfig::PREFIX_SEED, project.key().as_ref()],
+        seeds = [ProjectCounter::PREFIX_SEED, project.key().as_ref()],
         bump
     )]
     pub project_counter: Account<'info, ProjectCounter>,
@@ -89,7 +116,7 @@ pub struct Invest<'info> {
         init_if_needed,
         payer = investor,
         space = 8 + InvestorCounter::INIT_SPACE,
-        seeds = [InvestorCounter::PREFIX_SEED, investor.key().as_ref()],
+        seeds = [InvestorCounter::PREFIX_SEED, project.key().as_ref(), investor.key().as_ref()],
         bump
     )]
     pub investor_counter: Account<'info, InvestorCounter>,
