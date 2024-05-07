@@ -13,7 +13,7 @@ pub mod pda;
 pub mod state;
 pub mod utils;
 
-declare_id!("7xxCydutAXo4eicZXAN3JZmFCGg2dLqesGkrd8jAobxZ");
+declare_id!(str_to_pubkey(dotenv!("DEVNET_ROGRAM_ID")));
 
 #[program]
 pub mod kyupad_smart_contract {

@@ -34,3 +34,7 @@ export const generateRandomObjectId = () => {
   const objectId = new ObjectId();
   return objectId.toHexString();
 };
+
+export function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}

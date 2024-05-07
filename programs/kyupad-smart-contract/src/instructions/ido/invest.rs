@@ -72,7 +72,7 @@ pub fn invest(ctx: Context<Invest>, invest_args: InvestArgs) -> Result<()> {
                 &destination.key(),
                 investor.key,
                 &[],
-                project.ticket_size,
+                project.ticket_size * invest_args.invest_total as u64,
                 mint.decimals,
             )
             .unwrap();

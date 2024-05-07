@@ -69,7 +69,7 @@ pub struct Admin {
 #[derive(Debug, AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
 pub enum Permission {
     IdoAdmin,
-    CNFTAdmin,
+    CnftAdmin,
 }
 
 
