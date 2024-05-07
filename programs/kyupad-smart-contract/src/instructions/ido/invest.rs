@@ -44,7 +44,7 @@ pub fn invest(ctx: Context<Invest>, invest_args: InvestArgs) -> Result<()> {
     } else {
         investor_counter.remainning = invest_args.invest_max_total;
         if invest_args.invest_total > invest_args.invest_max_total {
-            return Err(KyuPadError::InvestTotalInvalid.into());
+            return Err(KyuPadError::InvalidTotalInvestment.into());
         }
     }
 

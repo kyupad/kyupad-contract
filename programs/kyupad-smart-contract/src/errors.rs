@@ -51,7 +51,7 @@ pub enum KyuPadError {
     ProjectOutOfTicket,
 
     #[msg("Invest total is invalid")]
-    InvestTotalInvalid,
+    InvalidTotalInvestment,
 
     #[msg("Not enough tickets")]
     NotEnoughTicket
