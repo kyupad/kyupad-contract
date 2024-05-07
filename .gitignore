@@ -12,3 +12,5 @@ solana*
 recover*
 Cargo.lock
 *.lock
+.idea
+.config
