@@ -24,7 +24,7 @@ pub enum KyuPadError {
     AllowedMintLimitReached,
 
     #[msg("Mint time is too early or expired")]
-    NotMintTime,
+    NotInvestTime,
 
     #[msg("This pool config is already in pools")]
     CannotAddPoolConfig,
@@ -46,4 +46,15 @@ pub enum KyuPadError {
 
     #[msg("Dont have right to do this action")]
     DontHaveRight,
+
+    #[msg("Projet is out of tickets to buy")]
+    ProjectOutOfTicket,
+
+    #[msg("Invest total is invalid")]
+    InvalidTotalInvestment,
+
+    #[msg("Not enough tickets")]
+    NotEnoughTicket,
+
+    NeedToPassMintDecimals,
 }

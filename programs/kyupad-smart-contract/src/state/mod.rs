@@ -1,7 +1,7 @@
-pub mod c_nft;
-pub mod ido;
+pub mod mint_counter;
+pub mod pool_config;
 pub mod writer;
 
-pub use c_nft::*;
-pub use ido::*;
+pub use mint_counter::*;
+pub use pool_config::*;
 pub use writer::*;

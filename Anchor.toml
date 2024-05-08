@@ -6,6 +6,7 @@ skip-lint = false
 
 [programs.devnet]
 kyupad_smart_contract = "7xxCydutAXo4eicZXAN3JZmFCGg2dLqesGkrd8jAobxZ"
+kyupad-ido = "8GUpbmx1FkZJJNC9edxaHhUarn71EPETvr86wgPgEHgY"
 
 [programs.mainnet]
 kyupad_smart_contract = "7xxCydutAXo4eicZXAN3JZmFCGg2dLqesGkrd8jAobxZ"
@@ -14,7 +15,7 @@ kyupad_smart_contract = "7xxCydutAXo4eicZXAN3JZmFCGg2dLqesGkrd8jAobxZ"
 url = "https://api.mainnet-beta.solana.com"
 
 [provider]
-cluster = "https://kathlin-5yytwf-fast-devnet.helius-rpc.com"
+cluster = "devnet"
 wallet = "/Users/admin/.config/solana/id.json"
 
 [scripts]

@@ -1182,6 +1182,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "kyupad-ido"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "const_str_to_pubkey",
+ "dotenv_codegen",
+ "spl-associated-token-account 3.0.2",
+ "spl-token",
+]
+
+[[package]]
 name = "kyupad-smart-contract"
 version = "0.1.1"
 dependencies = [

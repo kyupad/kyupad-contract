@@ -1,24 +1,35 @@
 use anchor_lang::prelude::*;
 use spl_token::{
     instruction::transfer_checked,
-    solana_program::{self, program::invoke},
+    solana_program::{self, program::invoke, system_instruction},
 };
-
-use anchor_spl::token::{Mint, Token, TokenAccount};
 
 use crate::*;
 
-use self::{errors::KyuPadError, utils::verify};
+use anchor_spl::token::Mint;
 
-pub fn invest(ctx: Context<Invest>, invest_args: InvestArgs) -> Result<()> {
-    let project_counter = &mut ctx.accounts.project_counter;
+use self::{
+    errors::KyuPadError,
+    utils::{assert_keys_equal, verify},
+};
+
+pub fn invest<'c: 'info, 'info>(
+    ctx: Context<'_, '_, 'c, 'info, Invest<'info>>,
+    invest_args: InvestArgs,
+) -> Result<()> {
+    let project_counter: &mut Account<ProjectCounter> = &mut ctx.accounts.project_counter;
     let project = &ctx.accounts.project;
     let investor_counter = &mut ctx.accounts.investor_counter;
     let investor = &ctx.accounts.investor;
-    let token_program = &ctx.accounts.token_program;
-    let mint = &ctx.accounts.mint;
-    let source = &ctx.accounts.source;
     let destination = &ctx.accounts.destination;
+    let system_program = &ctx.accounts.system_program;
+
+    // Check if in the time allow
+    let clock = Clock::get()?;
+    let current_timestamp = clock.unix_timestamp;
+    if current_timestamp < project.start_date || current_timestamp > project.end_date {
+        return Err(KyuPadError::NotInvestTime.into());
+    }
 
     // check if have enough ticket to invest
     if project_counter.remainning <= 0 {
@@ -33,11 +44,6 @@ pub fn invest(ctx: Context<Invest>, invest_args: InvestArgs) -> Result<()> {
 
     // check if user is enough ticket to invest
     if __discriminator != 0 {
-        msg!(
-            "{} {}",
-            invest_args.invest_total,
-            investor_counter.remainning
-        );
         if invest_args.invest_total > investor_counter.remainning {
             return Err(KyuPadError::NotEnoughTicket.into());
         }
@@ -65,28 +71,53 @@ pub fn invest(ctx: Context<Invest>, invest_args: InvestArgs) -> Result<()> {
             project_counter.remainning -= invest_args.invest_total as u32;
             investor_counter.remainning -= invest_args.invest_total;
 
-            let transfer_ins = transfer_checked(
-                token_program.key,
-                &source.key(),
-                &mint.key(),
-                &destination.key(),
-                investor.key,
-                &[],
-                project.ticket_size * invest_args.invest_total as u64,
-                mint.decimals,
-            )
-            .unwrap();
+            match project.token_address {
+                Some(token_address) => {
+                    let list_remainning_accounts = &mut ctx.remaining_accounts.iter();
+                    let token_program = next_account_info(list_remainning_accounts)?;
+                    let mint = next_account_info(list_remainning_accounts)?;
+                    let source = next_account_info(list_remainning_accounts)?;
 
-            invoke(
-                &transfer_ins,
-                &[
-                    token_program.to_account_info(),
-                    source.to_account_info(),
-                    mint.to_account_info(),
-                    destination.to_account_info(),
-                    investor.to_account_info(),
-                ],
-            )?;
+                    let mint_data: Account<Mint> = Account::try_from(mint)?;
+
+                    assert_keys_equal(&mint.key(), &token_address)?;
+
+                    invoke(
+                        &transfer_checked(
+                            token_program.key,
+                            &source.key(),
+                            &mint.key(),
+                            &destination.key(),
+                            investor.key,
+                            &[],
+                            project.ticket_size * invest_args.invest_total as u64,
+                            mint_data.decimals,
+                        )
+                        .unwrap(),
+                        &[
+                            token_program.to_account_info(),
+                            source.to_account_info(),
+                            mint.to_account_info(),
+                            destination.to_account_info(),
+                            investor.to_account_info(),
+                        ],
+                    )?;
+                }
+                None => {
+                    invoke(
+                        &system_instruction::transfer(
+                            &investor.key(),
+                            &destination.key(),
+                            project.ticket_size * invest_args.invest_total as u64,
+                        ),
+                        &[
+                            investor.to_account_info().clone(),
+                            destination.to_account_info(),
+                            system_program.to_account_info(),
+                        ],
+                    )?;
+                }
+            }
         }
     };
 
@@ -122,15 +153,10 @@ pub struct Invest<'info> {
     pub investor_counter: Account<'info, InvestorCounter>,
 
     #[account(mut)]
-    pub mint: Account<'info, Mint>,
+    /// CHECK:
+    pub destination: AccountInfo<'info>,
 
-    #[account(mut)]
-    pub source: Account<'info, TokenAccount>,
-
-    #[account(mut)]
-    pub destination: Account<'info, TokenAccount>,
-
-    pub token_program: Program<'info, Token>,
+    // pub token_program: AccountInfo<'info>,
     pub system_program: Program<'info, System>,
 }
 
