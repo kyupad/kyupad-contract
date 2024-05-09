@@ -38,7 +38,10 @@ pub fn add_pool_config<'c: 'info, 'info>(
 #[derive(Accounts)]
 #[instruction(pool_config_args: PoolConfigArgs)]
 pub struct AddPoolConfig<'info> {
-    #[account(mut)]
+    #[account(
+        mut,         
+        constraint = creator.key() == admin_pda.admin_key
+    )]
     pub creator: Signer<'info>,
 
     #[account(

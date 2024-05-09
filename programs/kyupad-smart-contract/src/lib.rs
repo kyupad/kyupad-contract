@@ -21,9 +21,8 @@ pub mod kyupad_smart_contract {
     pub fn init_admin(
         ctx: Context<InitAdmin>,
         address: Pubkey,
-        permissions: Vec<Permission>,
     ) -> Result<()> {
-        instructions::init_admin(ctx, address, permissions)
+        instructions::init_admin(ctx, address)
     }
 
     pub fn mint_cnft<'c: 'info, 'info>(

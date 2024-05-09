@@ -36,7 +36,11 @@ pub fn create_tree_config(ctx: Context<CreateTree>, max_depth: u32, max_buffer_s
 #[derive(Accounts)]
 #[instruction(_tree_space: u32)]
 pub struct CreateTree<'info> {
-    #[account(mut)]
+    #[account(
+        mut,         
+        constraint = creator.key() == admin_pda.admin_key
+    )]    
+    
     pub creator: Signer<'info>,
 
     #[account(

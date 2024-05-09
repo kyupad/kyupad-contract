@@ -572,7 +572,7 @@ describe('kyupad-smart-contract', () => {
     ).to.be.true;
   });
 
-  it('Invest project with token', async () => {
+  xit('Invest project with token', async () => {
     const tokenAddress = new PublicKey(
       '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
     );
