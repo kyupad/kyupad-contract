@@ -1,6 +1,5 @@
 use anchor_lang::prelude::*;
 use mpl_bubblegum::instructions::CreateTreeConfigCpiBuilder;
-use spl_account_compression::{program::SplAccountCompression, Noop};
 
 use crate::{Admin, ID};
 
@@ -71,6 +70,8 @@ pub struct CreateTree<'info> {
 
     /// CHECK:
     pub mpl_bubble_gum_program: AccountInfo<'info>, // 1
-    pub compression_program: Program<'info, SplAccountCompression>, // 2
-    pub log_wrapper: Program<'info, Noop>, // 3
+    /// CHECK:
+    pub compression_program: AccountInfo<'info>, // 2
+    /// CHECK:
+    pub log_wrapper: AccountInfo<'info>, // 3
 }

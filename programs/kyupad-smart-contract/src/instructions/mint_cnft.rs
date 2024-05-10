@@ -9,8 +9,6 @@ use anchor_lang::solana_program;
 use mint_counter::MintCounter;
 use mpl_bubblegum::instructions::MintToCollectionV1CpiBuilder;
 use mpl_bubblegum::types::MetadataArgs;
-use spl_account_compression::program::SplAccountCompression;
-use spl_account_compression::Noop;
 
 pub fn mint_cft<'c: 'info, 'info>(
     ctx: Context<'_, '_, 'c, 'info, MintcNFT<'info>>,
@@ -213,8 +211,10 @@ pub struct MintcNFT<'info> {
     pub edition_account: AccountInfo<'info>,
     /// CHECK: This is just used as a signing PDA.
     pub bubblegum_signer: UncheckedAccount<'info>,
-    pub log_wrapper: Program<'info, Noop>,
-    pub compression_program: Program<'info, SplAccountCompression>,
+    /// CHECK:
+    pub log_wrapper: AccountInfo<'info>,
+    /// CHECK:
+    pub compression_program: AccountInfo<'info>,
     /// CHECK:
     pub token_metadata_program: AccountInfo<'info>,
     pub system_program: Program<'info, System>,

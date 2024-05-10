@@ -2,7 +2,9 @@ use anchor_lang::prelude::*;
 
 use crate::Master;
 
-pub fn add_admin(_ctx: Context<AddAdmin>, _address: Pubkey) -> Result<()> {
+pub fn add_admin(ctx: Context<AddAdmin>, address: Pubkey) -> Result<()> {
+    let admin_pda = &mut ctx.accounts.admin_pda;
+    admin_pda.admin_key = address;
     Ok(())
 }
 
@@ -23,7 +25,7 @@ pub fn delete_admin(ctx: Context<DeleteAdmin>, _address: Pubkey) -> Result<()> {
 }
 
 #[derive(Accounts)]
-#[instruction(_address: Pubkey)]
+#[instruction(address: Pubkey)]
 pub struct AddAdmin<'info> {
     #[account(
         mut,
@@ -39,10 +41,10 @@ pub struct AddAdmin<'info> {
 
     /// CHECK
     #[account(
-        init, 
+        init_if_needed, 
         payer = signer, 
         space = 8 + Admin::INIT_SPACE, 
-        seeds = [b"admin", _address.key().as_ref()], 
+        seeds = [b"admin", address.key().as_ref()], 
         bump
      )]
     pub admin_pda: Account<'info, Admin>,
