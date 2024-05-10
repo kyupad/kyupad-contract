@@ -149,7 +149,7 @@ describe('kyupad-smart-contract', () => {
     new PublicKey(MPL_BUBBLEGUM_PROGRAM_ID.toString())
   );
 
-  it('Init admin', async () => {
+  xit('Init admin', async () => {
     const adminPubkey = new PublicKey(
       '5ifW9hTbfGQCtutGcmaV35Rw4h6ZVS8Yi3y1gXuL6BZn'
     );

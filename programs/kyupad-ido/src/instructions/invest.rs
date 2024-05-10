@@ -49,6 +49,9 @@ pub fn invest<'c: 'info, 'info>(
         }
     } else {
         investor_counter.remainning = invest_args.invest_max_total;
+        investor_counter.wallet = *investor.key;
+        investor_counter.project_id = invest_args.project_id;
+
         if invest_args.invest_total > invest_args.invest_max_total {
             return Err(KyuPadError::InvalidTotalInvestment.into());
         }
