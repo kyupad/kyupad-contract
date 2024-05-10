@@ -32,15 +32,18 @@ pub fn update_destination(ctx: Context<UpdateDestination>, _project_id: String) 
 #[derive(Accounts)]
 #[instruction(update_config_project: UpdateProjectConfigArgs)]
 pub struct UpdateProjectConfig<'info> {
-    #[account(mut)]
-    pub signer: Signer<'info>,
+    #[account(
+        mut,
+        constraint = creator.key() == admin_pda.admin_key
+    )]
+    pub creator: Signer<'info>,
 
     #[account(
-        seeds=[b"admin", signer.key().as_ref()],  
+        seeds=[b"admin", creator.key().as_ref()],  
         bump
     )]
-    /// CHECK
-    pub admin_pda: AccountInfo<'info>,
+    /// CHECK:
+    pub admin_pda: Account<'info, Admin>,
 
     #[account(
         mut,

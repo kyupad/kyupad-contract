@@ -39,13 +39,13 @@ pub struct AddAdmin<'info> {
 
     /// CHECK
     #[account(
-        init_if_needed, 
+        init, 
         payer = signer, 
-        space = 0, 
+        space = 8 + Admin::INIT_SPACE, 
         seeds = [b"admin", _address.key().as_ref()], 
         bump
      )]
-    pub admin_pda: AccountInfo<'info>,
+    pub admin_pda: Account<'info, Admin>,
 
     pub system_program: Program<'info, System>,
 }
@@ -72,4 +72,10 @@ pub struct DeleteAdmin<'info> {
     )]
     /// CHECK:
     pub admin_pda: AccountInfo<'info>,
+}
+
+#[account]
+#[derive(Debug,InitSpace)]
+pub struct Admin {
+    pub admin_key: Pubkey
 }

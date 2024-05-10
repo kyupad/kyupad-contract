@@ -34,10 +34,6 @@ import { bs58 } from '@coral-xyz/anchor/dist/cjs/utils/bytes';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-import _ from 'lodash';
-import { Option } from '@metaplex-foundation/umi';
-import { Done } from 'mocha';
-
 type ProjectConfigArgs = IdlTypes<KyupadIdo>['ProjectConfigArgs'];
 type InvestArgs = IdlTypes<KyupadIdo>['InvestArgs'];
 
@@ -325,7 +321,7 @@ describe('Test Kyupad IDO', () => {
     });
   });
 
-  describe('🔑🔑🔑Test decentralize permission', async () => {
+  describe('🔑🔑🔑 Test decentralize permission', async () => {
     xit('Init master', async () => {
       const [masterPda] = PublicKey.findProgramAddressSync(
         [Buffer.from('master')],
@@ -374,8 +370,11 @@ describe('Test Kyupad IDO', () => {
       ).to.be.true;
     });
 
-    xit('Add admin', async () => {
-      const adminAddress = upgradableAuthority.publicKey;
+    it('Add admin', async () => {
+      const adminAddress = new PublicKey(
+        'CY92ruXbHmeaNiGqaZ9mXnXFPTjgfq2pHDuoM5VgWY1V'
+      );
+
       const [masterPda] = PublicKey.findProgramAddressSync(
         [Buffer.from('master')],
         program.programId
@@ -2971,146 +2970,146 @@ describe('Test Kyupad IDO', () => {
       });
     });
 
-    // xit('Invest project with sol', async () => {
-    //   const destination = Keypair.generate().publicKey;
+    xit('Invest project with sol', async () => {
+      const destination = Keypair.generate().publicKey;
 
-    //   let { arrayWallet, investTotal } = generateWhiteListInvest(9999);
+      let { arrayWallet, investTotal } = generateWhiteListInvest(9999);
 
-    //   const randomNumber = Math.floor(Math.random() * 3) + 1;
-    //   const test =
-    //     upgradableAuthority.publicKey.toString() +
-    //     '_' +
-    //     randomNumber.toString();
-    //   arrayWallet.push(test);
+      const randomNumber = Math.floor(Math.random() * 3) + 1;
+      const test =
+        upgradableAuthority.publicKey.toString() +
+        '_' +
+        randomNumber.toString();
+      arrayWallet.push(test);
 
-    //   investTotal += randomNumber;
+      investTotal += randomNumber;
 
-    //   const leafNode = arrayWallet.map((addr) => keccak256(addr));
-    //   const merkleTree = new MerkleTree(leafNode, keccak256, {
-    //     sortPairs: true,
-    //   });
+      const leafNode = arrayWallet.map((addr) => keccak256(addr));
+      const merkleTree = new MerkleTree(leafNode, keccak256, {
+        sortPairs: true,
+      });
 
-    //   const merkle_root = merkleTree.getRoot();
+      const merkle_root = merkleTree.getRoot();
 
-    //   const id = generateRandomObjectId();
-    //   const startDate = new BN(Math.floor(Date.now() / 1000));
-    //   const endDate = new BN(Math.floor(Date.now() / 1000) + 3000);
+      const id = generateRandomObjectId();
+      const startDate = new BN(Math.floor(Date.now() / 1000));
+      const endDate = new BN(Math.floor(Date.now() / 1000) + 3000);
 
-    //   const tokenOffered = 1_000_000;
-    //   const ticketSizeSol = 0.1;
-    //   const ticketSize = new BN(ticketSizeSol * LAMPORTS_PER_SOL);
+      const tokenOffered = 1_000_000;
+      const ticketSizeSol = 0.1;
+      const ticketSize = new BN(ticketSizeSol * LAMPORTS_PER_SOL);
 
-    //   const projectConfigArgs: ProjectConfigArgs = {
-    //     id: id,
-    //     startDate: startDate,
-    //     endDate: endDate,
-    //     merkleRoot: merkle_root,
-    //     tokenAddress: null,
-    //     ticketSize: ticketSize,
-    //     tokenOffered: tokenOffered,
-    //     investTotal: investTotal,
-    //   };
+      const projectConfigArgs: ProjectConfigArgs = {
+        id: id,
+        startDate: startDate,
+        endDate: endDate,
+        merkleRoot: merkle_root,
+        tokenAddress: null,
+        ticketSize: ticketSize,
+        tokenOffered: tokenOffered,
+        investTotal: investTotal,
+      };
 
-    //   const [project] = PublicKey.findProgramAddressSync(
-    //     [Buffer.from('project_config'), Buffer.from(projectConfigArgs.id)],
-    //     program.programId
-    //   );
+      const [project] = PublicKey.findProgramAddressSync(
+        [Buffer.from('project_config'), Buffer.from(projectConfigArgs.id)],
+        program.programId
+      );
 
-    //   const [projectCounter] = PublicKey.findProgramAddressSync(
-    //     [Buffer.from('project_counter'), project.toBuffer()],
-    //     program.programId
-    //   );
+      const [projectCounter] = PublicKey.findProgramAddressSync(
+        [Buffer.from('project_counter'), project.toBuffer()],
+        program.programId
+      );
 
-    //   const [adminPda] = PublicKey.findProgramAddressSync(
-    //     [Buffer.from('admin'), upgradableAuthority.publicKey.toBuffer()],
-    //     program.programId
-    //   );
+      const [adminPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from('admin'), upgradableAuthority.publicKey.toBuffer()],
+        program.programId
+      );
 
-    //   const registerProjectIns = await program.methods
-    //     .registerProject(projectConfigArgs)
-    //     .accounts({
-    //       adminPda: adminPda,
-    //       creator: upgradableAuthority.publicKey,
-    //       project: project,
-    //       projectCounter: projectCounter,
-    //       destination: destination,
-    //     })
-    //     .instruction();
+      const registerProjectIns = await program.methods
+        .registerProject(projectConfigArgs)
+        .accounts({
+          adminPda: adminPda,
+          creator: upgradableAuthority.publicKey,
+          project: project,
+          projectCounter: projectCounter,
+          destination: destination,
+        })
+        .instruction();
 
-    //   const getProof = merkleTree.getProof(keccak256(test));
-    //   const merkle_proof = getProof.map((item) => Array.from(item.data));
+      const getProof = merkleTree.getProof(keccak256(test));
+      const merkle_proof = getProof.map((item) => Array.from(item.data));
 
-    //   const userInvestTotal =
-    //     randomNumber - 1 === 0 ? randomNumber : randomNumber - 1;
+      const userInvestTotal =
+        randomNumber - 1 === 0 ? randomNumber : randomNumber - 1;
 
-    //   const investArgs: InvestArgs = {
-    //     projectId: projectConfigArgs.id,
-    //     investTotal: userInvestTotal,
-    //     investMaxTotal: randomNumber,
-    //     merkleProof: merkle_proof,
-    //   };
+      const investArgs: InvestArgs = {
+        projectId: projectConfigArgs.id,
+        investTotal: userInvestTotal,
+        investMaxTotal: randomNumber,
+        merkleProof: merkle_proof,
+      };
 
-    //   const [investCounter] = PublicKey.findProgramAddressSync(
-    //     [
-    //       Buffer.from('invest_counter'),
-    //       project.toBuffer(),
-    //       upgradableAuthority.publicKey.toBuffer(),
-    //     ],
-    //     program.programId
-    //   );
+      const [investCounter] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from('invest_counter'),
+          project.toBuffer(),
+          upgradableAuthority.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
 
-    //   const investIns = await program.methods
-    //     .invest(investArgs)
-    //     .accounts({
-    //       investor: upgradableAuthority.publicKey,
-    //       project: project,
-    //       projectCounter: projectCounter,
-    //       investorCounter: investCounter,
-    //       destination: destination,
-    //     })
-    //     .signers([upgradableAuthority])
-    //     .instruction();
+      const investIns = await program.methods
+        .invest(investArgs)
+        .accounts({
+          investor: upgradableAuthority.publicKey,
+          project: project,
+          projectCounter: projectCounter,
+          investorCounter: investCounter,
+          destination: destination,
+        })
+        .signers([upgradableAuthority])
+        .instruction();
 
-    //   const tx = new Transaction().add(registerProjectIns).add(investIns);
+      const tx = new Transaction().add(registerProjectIns).add(investIns);
 
-    //   tx.feePayer = upgradableAuthority.publicKey;
-    //   tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+      tx.feePayer = upgradableAuthority.publicKey;
+      tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
 
-    //   tx.partialSign(upgradableAuthority);
+      tx.partialSign(upgradableAuthority);
 
-    //   const sig = await connection.sendTransaction(tx, [upgradableAuthority], {
-    //     skipPreflight: true,
-    //   });
+      const sig = await connection.sendTransaction(tx, [upgradableAuthority], {
+        skipPreflight: true,
+      });
 
-    //   console.log('Invest: ', sig);
+      console.log('Invest: ', sig);
 
-    //   await sleep(2000);
+      await sleep(2000);
 
-    //   const projectCounterData = await program.account.projectCounter.fetch(
-    //     projectCounter
-    //   );
+      const projectCounterData = await program.account.projectCounter.fetch(
+        projectCounter
+      );
 
-    //   const expectedBalance = await connection.getBalance(destination);
+      const expectedBalance = await connection.getBalance(destination);
 
-    //   expect(
-    //     expectedBalance,
-    //     'Expected destination balace equal ticketSOL'
-    //   ).to.eq(ticketSize.toNumber() * userInvestTotal);
+      expect(
+        expectedBalance,
+        'Expected destination balace equal ticketSOL'
+      ).to.eq(ticketSize.toNumber() * userInvestTotal);
 
-    //   expect(
-    //     projectCounterData.remainning,
-    //     "Project counter should be equal investotal - user's invest total"
-    //   ).to.eq(investTotal - userInvestTotal);
+      expect(
+        projectCounterData.remainning,
+        "Project counter should be equal investotal - user's invest total"
+      ).to.eq(investTotal - userInvestTotal);
 
-    //   const investCounterData = await program.account.investorCounter.fetch(
-    //     investCounter
-    //   );
+      const investCounterData = await program.account.investorCounter.fetch(
+        investCounter
+      );
 
-    //   expect(
-    //     investCounterData.remainning,
-    //     'User invest counter should be equal 0 or 1'
-    //   ).to.eq(randomNumber - userInvestTotal);
-    // });
+      expect(
+        investCounterData.remainning,
+        'User invest counter should be equal 0 or 1'
+      ).to.eq(randomNumber - userInvestTotal);
+    });
 
     // xit('Invest project with token', async () => {
     //   const tokenAddress = new PublicKey(

@@ -65,7 +65,10 @@ pub fn register_project<'c: 'info, 'info>(
 #[derive(Accounts)]
 #[instruction(project_config_args: ProjectConfigArgs)]
 pub struct RegisterProject<'info> {
-    #[account(mut)]
+    #[account(
+        mut,
+        constraint = creator.key() == admin_pda.admin_key
+    )]
     pub creator: Signer<'info>,
 
     #[account(
@@ -73,7 +76,7 @@ pub struct RegisterProject<'info> {
         bump
     )]
     /// CHECK:
-    pub admin_pda: AccountInfo<'info>,
+    pub admin_pda: Account<'info, Admin>,
 
     #[account(
         init_if_needed,
