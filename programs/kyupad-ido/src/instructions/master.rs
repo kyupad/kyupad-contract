@@ -1,5 +1,7 @@
 use anchor_lang::prelude::*;
 
+use crate::{program::KyupadIdo, ID};
+
 pub fn init_master(ctx: Context<InitMaster>, address: Pubkey) -> Result<()> {
     let master = &mut ctx.accounts.master_pda;
     master.master_key = address;
@@ -30,9 +32,11 @@ pub struct InitMaster<'info> {
 
     pub system_program: Program<'info, System>,
 
-    #[account(
-        constraint = kyupad_program_data.upgrade_authority_address == Some(signer.key()))]
-    pub kyupad_program_data: Account<'info, ProgramData>,
+    #[account(constraint = program.programdata_address()? == Some(program_data.key()))]
+    pub program: Program<'info, KyupadIdo>,
+
+    #[account(constraint = program_data.upgrade_authority_address == Some(signer.key()))]
+    pub program_data: Account<'info, ProgramData>,
 }
 
 #[derive(Accounts)]
@@ -45,6 +49,7 @@ pub struct TransferMasterRights<'info> {
 
     #[account(
         mut,
+        owner = ID,
         seeds = [b"master"], 
         bump
      )]

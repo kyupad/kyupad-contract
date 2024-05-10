@@ -135,14 +135,16 @@ pub struct Invest<'info> {
 
     #[account(
         seeds = [ProjectConfig::PREFIX_SEED, invest_args.project_id.as_bytes()],
-        bump
+        bump,
+        owner = ID,
     )]
     pub project: Account<'info, ProjectConfig>,
 
     #[account(
         mut,
         seeds = [ProjectCounter::PREFIX_SEED, project.key().as_ref()],
-        bump
+        bump,
+        owner = ID,
     )]
     pub project_counter: Account<'info, ProjectCounter>,
 

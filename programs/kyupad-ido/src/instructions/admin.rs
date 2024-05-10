@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::Master;
+use crate::{Master, ID};
 
 pub fn add_admin(ctx: Context<AddAdmin>, address: Pubkey) -> Result<()> {
     let admin_pda = &mut ctx.accounts.admin_pda;
@@ -36,12 +36,13 @@ pub struct AddAdmin<'info> {
     #[account(
         seeds = [b"master"],
         bump,
+        owner = ID,
     )]
     pub master_pda: Account<'info, Master>,
 
     /// CHECK
     #[account(
-        init_if_needed, 
+        init, 
         payer = signer, 
         space = 8 + Admin::INIT_SPACE, 
         seeds = [b"admin", address.key().as_ref()], 
@@ -64,13 +65,15 @@ pub struct DeleteAdmin<'info> {
     #[account(
         seeds = [b"master"],
         bump,
+        owner = ID,
     )]
     pub master_pda: Account<'info, Master>,
 
     #[account(
         mut, 
         seeds = [b"admin",_address.key().as_ref() ], 
-        bump
+        bump,
+        owner = ID,
     )]
     /// CHECK:
     pub admin_pda: AccountInfo<'info>,

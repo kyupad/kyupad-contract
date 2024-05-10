@@ -73,7 +73,8 @@ pub struct RegisterProject<'info> {
 
     #[account(
         seeds=[b"admin", creator.key().as_ref()],  
-        bump
+        bump,
+        owner = ID,
     )]
     /// CHECK:
     pub admin_pda: Account<'info, Admin>,

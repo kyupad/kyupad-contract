@@ -40,7 +40,8 @@ pub struct UpdateProjectConfig<'info> {
 
     #[account(
         seeds=[b"admin", creator.key().as_ref()],  
-        bump
+        bump,
+        owner = ID,
     )]
     /// CHECK:
     pub admin_pda: Account<'info, Admin>,
@@ -48,7 +49,8 @@ pub struct UpdateProjectConfig<'info> {
     #[account(
         mut,
         seeds = [ProjectConfig::PREFIX_SEED, update_config_project.project_id.as_bytes()],
-        bump
+        bump,
+        owner = ID,
     )]
     pub project: Account<'info, ProjectConfig>,
 }
@@ -64,14 +66,17 @@ pub struct UpdateDestination<'info> {
 
     #[account(
         seeds = [b"master"],
-        bump,
+        bump,       
+        owner = ID,
+
     )]
     pub master_pda: Account<'info, Master>,
 
     #[account(
         mut,
         seeds = [ProjectConfig::PREFIX_SEED, _project_id.as_bytes()],
-        bump
+        bump,
+        owner = ID,
     )]
     pub project: Account<'info, ProjectConfig>,
 
