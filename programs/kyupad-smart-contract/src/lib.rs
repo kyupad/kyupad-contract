@@ -12,7 +12,7 @@ pub mod instructions;
 pub mod state;
 pub mod utils;
 
-declare_id!(str_to_pubkey(dotenv!("DEVNET_ROGRAM_ID")));
+declare_id!(str_to_pubkey(dotenv!("NFT_PROGRAM_ID")));
 
 #[program]
 pub mod kyupad_smart_contract {
