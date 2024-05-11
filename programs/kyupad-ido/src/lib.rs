@@ -7,7 +7,11 @@ pub mod instructions;
 pub mod state;
 pub mod utils;
 
-declare_id!("DwFzHZexbYr1r3uKnh9rgAKwbyHcznXGXceE3dami4nk");
+#[macro_use]
+extern crate dotenv_codegen;
+use const_str_to_pubkey::str_to_pubkey;
+
+declare_id!(str_to_pubkey(dotenv!("IDO_PROGRAM_ID")));
 
 #[program]
 pub mod kyupad_ido {
