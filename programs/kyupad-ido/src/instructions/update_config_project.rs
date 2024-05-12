@@ -11,9 +11,9 @@ pub fn update_project_config(
 
     project.merkle_root = update_config_project.merkle_root;
 
-    match &update_config_project.invest_total {
-        Some(invest_total) => {
-            project.invest_total = *invest_total;
+    match &update_config_project.total_ticket {
+        Some(total_ticket) => {
+            project.total_ticket = *total_ticket;
         }
         None => {}
     }
@@ -25,7 +25,7 @@ pub fn update_destination(ctx: Context<UpdateDestination>, _project_id: String) 
     let project = &mut ctx.accounts.project;
     let destination = &ctx.accounts.destination;
 
-    project.destination = destination.key();
+    project.investment_destination = destination.key();
     Ok(())
 }
 
@@ -87,7 +87,7 @@ pub struct UpdateDestination<'info> {
 pub struct UpdateProjectConfigArgs {
     pub project_id: String,
     pub merkle_root: Vec<u8>,
-    pub invest_total: Option<u32>,
+    pub total_ticket: Option<u32>,
 }
 
 #[derive(Debug, AnchorSerialize, AnchorDeserialize)]

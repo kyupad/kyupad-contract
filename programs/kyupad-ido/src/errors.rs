@@ -22,4 +22,6 @@ pub enum KyuPadError {
     NotEnoughTicket,
 
     NeedToPassMintDecimals,
+
+    TransferIsError,
 }

@@ -44,8 +44,8 @@ type ProjectConfig = {
   tokenAddress: PublicKey;
   ticketSize: BN;
   tokenOffered: number;
-  investTotal: number;
-  destination: PublicKey;
+  totalTicket: number;
+  investmentDestination: PublicKey;
   tokenProgram: PublicKey;
 };
 
@@ -64,10 +64,10 @@ describe('Test Kyupad IDO', () => {
   );
 
   describe('📦📦📦 Register project', async () => {
-    xit('Register project with sol', async () => {
-      const destination = upgradableAuthority.publicKey;
+    it('Register project with sol', async () => {
+      const investmentDestination = upgradableAuthority.publicKey;
 
-      let { arrayWallet, investTotal } = generateWhiteListInvest(9999);
+      let { arrayWallet, totalTicket } = generateWhiteListInvest(9999);
 
       const randomNumber = Math.floor(Math.random() * 3) + 1;
       const test =
@@ -76,7 +76,7 @@ describe('Test Kyupad IDO', () => {
         randomNumber.toString();
       arrayWallet.push(test);
 
-      investTotal += randomNumber;
+      totalTicket += randomNumber;
 
       const leafNode = arrayWallet.map((addr) => keccak256(addr));
       const merkleTree = new MerkleTree(leafNode, keccak256, {
@@ -100,7 +100,7 @@ describe('Test Kyupad IDO', () => {
         tokenAddress: null,
         ticketSize: ticketSize,
         tokenOffered: tokenOffered,
-        investTotal: investTotal,
+        totalTicket: totalTicket,
       };
 
       const [project] = PublicKey.findProgramAddressSync(
@@ -108,24 +108,11 @@ describe('Test Kyupad IDO', () => {
         program.programId
       );
 
-      const [projectCounter] = PublicKey.findProgramAddressSync(
-        [Buffer.from('project_counter'), project.toBuffer()],
-        program.programId
-      );
-
-      const [adminPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from('admin'), upgradableAuthority.publicKey.toBuffer()],
-        program.programId
-      );
-
       const registerProjectIns = await program.methods
         .registerProject(projectConfigArgs)
         .accounts({
-          // adminPda: adminPda,
           creator: upgradableAuthority.publicKey,
-          // project: project,
-          // projectCounter: projectCounter,
-          destination: destination,
+          investmentDestination: investmentDestination,
         })
         .instruction();
 
@@ -150,7 +137,7 @@ describe('Test Kyupad IDO', () => {
 
       const projectDataInput: ProjectConfig = {
         ...projectConfigArgs,
-        destination: destination,
+        investmentDestination: investmentDestination,
         tokenProgram: null,
       };
 
@@ -174,147 +161,135 @@ describe('Test Kyupad IDO', () => {
       ).to.be.true;
     });
 
-    // xit('Register project with token', async () => {
-    //   const tokenAddress = new PublicKey(
-    //     '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
-    //   );
+    it('Register project with token', async () => {
+      const tokenAddress = new PublicKey(
+        '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
+      );
 
-    //   const tokenData = await getMint(connection, tokenAddress);
+      const tokenData = await getMint(connection, tokenAddress);
 
-    //   const receiver = Keypair.generate().publicKey;
+      const receiver = Keypair.generate().publicKey;
 
-    //   const destination = (
-    //     await getOrCreateAssociatedTokenAccount(
-    //       connection,
-    //       upgradableAuthority,
-    //       tokenAddress,
-    //       receiver
-    //     )
-    //   ).address;
+      const investmentDestination = (
+        await getOrCreateAssociatedTokenAccount(
+          connection,
+          upgradableAuthority,
+          tokenAddress,
+          receiver
+        )
+      ).address;
 
-    //   let { arrayWallet, investTotal } = generateWhiteListInvest(9999);
+      let { arrayWallet, totalTicket } = generateWhiteListInvest(9999);
 
-    //   const randomNumber = Math.floor(Math.random() * 3) + 1;
-    //   const test =
-    //     upgradableAuthority.publicKey.toString() +
-    //     '_' +
-    //     randomNumber.toString();
-    //   arrayWallet.push(test);
+      const randomNumber = Math.floor(Math.random() * 3) + 1;
+      const test =
+        upgradableAuthority.publicKey.toString() +
+        '_' +
+        randomNumber.toString();
+      arrayWallet.push(test);
 
-    //   investTotal += randomNumber;
+      totalTicket += randomNumber;
 
-    //   const leafNode = arrayWallet.map((addr) => keccak256(addr));
-    //   const merkleTree = new MerkleTree(leafNode, keccak256, {
-    //     sortPairs: true,
-    //   });
+      const leafNode = arrayWallet.map((addr) => keccak256(addr));
+      const merkleTree = new MerkleTree(leafNode, keccak256, {
+        sortPairs: true,
+      });
 
-    //   const merkle_root = merkleTree.getRoot();
+      const merkle_root = merkleTree.getRoot();
 
-    //   const id = generateRandomObjectId();
-    //   const startDate = new BN(Math.floor(Date.now() / 1000));
-    //   const endDate = new BN(Math.floor(Date.now() / 1000) + 3000);
+      const id = generateRandomObjectId();
+      const startDate = new BN(Math.floor(Date.now() / 1000));
+      const endDate = new BN(Math.floor(Date.now() / 1000) + 3000);
 
-    //   const tokenOffered = 100000; // 100 000 token KYUPAD
-    //   const ticketSize = 100; // 100 USDT per ticket
-    //   // const price = (investTotal * ticketSize) / tokenOffered;
+      const tokenOffered = 100000; // 100 000 token KYUPAD
+      const ticketSize = 100; // 100 USDT per ticket
+      // const price = (totalTicket * ticketSize) / tokenOffered;
 
-    //   const projectConfigArgs: ProjectConfigArgs = {
-    //     id: id,
-    //     startDate: startDate,
-    //     endDate: endDate,
-    //     merkleRoot: merkle_root,
-    //     tokenAddress: tokenAddress,
-    //     ticketSize: new BN(ticketSize * 10 ** tokenData.decimals),
-    //     tokenOffered: tokenOffered,
-    //     investTotal: investTotal,
-    //   };
+      const projectConfigArgs: ProjectConfigArgs = {
+        id: id,
+        startDate: startDate,
+        endDate: endDate,
+        merkleRoot: merkle_root,
+        tokenAddress: tokenAddress,
+        ticketSize: new BN(ticketSize * 10 ** tokenData.decimals),
+        tokenOffered: tokenOffered,
+        totalTicket: totalTicket,
+      };
 
-    //   const [project] = PublicKey.findProgramAddressSync(
-    //     [Buffer.from('project_config'), Buffer.from(projectConfigArgs.id)],
-    //     program.programId
-    //   );
+      const [project] = PublicKey.findProgramAddressSync(
+        [Buffer.from('project_config'), Buffer.from(projectConfigArgs.id)],
+        program.programId
+      );
 
-    //   const [projectCounter] = PublicKey.findProgramAddressSync(
-    //     [Buffer.from('project_counter'), project.toBuffer()],
-    //     program.programId
-    //   );
+      const remainningAccounRegister: AccountMeta[] = [
+        {
+          pubkey: TOKEN_PROGRAM_ID,
+          isSigner: false,
+          isWritable: false,
+        },
+        {
+          pubkey: tokenAddress,
+          isSigner: false,
+          isWritable: false,
+        },
+      ];
 
-    //   const [adminPda] = PublicKey.findProgramAddressSync(
-    //     [Buffer.from('admin'), upgradableAuthority.publicKey.toBuffer()],
-    //     program.programId
-    //   );
+      const registerProjectIns = await program.methods
+        .registerProject(projectConfigArgs)
+        .accounts({
+          creator: upgradableAuthority.publicKey,
+          investmentDestination: investmentDestination,
+        })
+        .remainingAccounts(remainningAccounRegister)
+        .instruction();
 
-    //   const remainningAccounRegister: AccountMeta[] = [
-    //     {
-    //       pubkey: TOKEN_PROGRAM_ID,
-    //       isSigner: false,
-    //       isWritable: false,
-    //     },
-    //     {
-    //       pubkey: tokenAddress,
-    //       isSigner: false,
-    //       isWritable: false,
-    //     },
-    //   ];
+      const tx = new Transaction().add(registerProjectIns);
 
-    //   const registerProjectIns = await program.methods
-    //     .registerProject(projectConfigArgs)
-    //     .accounts({
-    //       creator: upgradableAuthority.publicKey,
-    //       project: project,
-    //       projectCounter: projectCounter,
-    //       destination: destination,
-    //     })
-    //     .remainingAccounts(remainningAccounRegister)
-    //     .instruction();
+      tx.feePayer = upgradableAuthority.publicKey;
+      tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
 
-    //   const tx = new Transaction().add(registerProjectIns);
+      tx.partialSign(upgradableAuthority);
 
-    //   tx.feePayer = upgradableAuthority.publicKey;
-    //   tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+      const sig = await connection.sendTransaction(tx, [upgradableAuthority], {
+        skipPreflight: true,
+      });
 
-    //   tx.partialSign(upgradableAuthority);
+      console.log('Invest: ', sig);
 
-    //   const sig = await connection.sendTransaction(tx, [upgradableAuthority], {
-    //     skipPreflight: true,
-    //   });
+      await sleep(2000);
 
-    //   console.log('Invest: ', sig);
+      const projectData: ProjectConfig =
+        await program.account.projectConfig.fetch(project);
 
-    //   await sleep(2000);
+      const projectDataInput: ProjectConfig = {
+        ...projectConfigArgs,
+        investmentDestination: investmentDestination,
+        tokenProgram: null,
+      };
 
-    //   const projectData: ProjectConfig =
-    //     await program.account.projectConfig.fetch(project);
+      const order1 = Object.keys(projectData)
+        .sort()
+        .reduce((obj, key) => {
+          obj[key] = projectData[key];
+          return obj;
+        }, {});
 
-    //   const projectDataInput: ProjectConfig = {
-    //     ...projectConfigArgs,
-    //     destination: destination,
-    //     tokenProgram: null,
-    //   };
+      const order2 = Object.keys(projectDataInput)
+        .sort()
+        .reduce((obj, key) => {
+          obj[key] = projectDataInput[key];
+          return obj;
+        }, {});
 
-    //   const order1 = Object.keys(projectData)
-    //     .sort()
-    //     .reduce((obj, key) => {
-    //       obj[key] = projectData[key];
-    //       return obj;
-    //     }, {});
-
-    //   const order2 = Object.keys(projectDataInput)
-    //     .sort()
-    //     .reduce((obj, key) => {
-    //       obj[key] = projectDataInput[key];
-    //       return obj;
-    //     }, {});
-
-    //   expect(
-    //     JSON.stringify(order1) === JSON.stringify(order2),
-    //     'Expect project pda data to be equal initial data'
-    //   ).to.be.true;
-    // });
+      expect(
+        JSON.stringify(order1) === JSON.stringify(order2),
+        'Expect project pda data to be equal initial data'
+      ).to.be.true;
+    });
   });
 
   describe('🔑🔑🔑 Test decentralize permission', async () => {
-    xit('Init master', async () => {
+    it('Init master', async () => {
       const [masterPda] = PublicKey.findProgramAddressSync(
         [Buffer.from('master')],
         program.programId
@@ -414,7 +389,7 @@ describe('Test Kyupad IDO', () => {
 
   //       const receiver = Keypair.generate().publicKey;
 
-  //       const destination = (
+  //       const investmentDestination = (
   //         await getOrCreateAssociatedTokenAccount(
   //           connection,
   //           upgradableAuthority,
@@ -423,7 +398,7 @@ describe('Test Kyupad IDO', () => {
   //         )
   //       ).address;
 
-  //       let { arrayWallet, investTotal } = generateWhiteListInvest(9999);
+  //       let { arrayWallet, totalTicket } = generateWhiteListInvest(9999);
 
   //       const randomNumber = Math.floor(Math.random() * 3) + 1;
   //       const test =
@@ -444,7 +419,7 @@ describe('Test Kyupad IDO', () => {
 
   //       const tokenOffered = 100000; // 100 000 token KYUPAD
   //       const ticketSize = new BN(100 * 10 ** tokenData.decimals); // 100 USDT per ticket
-  //       // const price = (investTotal * ticketSize) / tokenOffered;
+  //       // const price = (totalTicket * ticketSize) / tokenOffered;
 
   //       const projectConfigArgs: ProjectConfigArgs = {
   //         id: id,
@@ -454,7 +429,7 @@ describe('Test Kyupad IDO', () => {
   //         tokenAddress: tokenAddress,
   //         ticketSize: ticketSize,
   //         tokenOffered: tokenOffered,
-  //         investTotal: investTotal,
+  //         totalTicket: totalTicket,
   //       };
 
   //       const [project] = PublicKey.findProgramAddressSync(
@@ -492,7 +467,7 @@ describe('Test Kyupad IDO', () => {
   //           creator: upgradableAuthority.publicKey,
   //           project: project,
   //           projectCounter: projectCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .remainingAccounts(remainningAccounRegister)
   //         .instruction();
@@ -500,12 +475,12 @@ describe('Test Kyupad IDO', () => {
   //       const getProof = merkleTree.getProof(keccak256(test));
   //       const merkle_proof = getProof.map((item) => Array.from(item.data));
 
-  //       const userInvestTotal =
+  //       const usertotalTicket =
   //         randomNumber - 1 === 0 ? randomNumber : randomNumber - 1;
 
   //       const investArgs: InvestArgs = {
   //         projectId: projectConfigArgs.id,
-  //         investTotal: userInvestTotal,
+  //         totalTicket: usertotalTicket,
   //         investMaxTotal: randomNumber,
   //         merkleProof: merkle_proof,
   //       };
@@ -540,7 +515,7 @@ describe('Test Kyupad IDO', () => {
   //           project: project,
   //           projectCounter: projectCounter,
   //           investorCounter: investCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .signers([upgradableAuthority])
   //         .remainingAccounts(remainningAccountsInvest)
@@ -572,7 +547,7 @@ describe('Test Kyupad IDO', () => {
 
   //       const receiver = Keypair.generate().publicKey;
 
-  //       const destination = (
+  //       const investmentDestination = (
   //         await getOrCreateAssociatedTokenAccount(
   //           connection,
   //           upgradableAuthority,
@@ -581,7 +556,7 @@ describe('Test Kyupad IDO', () => {
   //         )
   //       ).address;
 
-  //       let { arrayWallet, investTotal } = generateWhiteListInvest(9999);
+  //       let { arrayWallet, totalTicket } = generateWhiteListInvest(9999);
 
   //       const randomNumber = Math.floor(Math.random() * 3) + 1;
 
@@ -598,7 +573,7 @@ describe('Test Kyupad IDO', () => {
 
   //       const tokenOffered = 100000; // 100 000 token KYUPAD
   //       const ticketSize = new BN(100 * 10 ** tokenData.decimals); // 100 USDT per ticket
-  //       // const price = (investTotal * ticketSize) / tokenOffered;
+  //       // const price = (totalTicket * ticketSize) / tokenOffered;
 
   //       const projectConfigArgs: ProjectConfigArgs = {
   //         id: id,
@@ -608,7 +583,7 @@ describe('Test Kyupad IDO', () => {
   //         tokenAddress: tokenAddress,
   //         ticketSize: ticketSize,
   //         tokenOffered: tokenOffered,
-  //         investTotal: investTotal,
+  //         totalTicket: totalTicket,
   //       };
 
   //       const [project] = PublicKey.findProgramAddressSync(
@@ -646,17 +621,17 @@ describe('Test Kyupad IDO', () => {
   //           creator: upgradableAuthority.publicKey,
   //           project: project,
   //           projectCounter: projectCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .remainingAccounts(remainningAccounRegister)
   //         .instruction();
 
-  //       const userInvestTotal =
+  //       const usertotalTicket =
   //         randomNumber - 1 === 0 ? randomNumber : randomNumber - 1;
 
   //       const investArgs: InvestArgs = {
   //         projectId: projectConfigArgs.id,
-  //         investTotal: userInvestTotal,
+  //         totalTicket: usertotalTicket,
   //         investMaxTotal: randomNumber,
   //         merkleProof: [[]],
   //       };
@@ -691,7 +666,7 @@ describe('Test Kyupad IDO', () => {
   //           project: project,
   //           projectCounter: projectCounter,
   //           investorCounter: investCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .signers([upgradableAuthority])
   //         .remainingAccounts(remainningAccountsInvest)
@@ -725,7 +700,7 @@ describe('Test Kyupad IDO', () => {
 
   //       const receiver = Keypair.generate().publicKey;
 
-  //       const destination = (
+  //       const investmentDestination = (
   //         await getOrCreateAssociatedTokenAccount(
   //           connection,
   //           upgradableAuthority,
@@ -753,10 +728,10 @@ describe('Test Kyupad IDO', () => {
   //       const startDate = new BN(Math.floor(Date.now() / 1000));
   //       const endDate = new BN(Math.floor(Date.now() / 1000) + 3000);
 
-  //       const investTotal = 1500;
+  //       const totalTicket = 1500;
   //       const tokenOffered = 10000; // 100 000 token KYUPAD
   //       const ticketSize = new BN(100 * 10 ** tokenData.decimals); // 100 USDT per ticket
-  //       // const price = (investTotal * ticketSize) / tokenOffered;
+  //       // const price = (totalTicket * ticketSize) / tokenOffered;
 
   //       const projectConfigArgs: ProjectConfigArgs = {
   //         id: id,
@@ -766,7 +741,7 @@ describe('Test Kyupad IDO', () => {
   //         tokenAddress: tokenAddress,
   //         ticketSize: ticketSize,
   //         tokenOffered: tokenOffered,
-  //         investTotal: investTotal,
+  //         totalTicket: totalTicket,
   //       };
 
   //       const [project] = PublicKey.findProgramAddressSync(
@@ -804,7 +779,7 @@ describe('Test Kyupad IDO', () => {
   //           creator: upgradableAuthority.publicKey,
   //           project: project,
   //           projectCounter: projectCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .remainingAccounts(remainningAccounRegister)
   //         .instruction();
@@ -812,11 +787,11 @@ describe('Test Kyupad IDO', () => {
   //       const getProof = merkleTree.getProof(keccak256(test));
   //       const merkle_proof = getProof.map((item) => Array.from(item.data));
 
-  //       const userInvestTotal = userTicket;
+  //       const usertotalTicket = userTicket;
   //       const investArgs: InvestArgs = {
   //         projectId: projectConfigArgs.id,
-  //         investTotal: userInvestTotal,
-  //         investMaxTotal: userInvestTotal,
+  //         totalTicket: usertotalTicket,
+  //         investMaxTotal: usertotalTicket,
   //         merkleProof: merkle_proof,
   //       };
 
@@ -850,7 +825,7 @@ describe('Test Kyupad IDO', () => {
   //           project: project,
   //           projectCounter: projectCounter,
   //           investorCounter: investCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .signers([upgradableAuthority])
   //         .remainingAccounts(remainningAccountsInvest)
@@ -875,11 +850,11 @@ describe('Test Kyupad IDO', () => {
 
   //       await sleep(2000);
 
-  //       const info = await getAccount(connection, destination);
+  //       const info = await getAccount(connection, investmentDestination);
   //       const amount = Number(info.amount);
 
-  //       expect(amount, 'Destination amount should equal ticket size').to.eq(
-  //         ticketSize.toNumber() * userInvestTotal
+  //       expect(amount, 'investmentDestination amount should equal ticket size').to.eq(
+  //         ticketSize.toNumber() * usertotalTicket
   //       );
 
   //       const projectCounterData = await program.account.projectCounter.fetch(
@@ -889,7 +864,7 @@ describe('Test Kyupad IDO', () => {
   //       expect(
   //         projectCounterData.remainning,
   //         "Project counter should be equal investotal - user's invest total"
-  //       ).to.eq(investTotal - userInvestTotal);
+  //       ).to.eq(totalTicket - usertotalTicket);
 
   //       const investCounterData = await program.account.investorCounter.fetch(
   //         investCounter
@@ -910,7 +885,7 @@ describe('Test Kyupad IDO', () => {
 
   //       const receiver = Keypair.generate().publicKey;
 
-  //       const destination = (
+  //       const investmentDestination = (
   //         await getOrCreateAssociatedTokenAccount(
   //           connection,
   //           upgradableAuthority,
@@ -919,7 +894,7 @@ describe('Test Kyupad IDO', () => {
   //         )
   //       ).address;
 
-  //       let { arrayWallet, investTotal } = generateWhiteListInvest(9999);
+  //       let { arrayWallet, totalTicket } = generateWhiteListInvest(9999);
 
   //       const randomNumber = Math.floor(Math.random() * 3) + 1;
   //       const test =
@@ -940,7 +915,7 @@ describe('Test Kyupad IDO', () => {
 
   //       const tokenOffered = 100000; // 100 000 token KYUPAD
   //       const ticketSize = new BN(100 * 10 ** tokenData.decimals); // 100 USDT per ticket
-  //       // const price = (investTotal * ticketSize) / tokenOffered;
+  //       // const price = (totalTicket * ticketSize) / tokenOffered;
 
   //       const projectConfigArgs: ProjectConfigArgs = {
   //         id: id,
@@ -950,7 +925,7 @@ describe('Test Kyupad IDO', () => {
   //         tokenAddress: tokenAddress,
   //         ticketSize: ticketSize,
   //         tokenOffered: tokenOffered,
-  //         investTotal: investTotal,
+  //         totalTicket: totalTicket,
   //       };
 
   //       const [project] = PublicKey.findProgramAddressSync(
@@ -988,7 +963,7 @@ describe('Test Kyupad IDO', () => {
   //           creator: upgradableAuthority.publicKey,
   //           project: project,
   //           projectCounter: projectCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .remainingAccounts(remainningAccounRegister)
   //         .instruction();
@@ -996,12 +971,12 @@ describe('Test Kyupad IDO', () => {
   //       const getProof = merkleTree.getProof(keccak256(test));
   //       const merkle_proof = getProof.map((item) => Array.from(item.data));
 
-  //       const userInvestTotal =
+  //       const usertotalTicket =
   //         randomNumber - 1 === 0 ? randomNumber : randomNumber - 1;
 
   //       const investArgs: InvestArgs = {
   //         projectId: projectConfigArgs.id,
-  //         investTotal: userInvestTotal,
+  //         totalTicket: usertotalTicket,
   //         investMaxTotal: randomNumber,
   //         merkleProof: merkle_proof,
   //       };
@@ -1036,7 +1011,7 @@ describe('Test Kyupad IDO', () => {
   //           project: project,
   //           projectCounter: projectCounter,
   //           investorCounter: investCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .signers([upgradableAuthority])
   //         .remainingAccounts(remainningAccountsInvest)
@@ -1068,7 +1043,7 @@ describe('Test Kyupad IDO', () => {
 
   //       const receiver = Keypair.generate().publicKey;
 
-  //       const destination = (
+  //       const investmentDestination = (
   //         await getOrCreateAssociatedTokenAccount(
   //           connection,
   //           upgradableAuthority,
@@ -1096,10 +1071,10 @@ describe('Test Kyupad IDO', () => {
   //       const startDate = new BN(Math.floor(Date.now() / 1000) + 1000);
   //       const endDate = new BN(Math.floor(Date.now() / 1000) + 3000);
 
-  //       const investTotal = 1500;
+  //       const totalTicket = 1500;
   //       const tokenOffered = 10000; // 100 000 token KYUPAD
   //       const ticketSize = new BN(100 * 10 ** tokenData.decimals); // 100 USDT per ticket
-  //       // const price = (investTotal * ticketSize) / tokenOffered;
+  //       // const price = (totalTicket * ticketSize) / tokenOffered;
 
   //       const projectConfigArgs: ProjectConfigArgs = {
   //         id: id,
@@ -1109,7 +1084,7 @@ describe('Test Kyupad IDO', () => {
   //         tokenAddress: tokenAddress,
   //         ticketSize: ticketSize,
   //         tokenOffered: tokenOffered,
-  //         investTotal: investTotal,
+  //         totalTicket: totalTicket,
   //       };
 
   //       const [project] = PublicKey.findProgramAddressSync(
@@ -1147,7 +1122,7 @@ describe('Test Kyupad IDO', () => {
   //           creator: upgradableAuthority.publicKey,
   //           project: project,
   //           projectCounter: projectCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .remainingAccounts(remainningAccounRegister)
   //         .instruction();
@@ -1155,11 +1130,11 @@ describe('Test Kyupad IDO', () => {
   //       const getProof = merkleTree.getProof(keccak256(test));
   //       const merkle_proof = getProof.map((item) => Array.from(item.data));
 
-  //       const userInvestTotal = userTicket;
+  //       const usertotalTicket = userTicket;
   //       const investArgs: InvestArgs = {
   //         projectId: projectConfigArgs.id,
-  //         investTotal: userInvestTotal,
-  //         investMaxTotal: userInvestTotal,
+  //         totalTicket: usertotalTicket,
+  //         investMaxTotal: usertotalTicket,
   //         merkleProof: merkle_proof,
   //       };
 
@@ -1193,7 +1168,7 @@ describe('Test Kyupad IDO', () => {
   //           project: project,
   //           projectCounter: projectCounter,
   //           investorCounter: investCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .signers([upgradableAuthority])
   //         .remainingAccounts(remainningAccountsInvest)
@@ -1226,7 +1201,7 @@ describe('Test Kyupad IDO', () => {
 
   //       const receiver = Keypair.generate().publicKey;
 
-  //       const destination = (
+  //       const investmentDestination = (
   //         await getOrCreateAssociatedTokenAccount(
   //           connection,
   //           upgradableAuthority,
@@ -1254,10 +1229,10 @@ describe('Test Kyupad IDO', () => {
   //       const startDate = new BN(Math.floor(Date.now() / 1000));
   //       const endDate = new BN(Math.floor(Date.now() / 1000) + 3000);
 
-  //       const investTotal = 1500;
+  //       const totalTicket = 1500;
   //       const tokenOffered = 10000; // 100 000 token KYUPAD
   //       const ticketSize = new BN(100 * 10 ** tokenData.decimals); // 100 USDT per ticket
-  //       // const price = (investTotal * ticketSize) / tokenOffered;
+  //       // const price = (totalTicket * ticketSize) / tokenOffered;
 
   //       const projectConfigArgs: ProjectConfigArgs = {
   //         id: id,
@@ -1267,7 +1242,7 @@ describe('Test Kyupad IDO', () => {
   //         tokenAddress: tokenAddress,
   //         ticketSize: ticketSize,
   //         tokenOffered: tokenOffered,
-  //         investTotal: investTotal,
+  //         totalTicket: totalTicket,
   //       };
 
   //       const [project] = PublicKey.findProgramAddressSync(
@@ -1305,7 +1280,7 @@ describe('Test Kyupad IDO', () => {
   //           creator: upgradableAuthority.publicKey,
   //           project: project,
   //           projectCounter: projectCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .remainingAccounts(remainningAccounRegister)
   //         .instruction();
@@ -1313,11 +1288,11 @@ describe('Test Kyupad IDO', () => {
   //       const getProof = merkleTree.getProof(keccak256(test));
   //       const merkle_proof = getProof.map((item) => Array.from(item.data));
 
-  //       const userInvestTotal = userTicket;
+  //       const usertotalTicket = userTicket;
   //       const investArgs: InvestArgs = {
   //         projectId: projectConfigArgs.id,
-  //         investTotal: userInvestTotal + 1,
-  //         investMaxTotal: userInvestTotal,
+  //         totalTicket: usertotalTicket + 1,
+  //         investMaxTotal: usertotalTicket,
   //         merkleProof: merkle_proof,
   //       };
 
@@ -1351,7 +1326,7 @@ describe('Test Kyupad IDO', () => {
   //           project: project,
   //           projectCounter: projectCounter,
   //           investorCounter: investCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .signers([upgradableAuthority])
   //         .remainingAccounts(remainningAccountsInvest)
@@ -1384,7 +1359,7 @@ describe('Test Kyupad IDO', () => {
 
   //       const receiver = Keypair.generate().publicKey;
 
-  //       const destination = (
+  //       const investmentDestination = (
   //         await getOrCreateAssociatedTokenAccount(
   //           connection,
   //           upgradableAuthority,
@@ -1412,10 +1387,10 @@ describe('Test Kyupad IDO', () => {
   //       const startDate = new BN(Math.floor(Date.now() / 1000));
   //       const endDate = new BN(Math.floor(Date.now() / 1000) + 3000);
 
-  //       const investTotal = 1500;
+  //       const totalTicket = 1500;
   //       const tokenOffered = 10000; // 100 000 token KYUPAD
   //       const ticketSize = new BN(100 * 10 ** tokenData.decimals); // 100 USDT per ticket
-  //       // const price = (investTotal * ticketSize) / tokenOffered;
+  //       // const price = (totalTicket * ticketSize) / tokenOffered;
 
   //       const projectConfigArgs: ProjectConfigArgs = {
   //         id: id,
@@ -1425,7 +1400,7 @@ describe('Test Kyupad IDO', () => {
   //         tokenAddress: tokenAddress,
   //         ticketSize: ticketSize,
   //         tokenOffered: tokenOffered,
-  //         investTotal: investTotal,
+  //         totalTicket: totalTicket,
   //       };
 
   //       const [project] = PublicKey.findProgramAddressSync(
@@ -1463,7 +1438,7 @@ describe('Test Kyupad IDO', () => {
   //           creator: upgradableAuthority.publicKey,
   //           project: project,
   //           projectCounter: projectCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .remainingAccounts(remainningAccounRegister)
   //         .instruction();
@@ -1471,11 +1446,11 @@ describe('Test Kyupad IDO', () => {
   //       const getProof = merkleTree.getProof(keccak256(test));
   //       const merkle_proof = getProof.map((item) => Array.from(item.data));
 
-  //       const userInvestTotal = userTicket;
+  //       const usertotalTicket = userTicket;
   //       const investArgs: InvestArgs = {
   //         projectId: projectConfigArgs.id,
-  //         investTotal: userInvestTotal,
-  //         investMaxTotal: userInvestTotal,
+  //         totalTicket: usertotalTicket,
+  //         investMaxTotal: usertotalTicket,
   //         merkleProof: merkle_proof,
   //       };
 
@@ -1509,7 +1484,7 @@ describe('Test Kyupad IDO', () => {
   //           project: project,
   //           projectCounter: projectCounter,
   //           investorCounter: investCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .signers([upgradableAuthority])
   //         .remainingAccounts(remainningAccountsInvest)
@@ -1531,7 +1506,7 @@ describe('Test Kyupad IDO', () => {
   //           project: project,
   //           projectCounter: projectCounter,
   //           investorCounter: investCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .signers([upgradableAuthority])
   //         .remainingAccounts(remainningAccountsInvest)
@@ -1566,7 +1541,7 @@ describe('Test Kyupad IDO', () => {
 
   //       const receiver = Keypair.generate().publicKey;
 
-  //       const destination = (
+  //       const investmentDestination = (
   //         await getOrCreateAssociatedTokenAccount(
   //           connection,
   //           upgradableAuthority,
@@ -1594,10 +1569,10 @@ describe('Test Kyupad IDO', () => {
   //       const startDate = new BN(Math.floor(Date.now() / 1000));
   //       const endDate = new BN(Math.floor(Date.now() / 1000) + 3000);
 
-  //       const investTotal = 1;
+  //       const totalTicket = 1;
   //       const tokenOffered = 10000; // 100 000 token KYUPAD
   //       const ticketSize = new BN(100 * 10 ** tokenData.decimals); // 100 USDT per ticket
-  //       // const price = (investTotal * ticketSize) / tokenOffered;
+  //       // const price = (totalTicket * ticketSize) / tokenOffered;
 
   //       const projectConfigArgs: ProjectConfigArgs = {
   //         id: id,
@@ -1607,7 +1582,7 @@ describe('Test Kyupad IDO', () => {
   //         tokenAddress: tokenAddress,
   //         ticketSize: ticketSize,
   //         tokenOffered: tokenOffered,
-  //         investTotal: investTotal,
+  //         totalTicket: totalTicket,
   //       };
 
   //       const [project] = PublicKey.findProgramAddressSync(
@@ -1645,7 +1620,7 @@ describe('Test Kyupad IDO', () => {
   //           creator: upgradableAuthority.publicKey,
   //           project: project,
   //           projectCounter: projectCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .remainingAccounts(remainningAccounRegister)
   //         .instruction();
@@ -1653,10 +1628,10 @@ describe('Test Kyupad IDO', () => {
   //       const getProof = merkleTree.getProof(keccak256(test));
   //       const merkle_proof = getProof.map((item) => Array.from(item.data));
 
-  //       const userInvestTotal = userTicket - 1;
+  //       const usertotalTicket = userTicket - 1;
   //       const investArgs: InvestArgs = {
   //         projectId: projectConfigArgs.id,
-  //         investTotal: userInvestTotal,
+  //         totalTicket: usertotalTicket,
   //         investMaxTotal: userTicket,
   //         merkleProof: merkle_proof,
   //       };
@@ -1691,7 +1666,7 @@ describe('Test Kyupad IDO', () => {
   //           project: project,
   //           projectCounter: projectCounter,
   //           investorCounter: investCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .signers([upgradableAuthority])
   //         .remainingAccounts(remainningAccountsInvest)
@@ -1715,7 +1690,7 @@ describe('Test Kyupad IDO', () => {
   //           project: project,
   //           projectCounter: projectCounter,
   //           investorCounter: investCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .signers([upgradableAuthority])
   //         .remainingAccounts(remainningAccountsInvest)
@@ -1752,7 +1727,7 @@ describe('Test Kyupad IDO', () => {
 
   //       const receiver = Keypair.generate().publicKey;
 
-  //       const destination = (
+  //       const investmentDestination = (
   //         await getOrCreateAssociatedTokenAccount(
   //           connection,
   //           upgradableAuthority,
@@ -1780,10 +1755,10 @@ describe('Test Kyupad IDO', () => {
   //       const startDate = new BN(Math.floor(Date.now() / 1000));
   //       const endDate = new BN(Math.floor(Date.now() / 1000) + 3000);
 
-  //       const investTotal = 1500;
+  //       const totalTicket = 1500;
   //       const tokenOffered = 10000; // 100 000 token KYUPAD
   //       const ticketSize = new BN(100 * 10 ** tokenData.decimals); // 100 USDT per ticket
-  //       // const price = (investTotal * ticketSize) / tokenOffered;
+  //       // const price = (totalTicket * ticketSize) / tokenOffered;
 
   //       const projectConfigArgs: ProjectConfigArgs = {
   //         id: id,
@@ -1793,7 +1768,7 @@ describe('Test Kyupad IDO', () => {
   //         tokenAddress: tokenAddress,
   //         ticketSize: ticketSize,
   //         tokenOffered: tokenOffered,
-  //         investTotal: investTotal,
+  //         totalTicket: totalTicket,
   //       };
 
   //       const [project] = PublicKey.findProgramAddressSync(
@@ -1831,7 +1806,7 @@ describe('Test Kyupad IDO', () => {
   //           creator: upgradableAuthority.publicKey,
   //           project: project,
   //           projectCounter: projectCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .remainingAccounts(remainningAccounRegister)
   //         .instruction();
@@ -1839,10 +1814,10 @@ describe('Test Kyupad IDO', () => {
   //       const getProof = merkleTree.getProof(keccak256(test));
   //       const merkle_proof = getProof.map((item) => Array.from(item.data));
 
-  //       const userInvestTotal = userTicket - 1;
+  //       const usertotalTicket = userTicket - 1;
   //       const investArgs: InvestArgs = {
   //         projectId: projectConfigArgs.id,
-  //         investTotal: userInvestTotal,
+  //         totalTicket: usertotalTicket,
   //         investMaxTotal: userTicket,
   //         merkleProof: merkle_proof,
   //       };
@@ -1877,7 +1852,7 @@ describe('Test Kyupad IDO', () => {
   //           project: project,
   //           projectCounter: projectCounter,
   //           investorCounter: investCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .signers([upgradableAuthority])
   //         .remainingAccounts(remainningAccountsInvest)
@@ -1902,11 +1877,11 @@ describe('Test Kyupad IDO', () => {
 
   //       await sleep(2000);
 
-  //       const info = await getAccount(connection, destination);
+  //       const info = await getAccount(connection, investmentDestination);
   //       const amount = Number(info.amount);
 
-  //       expect(amount, 'Destination amount should equal ticket size').to.eq(
-  //         ticketSize.toNumber() * userInvestTotal
+  //       expect(amount, 'investmentDestination amount should equal ticket size').to.eq(
+  //         ticketSize.toNumber() * usertotalTicket
   //       );
 
   //       const projectCounterData = await program.account.projectCounter.fetch(
@@ -1916,7 +1891,7 @@ describe('Test Kyupad IDO', () => {
   //       expect(
   //         projectCounterData.remainning,
   //         "Project counter should be equal investotal - user's invest total"
-  //       ).to.eq(investTotal - userInvestTotal);
+  //       ).to.eq(totalTicket - usertotalTicket);
 
   //       const investCounterData = await program.account.investorCounter.fetch(
   //         investCounter
@@ -1925,7 +1900,7 @@ describe('Test Kyupad IDO', () => {
   //       expect(
   //         investCounterData.remainning,
   //         'User invest counter should be equal 1'
-  //       ).to.eq(userTicket - userInvestTotal);
+  //       ).to.eq(userTicket - usertotalTicket);
   //     });
 
   //     xit('D11: Success with second time invesment', async () => {
@@ -1937,7 +1912,7 @@ describe('Test Kyupad IDO', () => {
 
   //       const receiver = Keypair.generate().publicKey;
 
-  //       const destination = (
+  //       const investmentDestination = (
   //         await getOrCreateAssociatedTokenAccount(
   //           connection,
   //           upgradableAuthority,
@@ -1965,10 +1940,10 @@ describe('Test Kyupad IDO', () => {
   //       const startDate = new BN(Math.floor(Date.now() / 1000));
   //       const endDate = new BN(Math.floor(Date.now() / 1000) + 3000);
 
-  //       const investTotal = 1500;
+  //       const totalTicket = 1500;
   //       const tokenOffered = 10000; // 100 000 token KYUPAD
   //       const ticketSize = new BN(100 * 10 ** tokenData.decimals); // 100 USDT per ticket
-  //       // const price = (investTotal * ticketSize) / tokenOffered;
+  //       // const price = (totalTicket * ticketSize) / tokenOffered;
 
   //       const projectConfigArgs: ProjectConfigArgs = {
   //         id: id,
@@ -1978,7 +1953,7 @@ describe('Test Kyupad IDO', () => {
   //         tokenAddress: tokenAddress,
   //         ticketSize: ticketSize,
   //         tokenOffered: tokenOffered,
-  //         investTotal: investTotal,
+  //         totalTicket: totalTicket,
   //       };
 
   //       const [project] = PublicKey.findProgramAddressSync(
@@ -2016,7 +1991,7 @@ describe('Test Kyupad IDO', () => {
   //           creator: upgradableAuthority.publicKey,
   //           project: project,
   //           projectCounter: projectCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .remainingAccounts(remainningAccounRegister)
   //         .instruction();
@@ -2024,10 +1999,10 @@ describe('Test Kyupad IDO', () => {
   //       const getProof = merkleTree.getProof(keccak256(test));
   //       const merkle_proof = getProof.map((item) => Array.from(item.data));
 
-  //       const userInvestTotal = userTicket - 1;
+  //       const usertotalTicket = userTicket - 1;
   //       const investArgs: InvestArgs = {
   //         projectId: projectConfigArgs.id,
-  //         investTotal: userInvestTotal,
+  //         totalTicket: usertotalTicket,
   //         investMaxTotal: userTicket,
   //         merkleProof: merkle_proof,
   //       };
@@ -2062,7 +2037,7 @@ describe('Test Kyupad IDO', () => {
   //           project: project,
   //           projectCounter: projectCounter,
   //           investorCounter: investCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .signers([upgradableAuthority])
   //         .remainingAccounts(remainningAccountsInvest)
@@ -2090,10 +2065,10 @@ describe('Test Kyupad IDO', () => {
 
   //       await sleep(2000);
 
-  //       const info = await getAccount(connection, destination);
+  //       const info = await getAccount(connection, investmentDestination);
   //       const amount = Number(info.amount);
 
-  //       expect(amount, 'Destination amount should equal ticket size').to.eq(
+  //       expect(amount, 'investmentDestination amount should equal ticket size').to.eq(
   //         ticketSize.toNumber() * userTicket
   //       );
 
@@ -2104,7 +2079,7 @@ describe('Test Kyupad IDO', () => {
   //       expect(
   //         projectCounterData.remainning,
   //         "Project counter should be equal investotal - user's invest total"
-  //       ).to.eq(investTotal - userTicket);
+  //       ).to.eq(totalTicket - userTicket);
 
   //       const investCounterData = await program.account.investorCounter.fetch(
   //         investCounter
@@ -2125,7 +2100,7 @@ describe('Test Kyupad IDO', () => {
 
   //       const receiver = Keypair.generate().publicKey;
 
-  //       const destination = (
+  //       const investmentDestination = (
   //         await getOrCreateAssociatedTokenAccount(
   //           connection,
   //           upgradableAuthority,
@@ -2153,10 +2128,10 @@ describe('Test Kyupad IDO', () => {
   //       const startDate = new BN(Math.floor(Date.now() / 1000));
   //       const endDate = new BN(Math.floor(Date.now() / 1000) + 3000);
 
-  //       const investTotal = 1500;
+  //       const totalTicket = 1500;
   //       const tokenOffered = 10000; // 100 000 token KYUPAD
   //       const ticketSize = new BN(100 * 10 ** tokenData.decimals); // 100 USDT per ticket
-  //       // const price = (investTotal * ticketSize) / tokenOffered;
+  //       // const price = (totalTicket * ticketSize) / tokenOffered;
 
   //       const projectConfigArgs: ProjectConfigArgs = {
   //         id: id,
@@ -2166,7 +2141,7 @@ describe('Test Kyupad IDO', () => {
   //         tokenAddress: tokenAddress,
   //         ticketSize: ticketSize,
   //         tokenOffered: tokenOffered,
-  //         investTotal: investTotal,
+  //         totalTicket: totalTicket,
   //       };
 
   //       const [project] = PublicKey.findProgramAddressSync(
@@ -2204,7 +2179,7 @@ describe('Test Kyupad IDO', () => {
   //           creator: upgradableAuthority.publicKey,
   //           project: project,
   //           projectCounter: projectCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .remainingAccounts(remainningAccounRegister)
   //         .instruction();
@@ -2212,10 +2187,10 @@ describe('Test Kyupad IDO', () => {
   //       const getProof = merkleTree.getProof(keccak256(test));
   //       const merkle_proof = getProof.map((item) => Array.from(item.data));
 
-  //       const userInvestTotal = userTicket;
+  //       const usertotalTicket = userTicket;
   //       const investArgs: InvestArgs = {
   //         projectId: projectConfigArgs.id,
-  //         investTotal: userInvestTotal,
+  //         totalTicket: usertotalTicket,
   //         investMaxTotal: userTicket,
   //         merkleProof: merkle_proof,
   //       };
@@ -2250,7 +2225,7 @@ describe('Test Kyupad IDO', () => {
   //           project: project,
   //           projectCounter: projectCounter,
   //           investorCounter: investCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .signers([upgradableAuthority])
   //         .remainingAccounts(remainningAccountsInvest)
@@ -2275,11 +2250,11 @@ describe('Test Kyupad IDO', () => {
 
   //       await sleep(2000);
 
-  //       const info = await getAccount(connection, destination);
+  //       const info = await getAccount(connection, investmentDestination);
   //       const amount = Number(info.amount);
 
-  //       expect(amount, 'Destination amount should equal ticket size').to.eq(
-  //         ticketSize.toNumber() * userInvestTotal
+  //       expect(amount, 'investmentDestination amount should equal ticket size').to.eq(
+  //         ticketSize.toNumber() * usertotalTicket
   //       );
 
   //       const projectCounterData = await program.account.projectCounter.fetch(
@@ -2289,7 +2264,7 @@ describe('Test Kyupad IDO', () => {
   //       expect(
   //         projectCounterData.remainning,
   //         "Project counter should be equal investotal - user's invest total"
-  //       ).to.eq(investTotal - userInvestTotal);
+  //       ).to.eq(totalTicket - usertotalTicket);
 
   //       const investCounterData = await program.account.investorCounter.fetch(
   //         investCounter
@@ -2298,7 +2273,7 @@ describe('Test Kyupad IDO', () => {
   //       expect(
   //         investCounterData.remainning,
   //         'User invest counter should be equal 0'
-  //       ).to.eq(userTicket - userInvestTotal);
+  //       ).to.eq(userTicket - usertotalTicket);
   //     });
 
   //     xit('D13: Before invest time', async () => {
@@ -2310,7 +2285,7 @@ describe('Test Kyupad IDO', () => {
 
   //       const receiver = Keypair.generate().publicKey;
 
-  //       const destination = (
+  //       const investmentDestination = (
   //         await getOrCreateAssociatedTokenAccount(
   //           connection,
   //           upgradableAuthority,
@@ -2338,10 +2313,10 @@ describe('Test Kyupad IDO', () => {
   //       const startDate = new BN(Math.floor(Date.now() / 1000) + 1000);
   //       const endDate = new BN(Math.floor(Date.now() / 1000) + 3000);
 
-  //       const investTotal = 1500;
+  //       const totalTicket = 1500;
   //       const tokenOffered = 10000; // 100 000 token KYUPAD
   //       const ticketSize = new BN(100 * 10 ** tokenData.decimals); // 100 USDT per ticket
-  //       // const price = (investTotal * ticketSize) / tokenOffered;
+  //       // const price = (totalTicket * ticketSize) / tokenOffered;
 
   //       const projectConfigArgs: ProjectConfigArgs = {
   //         id: id,
@@ -2351,7 +2326,7 @@ describe('Test Kyupad IDO', () => {
   //         tokenAddress: tokenAddress,
   //         ticketSize: ticketSize,
   //         tokenOffered: tokenOffered,
-  //         investTotal: investTotal,
+  //         totalTicket: totalTicket,
   //       };
 
   //       const [project] = PublicKey.findProgramAddressSync(
@@ -2389,7 +2364,7 @@ describe('Test Kyupad IDO', () => {
   //           creator: upgradableAuthority.publicKey,
   //           project: project,
   //           projectCounter: projectCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .remainingAccounts(remainningAccounRegister)
   //         .instruction();
@@ -2397,10 +2372,10 @@ describe('Test Kyupad IDO', () => {
   //       const getProof = merkleTree.getProof(keccak256(test));
   //       const merkle_proof = getProof.map((item) => Array.from(item.data));
 
-  //       const userInvestTotal = userTicket;
+  //       const usertotalTicket = userTicket;
   //       const investArgs: InvestArgs = {
   //         projectId: projectConfigArgs.id,
-  //         investTotal: userInvestTotal,
+  //         totalTicket: usertotalTicket,
   //         investMaxTotal: userTicket,
   //         merkleProof: merkle_proof,
   //       };
@@ -2435,7 +2410,7 @@ describe('Test Kyupad IDO', () => {
   //           project: project,
   //           projectCounter: projectCounter,
   //           investorCounter: investCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .signers([upgradableAuthority])
   //         .remainingAccounts(remainningAccountsInvest)
@@ -2468,7 +2443,7 @@ describe('Test Kyupad IDO', () => {
 
   //       const receiver = Keypair.generate().publicKey;
 
-  //       const destination = (
+  //       const investmentDestination = (
   //         await getOrCreateAssociatedTokenAccount(
   //           connection,
   //           upgradableAuthority,
@@ -2496,10 +2471,10 @@ describe('Test Kyupad IDO', () => {
   //       const startDate = new BN(Math.floor(Date.now() / 1000) - 3000);
   //       const endDate = new BN(Math.floor(Date.now() / 1000) - 1000);
 
-  //       const investTotal = 1500;
+  //       const totalTicket = 1500;
   //       const tokenOffered = 10000; // 100 000 token KYUPAD
   //       const ticketSize = new BN(100 * 10 ** tokenData.decimals); // 100 USDT per ticket
-  //       // const price = (investTotal * ticketSize) / tokenOffered;
+  //       // const price = (totalTicket * ticketSize) / tokenOffered;
 
   //       const projectConfigArgs: ProjectConfigArgs = {
   //         id: id,
@@ -2509,7 +2484,7 @@ describe('Test Kyupad IDO', () => {
   //         tokenAddress: tokenAddress,
   //         ticketSize: ticketSize,
   //         tokenOffered: tokenOffered,
-  //         investTotal: investTotal,
+  //         totalTicket: totalTicket,
   //       };
 
   //       const [project] = PublicKey.findProgramAddressSync(
@@ -2547,7 +2522,7 @@ describe('Test Kyupad IDO', () => {
   //           creator: upgradableAuthority.publicKey,
   //           project: project,
   //           projectCounter: projectCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .remainingAccounts(remainningAccounRegister)
   //         .instruction();
@@ -2555,10 +2530,10 @@ describe('Test Kyupad IDO', () => {
   //       const getProof = merkleTree.getProof(keccak256(test));
   //       const merkle_proof = getProof.map((item) => Array.from(item.data));
 
-  //       const userInvestTotal = userTicket;
+  //       const usertotalTicket = userTicket;
   //       const investArgs: InvestArgs = {
   //         projectId: projectConfigArgs.id,
-  //         investTotal: userInvestTotal,
+  //         totalTicket: usertotalTicket,
   //         investMaxTotal: userTicket,
   //         merkleProof: merkle_proof,
   //       };
@@ -2593,7 +2568,7 @@ describe('Test Kyupad IDO', () => {
   //           project: project,
   //           projectCounter: projectCounter,
   //           investorCounter: investCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .signers([upgradableAuthority])
   //         .remainingAccounts(remainningAccountsInvest)
@@ -2626,7 +2601,7 @@ describe('Test Kyupad IDO', () => {
 
   //       const receiver = Keypair.generate().publicKey;
 
-  //       const destination = (
+  //       const investmentDestination = (
   //         await getOrCreateAssociatedTokenAccount(
   //           connection,
   //           upgradableAuthority,
@@ -2654,10 +2629,10 @@ describe('Test Kyupad IDO', () => {
   //       const startDate = new BN(Math.floor(Date.now() / 1000));
   //       const endDate = new BN(Math.floor(Date.now() / 1000) + 3000);
 
-  //       const investTotal = 1500;
+  //       const totalTicket = 1500;
   //       const tokenOffered = 10000; // 100 000 token KYUPAD
   //       const ticketSize = new BN(100 * 10 ** tokenData.decimals); // 100 USDT per ticket
-  //       // const price = (investTotal * ticketSize) / tokenOffered;
+  //       // const price = (totalTicket * ticketSize) / tokenOffered;
 
   //       const projectConfigArgs: ProjectConfigArgs = {
   //         id: id,
@@ -2667,7 +2642,7 @@ describe('Test Kyupad IDO', () => {
   //         tokenAddress: tokenAddress,
   //         ticketSize: ticketSize,
   //         tokenOffered: tokenOffered,
-  //         investTotal: investTotal,
+  //         totalTicket: totalTicket,
   //       };
 
   //       const [project] = PublicKey.findProgramAddressSync(
@@ -2705,7 +2680,7 @@ describe('Test Kyupad IDO', () => {
   //           creator: upgradableAuthority.publicKey,
   //           project: project,
   //           projectCounter: projectCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .remainingAccounts(remainningAccounRegister)
   //         .instruction();
@@ -2713,10 +2688,10 @@ describe('Test Kyupad IDO', () => {
   //       const getProof = merkleTree.getProof(keccak256(test));
   //       const merkle_proof = getProof.map((item) => Array.from(item.data));
 
-  //       const userInvestTotal = userTicket + 1;
+  //       const usertotalTicket = userTicket + 1;
   //       const investArgs: InvestArgs = {
   //         projectId: projectConfigArgs.id,
-  //         investTotal: userInvestTotal,
+  //         totalTicket: usertotalTicket,
   //         investMaxTotal: userTicket,
   //         merkleProof: merkle_proof,
   //       };
@@ -2751,7 +2726,7 @@ describe('Test Kyupad IDO', () => {
   //           project: project,
   //           projectCounter: projectCounter,
   //           investorCounter: investCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .signers([upgradableAuthority])
   //         .remainingAccounts(remainningAccountsInvest)
@@ -2784,7 +2759,7 @@ describe('Test Kyupad IDO', () => {
 
   //       const receiver = Keypair.generate().publicKey;
 
-  //       const destination = (
+  //       const investmentDestination = (
   //         await getOrCreateAssociatedTokenAccount(
   //           connection,
   //           upgradableAuthority,
@@ -2812,10 +2787,10 @@ describe('Test Kyupad IDO', () => {
   //       const startDate = new BN(Math.floor(Date.now() / 1000));
   //       const endDate = new BN(Math.floor(Date.now() / 1000) + 3000);
 
-  //       const investTotal = 1500;
+  //       const totalTicket = 1500;
   //       const tokenOffered = 10000; // 100 000 token KYUPAD
   //       const ticketSize = new BN(100 * 10 ** tokenData.decimals); // 100 USDT per ticket
-  //       // const price = (investTotal * ticketSize) / tokenOffered;
+  //       // const price = (totalTicket * ticketSize) / tokenOffered;
 
   //       const projectConfigArgs: ProjectConfigArgs = {
   //         id: id,
@@ -2825,7 +2800,7 @@ describe('Test Kyupad IDO', () => {
   //         tokenAddress: tokenAddress,
   //         ticketSize: ticketSize,
   //         tokenOffered: tokenOffered,
-  //         investTotal: investTotal,
+  //         totalTicket: totalTicket,
   //       };
 
   //       const [project] = PublicKey.findProgramAddressSync(
@@ -2863,7 +2838,7 @@ describe('Test Kyupad IDO', () => {
   //           creator: upgradableAuthority.publicKey,
   //           project: project,
   //           projectCounter: projectCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .remainingAccounts(remainningAccounRegister)
   //         .instruction();
@@ -2871,10 +2846,10 @@ describe('Test Kyupad IDO', () => {
   //       const getProof = merkleTree.getProof(keccak256(test));
   //       const merkle_proof = getProof.map((item) => Array.from(item.data));
 
-  //       const userInvestTotal = userTicket - 1;
+  //       const usertotalTicket = userTicket - 1;
   //       const investArgs: InvestArgs = {
   //         projectId: projectConfigArgs.id,
-  //         investTotal: userInvestTotal,
+  //         totalTicket: usertotalTicket,
   //         investMaxTotal: userTicket,
   //         merkleProof: merkle_proof,
   //       };
@@ -2909,7 +2884,7 @@ describe('Test Kyupad IDO', () => {
   //           project: project,
   //           projectCounter: projectCounter,
   //           investorCounter: investCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .signers([upgradableAuthority])
   //         .remainingAccounts(remainningAccountsInvest)
@@ -2918,7 +2893,7 @@ describe('Test Kyupad IDO', () => {
   //       const investIns2 = await program.methods
   //         .invest({
   //           projectId: projectConfigArgs.id,
-  //           investTotal: 2,
+  //           totalTicket: 2,
   //           investMaxTotal: userTicket,
   //           merkleProof: merkle_proof,
   //         })
@@ -2927,7 +2902,7 @@ describe('Test Kyupad IDO', () => {
   //           project: project,
   //           projectCounter: projectCounter,
   //           investorCounter: investCounter,
-  //           destination: destination,
+  //           investmentDestination: investmentDestination,
   //         })
   //         .signers([upgradableAuthority])
   //         .remainingAccounts(remainningAccountsInvest)
@@ -2956,9 +2931,9 @@ describe('Test Kyupad IDO', () => {
   //   });
 
   //   xit('Invest project with sol', async () => {
-  //     const destination = Keypair.generate().publicKey;
+  //     const investmentDestination = Keypair.generate().publicKey;
 
-  //     let { arrayWallet, investTotal } = generateWhiteListInvest(9999);
+  //     let { arrayWallet, totalTicket } = generateWhiteListInvest(9999);
 
   //     const randomNumber = Math.floor(Math.random() * 3) + 1;
   //     const test =
@@ -2967,7 +2942,7 @@ describe('Test Kyupad IDO', () => {
   //       randomNumber.toString();
   //     arrayWallet.push(test);
 
-  //     investTotal += randomNumber;
+  //     totalTicket += randomNumber;
 
   //     const leafNode = arrayWallet.map((addr) => keccak256(addr));
   //     const merkleTree = new MerkleTree(leafNode, keccak256, {
@@ -2992,7 +2967,7 @@ describe('Test Kyupad IDO', () => {
   //       tokenAddress: null,
   //       ticketSize: ticketSize,
   //       tokenOffered: tokenOffered,
-  //       investTotal: investTotal,
+  //       totalTicket: totalTicket,
   //     };
 
   //     const [project] = PublicKey.findProgramAddressSync(
@@ -3017,19 +2992,19 @@ describe('Test Kyupad IDO', () => {
   //         creator: upgradableAuthority.publicKey,
   //         project: project,
   //         projectCounter: projectCounter,
-  //         destination: destination,
+  //         investmentDestination: investmentDestination,
   //       })
   //       .instruction();
 
   //     const getProof = merkleTree.getProof(keccak256(test));
   //     const merkle_proof = getProof.map((item) => Array.from(item.data));
 
-  //     const userInvestTotal =
+  //     const usertotalTicket =
   //       randomNumber - 1 === 0 ? randomNumber : randomNumber - 1;
 
   //     const investArgs: InvestArgs = {
   //       projectId: projectConfigArgs.id,
-  //       investTotal: userInvestTotal,
+  //       totalTicket: usertotalTicket,
   //       investMaxTotal: randomNumber,
   //       merkleProof: merkle_proof,
   //     };
@@ -3050,7 +3025,7 @@ describe('Test Kyupad IDO', () => {
   //         project: project,
   //         projectCounter: projectCounter,
   //         investorCounter: investCounter,
-  //         destination: destination,
+  //         investmentDestination: investmentDestination,
   //       })
   //       .signers([upgradableAuthority])
   //       .instruction();
@@ -3074,17 +3049,17 @@ describe('Test Kyupad IDO', () => {
   //       projectCounter
   //     );
 
-  //     const expectedBalance = await connection.getBalance(destination);
+  //     const expectedBalance = await connection.getBalance(investmentDestination);
 
   //     expect(
   //       expectedBalance,
-  //       'Expected destination balace equal ticketSOL'
-  //     ).to.eq(ticketSize.toNumber() * userInvestTotal);
+  //       'Expected investmentDestination balace equal ticketSOL'
+  //     ).to.eq(ticketSize.toNumber() * usertotalTicket);
 
   //     expect(
   //       projectCounterData.remainning,
   //       "Project counter should be equal investotal - user's invest total"
-  //     ).to.eq(investTotal - userInvestTotal);
+  //     ).to.eq(totalTicket - usertotalTicket);
 
   //     const investCounterData = await program.account.investorCounter.fetch(
   //       investCounter
@@ -3093,7 +3068,7 @@ describe('Test Kyupad IDO', () => {
   //     expect(
   //       investCounterData.remainning,
   //       'User invest counter should be equal 0 or 1'
-  //     ).to.eq(randomNumber - userInvestTotal);
+  //     ).to.eq(randomNumber - usertotalTicket);
   //   });
 
   //   // xit('Invest project with token', async () => {
@@ -3105,7 +3080,7 @@ describe('Test Kyupad IDO', () => {
 
   //   //   const receiver = Keypair.generate().publicKey;
 
-  //   //   const destination = (
+  //   //   const investmentDestination = (
   //   //     await getOrCreateAssociatedTokenAccount(
   //   //       connection,
   //   //       upgradableAuthority,
@@ -3116,11 +3091,11 @@ describe('Test Kyupad IDO', () => {
 
   //   //   let { arrayWallet } = generateWhiteListInvest(9999);
 
-  //   //   const userInvestTotal = 1;
+  //   //   const usertotalTicket = 1;
   //   //   const test =
   //   //     upgradableAuthority.publicKey.toString() +
   //   //     '_' +
-  //   //     userInvestTotal.toString();
+  //   //     usertotalTicket.toString();
   //   //   arrayWallet.push(test);
 
   //   //   const leafNode = arrayWallet.map((addr) => keccak256(addr));
@@ -3134,10 +3109,10 @@ describe('Test Kyupad IDO', () => {
   //   //   const startDate = new BN(Math.floor(Date.now() / 1000));
   //   //   const endDate = new BN(Math.floor(Date.now() / 1000) + 3000);
 
-  //   //   const investTotal = 1500;
+  //   //   const totalTicket = 1500;
   //   //   const tokenOffered = 10000; // 100 000 token KYUPAD
   //   //   const ticketSize = new BN(100 * 10 ** tokenData.decimals); // 100 USDT per ticket
-  //   //   // const price = (investTotal * ticketSize) / tokenOffered;
+  //   //   // const price = (totalTicket * ticketSize) / tokenOffered;
 
   //   //   const projectConfigArgs: ProjectConfigArgs = {
   //   //     id: id,
@@ -3147,7 +3122,7 @@ describe('Test Kyupad IDO', () => {
   //   //     tokenAddress: tokenAddress,
   //   //     ticketSize: ticketSize,
   //   //     tokenOffered: tokenOffered,
-  //   //     investTotal: investTotal,
+  //   //     totalTicket: totalTicket,
   //   //   };
 
   //   //   const [project] = PublicKey.findProgramAddressSync(
@@ -3185,7 +3160,7 @@ describe('Test Kyupad IDO', () => {
   //   //       creator: upgradableAuthority.publicKey,
   //   //       project: project,
   //   //       projectCounter: projectCounter,
-  //   //       destination: destination,
+  //   //       investmentDestination: investmentDestination,
   //   //     })
   //   //     .remainingAccounts(remainningAccounRegister)
   //   //     .instruction();
@@ -3195,8 +3170,8 @@ describe('Test Kyupad IDO', () => {
 
   //   //   const investArgs: InvestArgs = {
   //   //     projectId: projectConfigArgs.id,
-  //   //     investTotal: userInvestTotal,
-  //   //     investMaxTotal: userInvestTotal,
+  //   //     totalTicket: usertotalTicket,
+  //   //     investMaxTotal: usertotalTicket,
   //   //     merkleProof: merkle_proof,
   //   //   };
 
@@ -3230,7 +3205,7 @@ describe('Test Kyupad IDO', () => {
   //   //       project: project,
   //   //       projectCounter: projectCounter,
   //   //       investorCounter: investCounter,
-  //   //       destination: destination,
+  //   //       investmentDestination: investmentDestination,
   //   //     })
   //   //     .signers([upgradableAuthority])
   //   //     .remainingAccounts(remainningAccountsInvest)
@@ -3251,10 +3226,10 @@ describe('Test Kyupad IDO', () => {
 
   //   //   await sleep(2000);
 
-  //   //   const info = await getAccount(connection, destination);
+  //   //   const info = await getAccount(connection, investmentDestination);
   //   //   const amount = Number(info.amount);
 
-  //   //   expect(amount, 'Destination amount should equal ticket size').to.eq(
+  //   //   expect(amount, 'investmentDestination amount should equal ticket size').to.eq(
   //   //     ticketSize.toNumber()
   //   //   );
 
@@ -3265,7 +3240,7 @@ describe('Test Kyupad IDO', () => {
   //   //   expect(
   //   //     projectCounterData.remainning,
   //   //     "Project counter should be equal investotal - user's invest total"
-  //   //   ).to.eq(investTotal - userInvestTotal);
+  //   //   ).to.eq(totalTicket - usertotalTicket);
 
   //   //   const investCounterData = await program.account.investorCounter.fetch(
   //   //     investCounter

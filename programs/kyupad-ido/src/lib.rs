@@ -11,7 +11,8 @@ pub mod utils;
 extern crate dotenv_codegen;
 use const_str_to_pubkey::str_to_pubkey;
 
-declare_id!(str_to_pubkey(dotenv!("IDO_PROGRAM_ID")));
+const PROGRAM_ID: Pubkey = str_to_pubkey(dotenv!("IDO_PROGRAM_ID"));
+declare_id!(PROGRAM_ID);
 
 #[program]
 pub mod kyupad_ido {

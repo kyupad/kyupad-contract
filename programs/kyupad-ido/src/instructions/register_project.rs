@@ -11,25 +11,25 @@ pub fn register_project<'c: 'info, 'info>(
     project_config_args: ProjectConfigArgs,
 ) -> Result<()> {
     let project = &mut ctx.accounts.project;
-    let destination = &mut ctx.accounts.destination;
+    let investment_destination = &mut ctx.accounts.investment_destination;
     let creator = &ctx.accounts.creator;
 
     project.id = project_config_args.id;
     project.start_date = project_config_args.start_date;
     project.end_date = project_config_args.end_date;
     project.merkle_root = project_config_args.merkle_root;
-    project.destination = destination.key();
+    project.investment_destination = investment_destination.key();
     project.token_address = project_config_args.token_address;
     project.ticket_size = project_config_args.ticket_size;
     project.token_offered = project_config_args.token_offered;
-    project.invest_total = project_config_args.invest_total;
+    project.total_ticket = project_config_args.total_ticket;
 
     let project_counter = &mut ctx.accounts.project_counter;
-    project_counter.remainning = project_config_args.invest_total;
+    project_counter.remainning = project_config_args.total_ticket;
 
     match project_config_args.token_address {
         Some(token_address) => {
-            let mut __data: &[u8] = &destination.try_borrow_data()?;
+            let mut __data: &[u8] = &investment_destination.try_borrow_data()?;
             let mut __disc_bytes = [0u8; 8];
             __disc_bytes.copy_from_slice(&__data[..8]);
             let __discriminator = u64::from_le_bytes(__disc_bytes);
@@ -43,13 +43,13 @@ pub fn register_project<'c: 'info, 'info>(
                 invoke(
                     &create_associated_token_account(
                         &creator.key,
-                        &destination.key,
+                        &investment_destination.key,
                         &mint.key,
                         &token_program.key,
                     ),
                     &[
                         creator.to_account_info(),
-                        destination.to_account_info(),
+                        investment_destination.to_account_info(),
                         mint.to_account_info(),
                         token_program.to_account_info(),
                     ],
@@ -98,7 +98,7 @@ pub struct RegisterProject<'info> {
     pub project_counter: Account<'info, ProjectCounter>,
 
     /// CHECK:
-    pub destination: AccountInfo<'info>,
+    pub investment_destination: AccountInfo<'info>,
 
     pub system_program: Program<'info, System>,
 }

@@ -9,11 +9,11 @@ pub struct ProjectConfig {
     pub end_date: i64,
     #[max_len(32)]
     pub merkle_root: Vec<u8>,
-    pub destination: Pubkey,
+    pub investment_destination: Pubkey,
     pub token_address: Option<Pubkey>,
     pub ticket_size: u64,
     pub token_offered: u32,
-    pub invest_total: u32,
+    pub total_ticket: u32,
     pub token_program: Option<Pubkey>,
 }
 
@@ -32,5 +32,5 @@ pub struct ProjectConfigArgs {
     pub token_address: Option<Pubkey>,
     pub ticket_size: u64,
     pub token_offered: u32,
-    pub invest_total: u32,
+    pub total_ticket: u32,
 }
