@@ -55,11 +55,3 @@ pub fn assert_keys_equal(key1: &Pubkey, key2: &Pubkey) -> Result<()> {
         Ok(())
     }
 }
-
-pub fn assert_owned_by(account: &AccountInfo, owner: &Pubkey) -> Result<()> {
-    if !cmp_pubkeys(account.owner, owner) {
-        err!(KyuPadError::IncorrectOwner)
-    } else {
-        Ok(())
-    }
-}

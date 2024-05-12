@@ -3,35 +3,27 @@ use anchor_spl::token::TokenAccount;
 
 use crate::*;
 
-pub fn update_project_config(
-    ctx: Context<UpdateProjectConfig>,
-    update_config_project: UpdateProjectConfigArgs,
+pub fn update_whitelist(
+    ctx: Context<UpdateWhitelist>,
+    update_whitelist_args: UpdateWhitelistArgs,
 ) -> Result<()> {
     let project = &mut ctx.accounts.project;
 
-    project.merkle_root = update_config_project.merkle_root;
-
-    match &update_config_project.total_ticket {
-        Some(total_ticket) => {
-            project.total_ticket = *total_ticket;
-        }
-        None => {}
-    }
-
+    project.merkle_root = update_whitelist_args.merkle_root;
     Ok(())
 }
 
-pub fn update_destination(ctx: Context<UpdateDestination>, _project_id: String) -> Result<()> {
+pub fn update_vault_address(ctx: Context<UpdateVaultAddress>, _project_id: String) -> Result<()> {
     let project = &mut ctx.accounts.project;
-    let destination = &ctx.accounts.destination;
+    let vault_address = &ctx.accounts.vault_address;
 
-    project.investment_destination = destination.key();
+    project.vault_address = vault_address.key();
     Ok(())
 }
 
 #[derive(Accounts)]
-#[instruction(update_config_project: UpdateProjectConfigArgs)]
-pub struct UpdateProjectConfig<'info> {
+#[instruction(update_config_project: UpdateWhitelistArgs)]
+pub struct UpdateWhitelist<'info> {
     #[account(
         mut,
         constraint = creator.key() == admin_pda.admin_key
@@ -57,7 +49,7 @@ pub struct UpdateProjectConfig<'info> {
 
 #[derive(Accounts)]
 #[instruction(_project_id: String)]
-pub struct UpdateDestination<'info> {
+pub struct UpdateVaultAddress<'info> {
     #[account(
         mut,
         constraint = signer.key() == master_pda.master_key
@@ -68,7 +60,6 @@ pub struct UpdateDestination<'info> {
         seeds = [b"master"],
         bump,       
         owner = ID,
-
     )]
     pub master_pda: Account<'info, Master>,
 
@@ -80,18 +71,17 @@ pub struct UpdateDestination<'info> {
     )]
     pub project: Account<'info, ProjectConfig>,
 
-    pub destination: Account<'info, TokenAccount>,
+    pub vault_address: Account<'info, TokenAccount>,
 }
 
 #[derive(Debug, AnchorSerialize, AnchorDeserialize)]
-pub struct UpdateProjectConfigArgs {
+pub struct UpdateWhitelistArgs {
     pub project_id: String,
     pub merkle_root: Vec<u8>,
-    pub total_ticket: Option<u32>,
 }
 
 #[derive(Debug, AnchorSerialize, AnchorDeserialize)]
-pub struct UpdateDestinationArgs {
+pub struct UpdateVaultAddressArgs {
     pub project_id: String,
-    pub destination: Pubkey,
+    pub vault_address: Pubkey,
 }

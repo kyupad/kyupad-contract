@@ -5,11 +5,10 @@ pub enum KyuPadError {
     #[msg("This wallet is't supported to mint")]
     InvalidWallet,
 
+    #[msg("The publicKey provide doesn't match with config publicKey")]
     PublicKeyMismatch,
 
-    IncorrectOwner,
-
-    #[msg("Mint time is too early or expired")]
+    #[msg("Invest time is too early or expired")]
     NotInvestTime,
 
     #[msg("Projet is out of tickets to buy")]
@@ -21,7 +20,6 @@ pub enum KyuPadError {
     #[msg("Not enough tickets")]
     NotEnoughTicket,
 
-    NeedToPassMintDecimals,
-
+    #[msg("Transfer instruction is error")]
     TransferIsError,
 }

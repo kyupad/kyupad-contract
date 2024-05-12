@@ -50,4 +50,15 @@ pub mod kyupad_ido {
     ) -> Result<()> {
         instructions::transfer_master_rights(ctx, new_master_address)
     }
+
+    pub fn update_whitelist(
+        ctx: Context<UpdateWhitelist>,
+        update_whitelist_args: UpdateWhitelistArgs,
+    ) -> Result<()> {
+        instructions::update_whitelist(ctx, update_whitelist_args)
+    }
+
+    pub fn update_vault_address(ctx: Context<UpdateVaultAddress>, project_id: String) -> Result<()> {
+        instructions::update_vault_address(ctx, project_id)
+    }
 }

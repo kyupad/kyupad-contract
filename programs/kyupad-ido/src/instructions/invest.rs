@@ -23,7 +23,7 @@ pub fn invest<'c: 'info, 'info>(
     let project = &ctx.accounts.project;
     let investor_counter = &mut ctx.accounts.investor_counter;
     let investor = &ctx.accounts.investor;
-    let investment_destination = &ctx.accounts.investment_destination;
+    let vault_address = &ctx.accounts.vault_address;
     let system_program = &ctx.accounts.system_program;
 
     // check if has a valid max_ticket_amount
@@ -39,25 +39,15 @@ pub fn invest<'c: 'info, 'info>(
     }
 
     // check if have enough ticket to invest
-    if project_counter.remainning <= 0 {
+    if project_counter.remaining <= 0 {
         return Err(KyuPadError::ProjectOutOfTicket.into());
     }
 
-    let binding = investor_counter.to_account_info();
-    let mut __data: &[u8] = &binding.try_borrow_data()?;
-    let mut __disc_bytes = [0u8; 8];
-    __disc_bytes.copy_from_slice(&__data[..8]);
-    let __discriminator = u64::from_le_bytes(__disc_bytes);
+    let remaining_ticket = invest_args.max_ticket_amount - investor_counter.total_invested_ticket;
 
-    // check if user is enough ticket to invest
-    if __discriminator != 0 {
-        if invest_args.ticket_amount > investor_counter.remainning {
-            return Err(KyuPadError::NotEnoughTicket.into());
-        }
-    } else {
-        investor_counter.remainning = invest_args.max_ticket_amount;
-        investor_counter.wallet = *investor.key;
-        investor_counter.project_id = invest_args.project_id;
+    // check if remaining is bigger than 0 or ticket amount is bigger than remaining ticket
+    if remaining_ticket <= 0 || invest_args.ticket_amount > remaining_ticket {
+        return Err(KyuPadError::NotEnoughTicket.into());
     }
 
     // check if user have right to invest
@@ -78,10 +68,10 @@ pub fn invest<'c: 'info, 'info>(
 
             match project.token_address {
                 Some(token_address) => {
-                    let list_remainning_accounts = &mut ctx.remaining_accounts.iter();
-                    let token_program = next_account_info(list_remainning_accounts)?;
-                    let mint = next_account_info(list_remainning_accounts)?;
-                    let source = next_account_info(list_remainning_accounts)?;
+                    let list_remaining_accounts = &mut ctx.remaining_accounts.iter();
+                    let token_program = next_account_info(list_remaining_accounts)?;
+                    let mint = next_account_info(list_remaining_accounts)?;
+                    let source = next_account_info(list_remaining_accounts)?;
 
                     let mint_data: Account<Mint> = Account::try_from(mint)?;
 
@@ -101,7 +91,7 @@ pub fn invest<'c: 'info, 'info>(
                             token_program.key,
                             &source.key(),
                             &mint.key(),
-                            &investment_destination.key(),
+                            &vault_address.key(),
                             investor.key,
                             &[],
                             project.ticket_size * invest_args.ticket_amount as u64,
@@ -112,7 +102,7 @@ pub fn invest<'c: 'info, 'info>(
                             token_program.to_account_info(),
                             source.to_account_info(),
                             mint.to_account_info(),
-                            investment_destination.to_account_info(),
+                            vault_address.to_account_info(),
                             investor.to_account_info(),
                         ],
                     );
@@ -121,12 +111,12 @@ pub fn invest<'c: 'info, 'info>(
                     transfer_result = invoke(
                         &system_instruction::transfer(
                             &investor.key(),
-                            &investment_destination.key(),
+                            &vault_address.key(),
                             project.ticket_size * invest_args.ticket_amount as u64,
                         ),
                         &[
                             investor.to_account_info().clone(),
-                            investment_destination.to_account_info(),
+                            vault_address.to_account_info(),
                             system_program.to_account_info(),
                         ],
                     );
@@ -135,9 +125,15 @@ pub fn invest<'c: 'info, 'info>(
 
             match transfer_result {
                 Ok(_) => {
-                    // calculate remainning ticket for project's counter and investor's counter
-                    project_counter.remainning -= invest_args.ticket_amount as u32;
-                    investor_counter.remainning -= invest_args.ticket_amount;
+                    // calculate remaining ticket for project's counter
+                    project_counter.remaining -= invest_args.ticket_amount as u32;
+
+                    // increase total_invested_ticket by an amount equal to ticket_amount
+                    investor_counter.total_invested_ticket += invest_args.ticket_amount;
+
+                    // Assign these two value fields to serve fetching data
+                    investor_counter.wallet = *investor.key;
+                    investor_counter.project_id = invest_args.project_id;
                 }
                 Err(_) => return Err(KyuPadError::TransferIsError.into()),
             }
@@ -179,7 +175,7 @@ pub struct Invest<'info> {
 
     #[account(mut)]
     /// CHECK:
-    pub investment_destination: AccountInfo<'info>,
+    pub vault_address: AccountInfo<'info>,
 
     // pub token_program: AccountInfo<'info>,
     pub system_program: Program<'info, System>,

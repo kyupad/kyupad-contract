@@ -43,7 +43,7 @@ type ProjectConfig = {
   ticketSize: BN;
   tokenOffered: number;
   totalTicket: number;
-  investmentDestination: PublicKey;
+  vaultAddress: PublicKey;
   tokenProgram: PublicKey;
 };
 
@@ -63,7 +63,7 @@ describe('Test Kyupad IDO', () => {
 
   describe('📦📦📦 Register project', async () => {
     xit('Register project with sol', async () => {
-      const investmentDestination = upgradableAuthority.publicKey;
+      const vaultAddress = upgradableAuthority.publicKey;
 
       let { arrayWallet, totalTicket } = generateWhiteListInvest(9999);
 
@@ -110,7 +110,7 @@ describe('Test Kyupad IDO', () => {
         .registerProject(projectConfigArgs)
         .accounts({
           creator: upgradableAuthority.publicKey,
-          investmentDestination: investmentDestination,
+          vaultAddress: vaultAddress,
         })
         .instruction();
 
@@ -135,7 +135,7 @@ describe('Test Kyupad IDO', () => {
 
       const projectDataInput: ProjectConfig = {
         ...projectConfigArgs,
-        investmentDestination: investmentDestination,
+        vaultAddress: vaultAddress,
         tokenProgram: null,
       };
 
@@ -168,7 +168,7 @@ describe('Test Kyupad IDO', () => {
 
       const receiver = Keypair.generate().publicKey;
 
-      const investmentDestination = (
+      const vaultAddress = (
         await getOrCreateAssociatedTokenAccount(
           connection,
           upgradableAuthority,
@@ -219,7 +219,7 @@ describe('Test Kyupad IDO', () => {
         program.programId
       );
 
-      const remainningAccounRegister: AccountMeta[] = [
+      const remainingAccounRegister: AccountMeta[] = [
         {
           pubkey: TOKEN_PROGRAM_ID,
           isSigner: false,
@@ -236,9 +236,9 @@ describe('Test Kyupad IDO', () => {
         .registerProject(projectConfigArgs)
         .accounts({
           creator: upgradableAuthority.publicKey,
-          investmentDestination: investmentDestination,
+          vaultAddress: vaultAddress,
         })
-        .remainingAccounts(remainningAccounRegister)
+        .remainingAccounts(remainingAccounRegister)
         .instruction();
 
       const tx = new Transaction().add(registerProjectIns);
@@ -261,7 +261,7 @@ describe('Test Kyupad IDO', () => {
 
       const projectDataInput: ProjectConfig = {
         ...projectConfigArgs,
-        investmentDestination: investmentDestination,
+        vaultAddress: vaultAddress,
         tokenProgram: null,
       };
 
@@ -388,7 +388,7 @@ describe('Test Kyupad IDO', () => {
 
         const receiver = Keypair.generate().publicKey;
 
-        const investmentDestination = (
+        const vaultAddress = (
           await getOrCreateAssociatedTokenAccount(
             connection,
             upgradableAuthority,
@@ -431,7 +431,7 @@ describe('Test Kyupad IDO', () => {
           totalTicket: totalTicket,
         };
 
-        const remainningAccounRegister: AccountMeta[] = [
+        const remainingAccounRegister: AccountMeta[] = [
           {
             pubkey: TOKEN_PROGRAM_ID,
             isSigner: false,
@@ -448,9 +448,9 @@ describe('Test Kyupad IDO', () => {
           .registerProject(projectConfigArgs)
           .accounts({
             creator: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
-          .remainingAccounts(remainningAccounRegister)
+          .remainingAccounts(remainingAccounRegister)
           .instruction();
 
         const getProof = merkleTree.getProof(keccak256(test));
@@ -471,8 +471,8 @@ describe('Test Kyupad IDO', () => {
           upgradableAuthority.publicKey
         );
 
-        const remainningAccountsInvest: AccountMeta[] = [
-          ...remainningAccounRegister,
+        const remainingAccountsInvest: AccountMeta[] = [
+          ...remainingAccounRegister,
           {
             pubkey: source,
             isSigner: false,
@@ -484,10 +484,10 @@ describe('Test Kyupad IDO', () => {
           .invest(investArgs)
           .accounts({
             investor: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
           .signers([upgradableAuthority])
-          .remainingAccounts(remainningAccountsInvest)
+          .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
         const tx = new Transaction().add(registerProjectIns).add(investIns);
@@ -516,7 +516,7 @@ describe('Test Kyupad IDO', () => {
 
         const receiver = Keypair.generate().publicKey;
 
-        const investmentDestination = (
+        const vaultAddress = (
           await getOrCreateAssociatedTokenAccount(
             connection,
             upgradableAuthority,
@@ -555,7 +555,7 @@ describe('Test Kyupad IDO', () => {
           totalTicket: totalTicket,
         };
 
-        const remainningAccounRegister: AccountMeta[] = [
+        const remainingAccounRegister: AccountMeta[] = [
           {
             pubkey: TOKEN_PROGRAM_ID,
             isSigner: false,
@@ -572,9 +572,9 @@ describe('Test Kyupad IDO', () => {
           .registerProject(projectConfigArgs)
           .accounts({
             creator: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
-          .remainingAccounts(remainningAccounRegister)
+          .remainingAccounts(remainingAccounRegister)
           .instruction();
 
         const usertotalTicket =
@@ -592,8 +592,8 @@ describe('Test Kyupad IDO', () => {
           upgradableAuthority.publicKey
         );
 
-        const remainningAccountsInvest: AccountMeta[] = [
-          ...remainningAccounRegister,
+        const remainingAccountsInvest: AccountMeta[] = [
+          ...remainingAccounRegister,
           {
             pubkey: source,
             isSigner: false,
@@ -605,10 +605,10 @@ describe('Test Kyupad IDO', () => {
           .invest(investArgs)
           .accounts({
             investor: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
           .signers([upgradableAuthority])
-          .remainingAccounts(remainningAccountsInvest)
+          .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
         const tx = new Transaction().add(registerProjectIns).add(investIns);
@@ -639,7 +639,7 @@ describe('Test Kyupad IDO', () => {
 
         const receiver = Keypair.generate().publicKey;
 
-        const investmentDestination = (
+        const vaultAddress = (
           await getOrCreateAssociatedTokenAccount(
             connection,
             upgradableAuthority,
@@ -693,7 +693,7 @@ describe('Test Kyupad IDO', () => {
           program.programId
         );
 
-        const remainningAccounRegister: AccountMeta[] = [
+        const remainingAccounRegister: AccountMeta[] = [
           {
             pubkey: TOKEN_PROGRAM_ID,
             isSigner: false,
@@ -710,9 +710,9 @@ describe('Test Kyupad IDO', () => {
           .registerProject(projectConfigArgs)
           .accounts({
             creator: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
-          .remainingAccounts(remainningAccounRegister)
+          .remainingAccounts(remainingAccounRegister)
           .instruction();
 
         const getProof = merkleTree.getProof(keccak256(test));
@@ -740,8 +740,8 @@ describe('Test Kyupad IDO', () => {
           upgradableAuthority.publicKey
         );
 
-        const remainningAccountsInvest: AccountMeta[] = [
-          ...remainningAccounRegister,
+        const remainingAccountsInvest: AccountMeta[] = [
+          ...remainingAccounRegister,
           {
             pubkey: source,
             isSigner: false,
@@ -753,10 +753,10 @@ describe('Test Kyupad IDO', () => {
           .invest(investArgs)
           .accounts({
             investor: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
           .signers([upgradableAuthority])
-          .remainingAccounts(remainningAccountsInvest)
+          .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
         const tx = new Transaction().add(registerProjectIns).add(investIns);
@@ -778,12 +778,12 @@ describe('Test Kyupad IDO', () => {
 
         await sleep(2000);
 
-        const info = await getAccount(connection, investmentDestination);
+        const info = await getAccount(connection, vaultAddress);
         const amount = Number(info.amount);
 
         expect(
           amount,
-          'investmentDestination amount should equal ticket size'
+          'vaultAddress amount should equal ticket size'
         ).to.eq(ticketSize.toNumber() * usertotalTicket);
 
         const projectCounterData = await program.account.projectCounter.fetch(
@@ -791,7 +791,7 @@ describe('Test Kyupad IDO', () => {
         );
 
         expect(
-          projectCounterData.remainning,
+          projectCounterData.remaining,
           "Project counter should be equal investotal - user's invest total"
         ).to.eq(totalTicket - usertotalTicket);
 
@@ -800,7 +800,7 @@ describe('Test Kyupad IDO', () => {
         );
 
         expect(
-          investCounterData.remainning,
+          investCounterData.totalInvestedTicket,
           'User invest counter should be equal 0'
         ).to.eq(0);
       });
@@ -814,7 +814,7 @@ describe('Test Kyupad IDO', () => {
 
         const receiver = Keypair.generate().publicKey;
 
-        const investmentDestination = (
+        const vaultAddress = (
           await getOrCreateAssociatedTokenAccount(
             connection,
             upgradableAuthority,
@@ -867,7 +867,7 @@ describe('Test Kyupad IDO', () => {
           program.programId
         );
 
-        const remainningAccounRegister: AccountMeta[] = [
+        const remainingAccounRegister: AccountMeta[] = [
           {
             pubkey: TOKEN_PROGRAM_ID,
             isSigner: false,
@@ -884,9 +884,9 @@ describe('Test Kyupad IDO', () => {
           .registerProject(projectConfigArgs)
           .accounts({
             creator: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
-          .remainingAccounts(remainningAccounRegister)
+          .remainingAccounts(remainingAccounRegister)
           .instruction();
 
         const getProof = merkleTree.getProof(keccak256(test));
@@ -916,8 +916,8 @@ describe('Test Kyupad IDO', () => {
           upgradableAuthority.publicKey
         );
 
-        const remainningAccountsInvest: AccountMeta[] = [
-          ...remainningAccounRegister,
+        const remainingAccountsInvest: AccountMeta[] = [
+          ...remainingAccounRegister,
           {
             pubkey: source,
             isSigner: false,
@@ -929,10 +929,10 @@ describe('Test Kyupad IDO', () => {
           .invest(investArgs)
           .accounts({
             investor: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
           .signers([upgradableAuthority])
-          .remainingAccounts(remainningAccountsInvest)
+          .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
         const tx = new Transaction().add(registerProjectIns).add(investIns);
@@ -961,7 +961,7 @@ describe('Test Kyupad IDO', () => {
 
         const receiver = Keypair.generate().publicKey;
 
-        const investmentDestination = (
+        const vaultAddress = (
           await getOrCreateAssociatedTokenAccount(
             connection,
             upgradableAuthority,
@@ -1020,7 +1020,7 @@ describe('Test Kyupad IDO', () => {
           program.programId
         );
 
-        const remainningAccounRegister: AccountMeta[] = [
+        const remainingAccounRegister: AccountMeta[] = [
           {
             pubkey: TOKEN_PROGRAM_ID,
             isSigner: false,
@@ -1037,9 +1037,9 @@ describe('Test Kyupad IDO', () => {
           .registerProject(projectConfigArgs)
           .accounts({
             creator: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
-          .remainingAccounts(remainningAccounRegister)
+          .remainingAccounts(remainingAccounRegister)
           .instruction();
 
         const getProof = merkleTree.getProof(keccak256(test));
@@ -1067,8 +1067,8 @@ describe('Test Kyupad IDO', () => {
           upgradableAuthority.publicKey
         );
 
-        const remainningAccountsInvest: AccountMeta[] = [
-          ...remainningAccounRegister,
+        const remainingAccountsInvest: AccountMeta[] = [
+          ...remainingAccounRegister,
           {
             pubkey: source,
             isSigner: false,
@@ -1080,10 +1080,10 @@ describe('Test Kyupad IDO', () => {
           .invest(investArgs)
           .accounts({
             investor: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
           .signers([upgradableAuthority])
-          .remainingAccounts(remainningAccountsInvest)
+          .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
         const tx = new Transaction().add(registerProjectIns).add(investIns);
@@ -1113,7 +1113,7 @@ describe('Test Kyupad IDO', () => {
 
         const receiver = Keypair.generate().publicKey;
 
-        const investmentDestination = (
+        const vaultAddress = (
           await getOrCreateAssociatedTokenAccount(
             connection,
             upgradableAuthority,
@@ -1172,7 +1172,7 @@ describe('Test Kyupad IDO', () => {
           program.programId
         );
 
-        const remainningAccounRegister: AccountMeta[] = [
+        const remainingAccounRegister: AccountMeta[] = [
           {
             pubkey: TOKEN_PROGRAM_ID,
             isSigner: false,
@@ -1189,9 +1189,9 @@ describe('Test Kyupad IDO', () => {
           .registerProject(projectConfigArgs)
           .accounts({
             creator: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
-          .remainingAccounts(remainningAccounRegister)
+          .remainingAccounts(remainingAccounRegister)
           .instruction();
 
         const getProof = merkleTree.getProof(keccak256(test));
@@ -1219,8 +1219,8 @@ describe('Test Kyupad IDO', () => {
           upgradableAuthority.publicKey
         );
 
-        const remainningAccountsInvest: AccountMeta[] = [
-          ...remainningAccounRegister,
+        const remainingAccountsInvest: AccountMeta[] = [
+          ...remainingAccounRegister,
           {
             pubkey: source,
             isSigner: false,
@@ -1232,10 +1232,10 @@ describe('Test Kyupad IDO', () => {
           .invest(investArgs)
           .accounts({
             investor: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
           .signers([upgradableAuthority])
-          .remainingAccounts(remainningAccountsInvest)
+          .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
         const tx = new Transaction().add(registerProjectIns).add(investIns);
@@ -1265,7 +1265,7 @@ describe('Test Kyupad IDO', () => {
 
         const receiver = Keypair.generate().publicKey;
 
-        const investmentDestination = (
+        const vaultAddress = (
           await getOrCreateAssociatedTokenAccount(
             connection,
             upgradableAuthority,
@@ -1324,7 +1324,7 @@ describe('Test Kyupad IDO', () => {
           program.programId
         );
 
-        const remainningAccounRegister: AccountMeta[] = [
+        const remainingAccounRegister: AccountMeta[] = [
           {
             pubkey: TOKEN_PROGRAM_ID,
             isSigner: false,
@@ -1341,9 +1341,9 @@ describe('Test Kyupad IDO', () => {
           .registerProject(projectConfigArgs)
           .accounts({
             creator: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
-          .remainingAccounts(remainningAccounRegister)
+          .remainingAccounts(remainingAccounRegister)
           .instruction();
 
         const getProof = merkleTree.getProof(keccak256(test));
@@ -1371,8 +1371,8 @@ describe('Test Kyupad IDO', () => {
           upgradableAuthority.publicKey
         );
 
-        const remainningAccountsInvest: AccountMeta[] = [
-          ...remainningAccounRegister,
+        const remainingAccountsInvest: AccountMeta[] = [
+          ...remainingAccounRegister,
           {
             pubkey: source,
             isSigner: false,
@@ -1384,10 +1384,10 @@ describe('Test Kyupad IDO', () => {
           .invest(investArgs)
           .accounts({
             investor: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
           .signers([upgradableAuthority])
-          .remainingAccounts(remainningAccountsInvest)
+          .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
         const tx = new Transaction().add(registerProjectIns).add(investIns);
@@ -1403,10 +1403,10 @@ describe('Test Kyupad IDO', () => {
           .invest(investArgs)
           .accounts({
             investor: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
           .signers([upgradableAuthority])
-          .remainingAccounts(remainningAccountsInvest)
+          .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
         const tx_2 = new Transaction().add(investSecondTimeIns);
@@ -1438,7 +1438,7 @@ describe('Test Kyupad IDO', () => {
 
         const receiver = Keypair.generate().publicKey;
 
-        const investmentDestination = (
+        const vaultAddress = (
           await getOrCreateAssociatedTokenAccount(
             connection,
             upgradableAuthority,
@@ -1497,7 +1497,7 @@ describe('Test Kyupad IDO', () => {
           program.programId
         );
 
-        const remainningAccounRegister: AccountMeta[] = [
+        const remainingAccounRegister: AccountMeta[] = [
           {
             pubkey: TOKEN_PROGRAM_ID,
             isSigner: false,
@@ -1514,9 +1514,9 @@ describe('Test Kyupad IDO', () => {
           .registerProject(projectConfigArgs)
           .accounts({
             creator: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
-          .remainingAccounts(remainningAccounRegister)
+          .remainingAccounts(remainingAccounRegister)
           .instruction();
 
         const getProof = merkleTree.getProof(keccak256(test));
@@ -1544,8 +1544,8 @@ describe('Test Kyupad IDO', () => {
           upgradableAuthority.publicKey
         );
 
-        const remainningAccountsInvest: AccountMeta[] = [
-          ...remainningAccounRegister,
+        const remainingAccountsInvest: AccountMeta[] = [
+          ...remainingAccounRegister,
           {
             pubkey: source,
             isSigner: false,
@@ -1557,10 +1557,10 @@ describe('Test Kyupad IDO', () => {
           .invest(investArgs)
           .accounts({
             investor: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
           .signers([upgradableAuthority])
-          .remainingAccounts(remainningAccountsInvest)
+          .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
         const tx = new Transaction().add(registerProjectIns).add(investIns);
@@ -1578,10 +1578,10 @@ describe('Test Kyupad IDO', () => {
           .invest(investArgs)
           .accounts({
             investor: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
           .signers([upgradableAuthority])
-          .remainingAccounts(remainningAccountsInvest)
+          .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
         const tx_2 = new Transaction().add(investSecondTimeIns);
@@ -1615,7 +1615,7 @@ describe('Test Kyupad IDO', () => {
 
         const receiver = Keypair.generate().publicKey;
 
-        const investmentDestination = (
+        const vaultAddress = (
           await getOrCreateAssociatedTokenAccount(
             connection,
             upgradableAuthority,
@@ -1674,7 +1674,7 @@ describe('Test Kyupad IDO', () => {
           program.programId
         );
 
-        const remainningAccounRegister: AccountMeta[] = [
+        const remainingAccounRegister: AccountMeta[] = [
           {
             pubkey: TOKEN_PROGRAM_ID,
             isSigner: false,
@@ -1691,9 +1691,9 @@ describe('Test Kyupad IDO', () => {
           .registerProject(projectConfigArgs)
           .accounts({
             creator: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
-          .remainingAccounts(remainningAccounRegister)
+          .remainingAccounts(remainingAccounRegister)
           .instruction();
 
         const getProof = merkleTree.getProof(keccak256(test));
@@ -1721,8 +1721,8 @@ describe('Test Kyupad IDO', () => {
           upgradableAuthority.publicKey
         );
 
-        const remainningAccountsInvest: AccountMeta[] = [
-          ...remainningAccounRegister,
+        const remainingAccountsInvest: AccountMeta[] = [
+          ...remainingAccounRegister,
           {
             pubkey: source,
             isSigner: false,
@@ -1734,10 +1734,10 @@ describe('Test Kyupad IDO', () => {
           .invest(investArgs)
           .accounts({
             investor: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
           .signers([upgradableAuthority])
-          .remainingAccounts(remainningAccountsInvest)
+          .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
         const tx = new Transaction().add(registerProjectIns).add(investIns);
@@ -1759,12 +1759,12 @@ describe('Test Kyupad IDO', () => {
 
         await sleep(2000);
 
-        const info = await getAccount(connection, investmentDestination);
+        const info = await getAccount(connection, vaultAddress);
         const amount = Number(info.amount);
 
         expect(
           amount,
-          'investmentDestination amount should equal ticket size'
+          'vaultAddress amount should equal ticket size'
         ).to.eq(ticketSize.toNumber() * usertotalTicket);
 
         const projectCounterData = await program.account.projectCounter.fetch(
@@ -1772,7 +1772,7 @@ describe('Test Kyupad IDO', () => {
         );
 
         expect(
-          projectCounterData.remainning,
+          projectCounterData.remaining,
           "Project counter should be equal investotal - user's invest total"
         ).to.eq(totalTicket - usertotalTicket);
 
@@ -1781,7 +1781,7 @@ describe('Test Kyupad IDO', () => {
         );
 
         expect(
-          investCounterData.remainning,
+          investCounterData.totalInvestedTicket,
           'User invest counter should be equal 1'
         ).to.eq(userTicket - usertotalTicket);
       });
@@ -1795,7 +1795,7 @@ describe('Test Kyupad IDO', () => {
 
         const receiver = Keypair.generate().publicKey;
 
-        const investmentDestination = (
+        const vaultAddress = (
           await getOrCreateAssociatedTokenAccount(
             connection,
             upgradableAuthority,
@@ -1854,7 +1854,7 @@ describe('Test Kyupad IDO', () => {
           program.programId
         );
 
-        const remainningAccounRegister: AccountMeta[] = [
+        const remainingAccounRegister: AccountMeta[] = [
           {
             pubkey: TOKEN_PROGRAM_ID,
             isSigner: false,
@@ -1871,9 +1871,9 @@ describe('Test Kyupad IDO', () => {
           .registerProject(projectConfigArgs)
           .accounts({
             creator: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
-          .remainingAccounts(remainningAccounRegister)
+          .remainingAccounts(remainingAccounRegister)
           .instruction();
 
         const getProof = merkleTree.getProof(keccak256(test));
@@ -1901,8 +1901,8 @@ describe('Test Kyupad IDO', () => {
           upgradableAuthority.publicKey
         );
 
-        const remainningAccountsInvest: AccountMeta[] = [
-          ...remainningAccounRegister,
+        const remainingAccountsInvest: AccountMeta[] = [
+          ...remainingAccounRegister,
           {
             pubkey: source,
             isSigner: false,
@@ -1914,10 +1914,10 @@ describe('Test Kyupad IDO', () => {
           .invest(investArgs)
           .accounts({
             investor: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
           .signers([upgradableAuthority])
-          .remainingAccounts(remainningAccountsInvest)
+          .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
         const tx = new Transaction()
@@ -1942,12 +1942,12 @@ describe('Test Kyupad IDO', () => {
 
         await sleep(2000);
 
-        const info = await getAccount(connection, investmentDestination);
+        const info = await getAccount(connection, vaultAddress);
         const amount = Number(info.amount);
 
         expect(
           amount,
-          'investmentDestination amount should equal ticket size'
+          'vaultAddress amount should equal ticket size'
         ).to.eq(ticketSize.toNumber() * userTicket);
 
         const projectCounterData = await program.account.projectCounter.fetch(
@@ -1955,7 +1955,7 @@ describe('Test Kyupad IDO', () => {
         );
 
         expect(
-          projectCounterData.remainning,
+          projectCounterData.remaining,
           "Project counter should be equal investotal - user's invest total"
         ).to.eq(totalTicket - userTicket);
 
@@ -1964,7 +1964,7 @@ describe('Test Kyupad IDO', () => {
         );
 
         expect(
-          investCounterData.remainning,
+          investCounterData.totalInvestedTicket,
           'User invest counter should be equal 0'
         ).to.eq(0);
       });
@@ -1978,7 +1978,7 @@ describe('Test Kyupad IDO', () => {
 
         const receiver = Keypair.generate().publicKey;
 
-        const investmentDestination = (
+        const vaultAddress = (
           await getOrCreateAssociatedTokenAccount(
             connection,
             upgradableAuthority,
@@ -2037,7 +2037,7 @@ describe('Test Kyupad IDO', () => {
           program.programId
         );
 
-        const remainningAccounRegister: AccountMeta[] = [
+        const remainingAccounRegister: AccountMeta[] = [
           {
             pubkey: TOKEN_PROGRAM_ID,
             isSigner: false,
@@ -2054,9 +2054,9 @@ describe('Test Kyupad IDO', () => {
           .registerProject(projectConfigArgs)
           .accounts({
             creator: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
-          .remainingAccounts(remainningAccounRegister)
+          .remainingAccounts(remainingAccounRegister)
           .instruction();
 
         const getProof = merkleTree.getProof(keccak256(test));
@@ -2084,8 +2084,8 @@ describe('Test Kyupad IDO', () => {
           upgradableAuthority.publicKey
         );
 
-        const remainningAccountsInvest: AccountMeta[] = [
-          ...remainningAccounRegister,
+        const remainingAccountsInvest: AccountMeta[] = [
+          ...remainingAccounRegister,
           {
             pubkey: source,
             isSigner: false,
@@ -2097,10 +2097,10 @@ describe('Test Kyupad IDO', () => {
           .invest(investArgs)
           .accounts({
             investor: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
           .signers([upgradableAuthority])
-          .remainingAccounts(remainningAccountsInvest)
+          .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
         const tx = new Transaction().add(registerProjectIns).add(investIns);
@@ -2122,12 +2122,12 @@ describe('Test Kyupad IDO', () => {
 
         await sleep(2000);
 
-        const info = await getAccount(connection, investmentDestination);
+        const info = await getAccount(connection, vaultAddress);
         const amount = Number(info.amount);
 
         expect(
           amount,
-          'investmentDestination amount should equal ticket size'
+          'vaultAddress amount should equal ticket size'
         ).to.eq(ticketSize.toNumber() * usertotalTicket);
 
         const projectCounterData = await program.account.projectCounter.fetch(
@@ -2135,7 +2135,7 @@ describe('Test Kyupad IDO', () => {
         );
 
         expect(
-          projectCounterData.remainning,
+          projectCounterData.remaining,
           "Project counter should be equal investotal - user's invest total"
         ).to.eq(totalTicket - usertotalTicket);
 
@@ -2144,7 +2144,7 @@ describe('Test Kyupad IDO', () => {
         );
 
         expect(
-          investCounterData.remainning,
+          investCounterData.totalInvestedTicket,
           'User invest counter should be equal 0'
         ).to.eq(userTicket - usertotalTicket);
       });
@@ -2158,7 +2158,7 @@ describe('Test Kyupad IDO', () => {
 
         const receiver = Keypair.generate().publicKey;
 
-        const investmentDestination = (
+        const vaultAddress = (
           await getOrCreateAssociatedTokenAccount(
             connection,
             upgradableAuthority,
@@ -2217,7 +2217,7 @@ describe('Test Kyupad IDO', () => {
           program.programId
         );
 
-        const remainningAccounRegister: AccountMeta[] = [
+        const remainingAccounRegister: AccountMeta[] = [
           {
             pubkey: TOKEN_PROGRAM_ID,
             isSigner: false,
@@ -2234,9 +2234,9 @@ describe('Test Kyupad IDO', () => {
           .registerProject(projectConfigArgs)
           .accounts({
             creator: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
-          .remainingAccounts(remainningAccounRegister)
+          .remainingAccounts(remainingAccounRegister)
           .instruction();
 
         const getProof = merkleTree.getProof(keccak256(test));
@@ -2264,8 +2264,8 @@ describe('Test Kyupad IDO', () => {
           upgradableAuthority.publicKey
         );
 
-        const remainningAccountsInvest: AccountMeta[] = [
-          ...remainningAccounRegister,
+        const remainingAccountsInvest: AccountMeta[] = [
+          ...remainingAccounRegister,
           {
             pubkey: source,
             isSigner: false,
@@ -2277,10 +2277,10 @@ describe('Test Kyupad IDO', () => {
           .invest(investArgs)
           .accounts({
             investor: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
           .signers([upgradableAuthority])
-          .remainingAccounts(remainningAccountsInvest)
+          .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
         const tx = new Transaction().add(registerProjectIns).add(investIns);
@@ -2310,7 +2310,7 @@ describe('Test Kyupad IDO', () => {
 
         const receiver = Keypair.generate().publicKey;
 
-        const investmentDestination = (
+        const vaultAddress = (
           await getOrCreateAssociatedTokenAccount(
             connection,
             upgradableAuthority,
@@ -2369,7 +2369,7 @@ describe('Test Kyupad IDO', () => {
           program.programId
         );
 
-        const remainningAccounRegister: AccountMeta[] = [
+        const remainingAccounRegister: AccountMeta[] = [
           {
             pubkey: TOKEN_PROGRAM_ID,
             isSigner: false,
@@ -2386,9 +2386,9 @@ describe('Test Kyupad IDO', () => {
           .registerProject(projectConfigArgs)
           .accounts({
             creator: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
-          .remainingAccounts(remainningAccounRegister)
+          .remainingAccounts(remainingAccounRegister)
           .instruction();
 
         const getProof = merkleTree.getProof(keccak256(test));
@@ -2416,8 +2416,8 @@ describe('Test Kyupad IDO', () => {
           upgradableAuthority.publicKey
         );
 
-        const remainningAccountsInvest: AccountMeta[] = [
-          ...remainningAccounRegister,
+        const remainingAccountsInvest: AccountMeta[] = [
+          ...remainingAccounRegister,
           {
             pubkey: source,
             isSigner: false,
@@ -2429,10 +2429,10 @@ describe('Test Kyupad IDO', () => {
           .invest(investArgs)
           .accounts({
             investor: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
           .signers([upgradableAuthority])
-          .remainingAccounts(remainningAccountsInvest)
+          .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
         const tx = new Transaction().add(registerProjectIns).add(investIns);
@@ -2462,7 +2462,7 @@ describe('Test Kyupad IDO', () => {
 
         const receiver = Keypair.generate().publicKey;
 
-        const investmentDestination = (
+        const vaultAddress = (
           await getOrCreateAssociatedTokenAccount(
             connection,
             upgradableAuthority,
@@ -2521,7 +2521,7 @@ describe('Test Kyupad IDO', () => {
           program.programId
         );
 
-        const remainningAccounRegister: AccountMeta[] = [
+        const remainingAccounRegister: AccountMeta[] = [
           {
             pubkey: TOKEN_PROGRAM_ID,
             isSigner: false,
@@ -2538,9 +2538,9 @@ describe('Test Kyupad IDO', () => {
           .registerProject(projectConfigArgs)
           .accounts({
             creator: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
-          .remainingAccounts(remainningAccounRegister)
+          .remainingAccounts(remainingAccounRegister)
           .instruction();
 
         const getProof = merkleTree.getProof(keccak256(test));
@@ -2568,8 +2568,8 @@ describe('Test Kyupad IDO', () => {
           upgradableAuthority.publicKey
         );
 
-        const remainningAccountsInvest: AccountMeta[] = [
-          ...remainningAccounRegister,
+        const remainingAccountsInvest: AccountMeta[] = [
+          ...remainingAccounRegister,
           {
             pubkey: source,
             isSigner: false,
@@ -2581,10 +2581,10 @@ describe('Test Kyupad IDO', () => {
           .invest(investArgs)
           .accounts({
             investor: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
           .signers([upgradableAuthority])
-          .remainingAccounts(remainningAccountsInvest)
+          .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
         const tx = new Transaction().add(registerProjectIns).add(investIns);
@@ -2614,7 +2614,7 @@ describe('Test Kyupad IDO', () => {
 
         const receiver = Keypair.generate().publicKey;
 
-        const investmentDestination = (
+        const vaultAddress = (
           await getOrCreateAssociatedTokenAccount(
             connection,
             upgradableAuthority,
@@ -2673,7 +2673,7 @@ describe('Test Kyupad IDO', () => {
           program.programId
         );
 
-        const remainningAccounRegister: AccountMeta[] = [
+        const remainingAccounRegister: AccountMeta[] = [
           {
             pubkey: TOKEN_PROGRAM_ID,
             isSigner: false,
@@ -2690,9 +2690,9 @@ describe('Test Kyupad IDO', () => {
           .registerProject(projectConfigArgs)
           .accounts({
             creator: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
-          .remainingAccounts(remainningAccounRegister)
+          .remainingAccounts(remainingAccounRegister)
           .instruction();
 
         const getProof = merkleTree.getProof(keccak256(test));
@@ -2720,8 +2720,8 @@ describe('Test Kyupad IDO', () => {
           upgradableAuthority.publicKey
         );
 
-        const remainningAccountsInvest: AccountMeta[] = [
-          ...remainningAccounRegister,
+        const remainingAccountsInvest: AccountMeta[] = [
+          ...remainingAccounRegister,
           {
             pubkey: source,
             isSigner: false,
@@ -2733,10 +2733,10 @@ describe('Test Kyupad IDO', () => {
           .invest(investArgs)
           .accounts({
             investor: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
           .signers([upgradableAuthority])
-          .remainingAccounts(remainningAccountsInvest)
+          .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
         const investArgs2: InvestArgs = {
@@ -2750,10 +2750,10 @@ describe('Test Kyupad IDO', () => {
           .invest(investArgs2)
           .accounts({
             investor: upgradableAuthority.publicKey,
-            investmentDestination: investmentDestination,
+            vaultAddress: vaultAddress,
           })
           .signers([upgradableAuthority])
-          .remainingAccounts(remainningAccountsInvest)
+          .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
         const tx = new Transaction()
@@ -2779,7 +2779,7 @@ describe('Test Kyupad IDO', () => {
     });
 
     xit('Invest project with sol', async () => {
-      const investmentDestination = Keypair.generate().publicKey;
+      const vaultAddress = Keypair.generate().publicKey;
 
       let { arrayWallet, totalTicket } = generateWhiteListInvest(9999);
 
@@ -2837,7 +2837,7 @@ describe('Test Kyupad IDO', () => {
         .registerProject(projectConfigArgs)
         .accounts({
           creator: upgradableAuthority.publicKey,
-          investmentDestination: investmentDestination,
+          vaultAddress: vaultAddress,
         })
         .instruction();
 
@@ -2867,7 +2867,7 @@ describe('Test Kyupad IDO', () => {
         .invest(investArgs)
         .accounts({
           investor: upgradableAuthority.publicKey,
-          investmentDestination: investmentDestination,
+          vaultAddress: vaultAddress,
         })
         .signers([upgradableAuthority])
         .instruction();
@@ -2892,16 +2892,16 @@ describe('Test Kyupad IDO', () => {
       );
 
       const expectedBalance = await connection.getBalance(
-        investmentDestination
+        vaultAddress
       );
 
       expect(
         expectedBalance,
-        'Expected investmentDestination balace equal ticketSOL'
+        'Expected vaultAddress balace equal ticketSOL'
       ).to.eq(ticketSize.toNumber() * usertotalTicket);
 
       expect(
-        projectCounterData.remainning,
+        projectCounterData.remaining,
         "Project counter should be equal investotal - user's invest total"
       ).to.eq(totalTicket - usertotalTicket);
 
@@ -2910,7 +2910,7 @@ describe('Test Kyupad IDO', () => {
       );
 
       expect(
-        investCounterData.remainning,
+        investCounterData.totalInvestedTicket,
         'User invest counter should be equal 0 or 1'
       ).to.eq(randomNumber - usertotalTicket);
     });
@@ -2924,7 +2924,7 @@ describe('Test Kyupad IDO', () => {
 
       const receiver = Keypair.generate().publicKey;
 
-      const investmentDestination = (
+      const vaultAddress = (
         await getOrCreateAssociatedTokenAccount(
           connection,
           upgradableAuthority,
@@ -2984,7 +2984,7 @@ describe('Test Kyupad IDO', () => {
         program.programId
       );
 
-      const remainningAccounRegister: AccountMeta[] = [
+      const remainingAccounRegister: AccountMeta[] = [
         {
           pubkey: TOKEN_PROGRAM_ID,
           isSigner: false,
@@ -3001,9 +3001,9 @@ describe('Test Kyupad IDO', () => {
         .registerProject(projectConfigArgs)
         .accounts({
           creator: upgradableAuthority.publicKey,
-          investmentDestination: investmentDestination,
+          vaultAddress: vaultAddress,
         })
-        .remainingAccounts(remainningAccounRegister)
+        .remainingAccounts(remainingAccounRegister)
         .instruction();
 
       const getProof = merkleTree.getProof(keccak256(test));
@@ -3030,8 +3030,8 @@ describe('Test Kyupad IDO', () => {
         upgradableAuthority.publicKey
       );
 
-      const remainningAccountsInvest: AccountMeta[] = [
-        ...remainningAccounRegister,
+      const remainingAccountsInvest: AccountMeta[] = [
+        ...remainingAccounRegister,
         {
           pubkey: source,
           isSigner: false,
@@ -3043,10 +3043,10 @@ describe('Test Kyupad IDO', () => {
         .invest(investArgs)
         .accounts({
           investor: upgradableAuthority.publicKey,
-          investmentDestination: investmentDestination,
+          vaultAddress: vaultAddress,
         })
         .signers([upgradableAuthority])
-        .remainingAccounts(remainningAccountsInvest)
+        .remainingAccounts(remainingAccountsInvest)
         .instruction();
 
       const tx = new Transaction().add(registerProjectIns).add(investIns);
@@ -3064,12 +3064,12 @@ describe('Test Kyupad IDO', () => {
 
       await sleep(2000);
 
-      const info = await getAccount(connection, investmentDestination);
+      const info = await getAccount(connection, vaultAddress);
       const amount = Number(info.amount);
 
       expect(
         amount,
-        'investmentDestination amount should equal ticket size'
+        'vaultAddress amount should equal ticket size'
       ).to.eq(ticketSize.toNumber());
 
       const projectCounterData = await program.account.projectCounter.fetch(
@@ -3077,7 +3077,7 @@ describe('Test Kyupad IDO', () => {
       );
 
       expect(
-        projectCounterData.remainning,
+        projectCounterData.remaining,
         "Project counter should be equal investotal - user's invest total"
       ).to.eq(totalTicket - usertotalTicket);
 
@@ -3086,7 +3086,7 @@ describe('Test Kyupad IDO', () => {
       );
 
       expect(
-        investCounterData.remainning,
+        investCounterData.totalInvestedTicket,
         'User invest counter should be equal 0'
       ).to.eq(0);
     });

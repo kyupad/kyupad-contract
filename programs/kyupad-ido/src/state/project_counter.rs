@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 #[account]
 #[derive(Debug, InitSpace)]
 pub struct ProjectCounter {
-    pub remainning: u32,
+    pub remaining: u32,
 }
 
 impl ProjectCounter {
