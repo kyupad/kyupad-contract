@@ -1,18 +1,18 @@
-#[macro_use]
-extern crate dotenv_codegen;
-
 use anchor_lang::prelude::*;
 use instructions::*;
 use state::*;
-
-use const_str_to_pubkey::str_to_pubkey;
 
 pub mod errors;
 pub mod instructions;
 pub mod state;
 pub mod utils;
 
-declare_id!(str_to_pubkey(dotenv!("NFT_PROGRAM_ID")));
+#[macro_use]
+extern crate dotenv_codegen;
+use const_str_to_pubkey::str_to_pubkey;
+
+const PROGRAM_ID: Pubkey = str_to_pubkey(dotenv!("NFT_PROGRAM_ID"));
+declare_id!(PROGRAM_ID);
 
 #[program]
 pub mod kyupad_smart_contract {

@@ -1,3 +1,5 @@
+MAKEFLAGS += --silent
+
 # Include .env file if present
 ifneq (,$(wildcard ./.env))
 	include .env
@@ -7,6 +9,7 @@ endif
 ido/build:
 	./scripts/map-programid-to-env.sh
 	anchor build -p kyupad_ido
+	./scripts/map-programid-to-idl.sh
 
 ido/deploy: ido/build
 	anchor deploy -p kyupad_ido
@@ -31,4 +34,4 @@ run/test-node:
 	solana-test-validator -r
 
 reset:
-	rm -r target test-ledger
+	rm -rf target test-ledger
