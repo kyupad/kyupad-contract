@@ -35,3 +35,12 @@ run/test-node:
 
 reset:
 	rm -rf target test-ledger
+
+ido/solana/deploy:
+	anchor build -p kyupad_ido
+	./scripts/map-programid-from-env.sh
+	solana program deploy ./target/deploy/kyupad_ido.so --program-id ${IDO_PROGRAM_ID}
+
+ido/solana/build:
+	anchor build -p kyupad_ido
+	./scripts/map-programid-from-env.sh

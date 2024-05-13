@@ -1,6 +1,5 @@
 use anchor_lang::prelude::*;
-use spl_associated_token_account::instruction::create_associated_token_account;
-use spl_token::solana_program::program::invoke;
+use spl_associated_token_account::get_associated_token_address_with_program_id;
 
 use crate::*;
 
@@ -11,14 +10,12 @@ pub fn register_project<'c: 'info, 'info>(
     project_config_args: ProjectConfigArgs,
 ) -> Result<()> {
     let project = &mut ctx.accounts.project;
-    let vault_address = &mut ctx.accounts.vault_address;
-    let creator = &ctx.accounts.creator;
+    let receiver = &mut ctx.accounts.receiver;
 
     project.id = project_config_args.id;
     project.start_date = project_config_args.start_date;
     project.end_date = project_config_args.end_date;
     project.merkle_root = project_config_args.merkle_root;
-    project.vault_address = vault_address.key();
     project.token_address = project_config_args.token_address;
     project.ticket_size = project_config_args.ticket_size;
     project.token_offered = project_config_args.token_offered;
@@ -29,32 +26,19 @@ pub fn register_project<'c: 'info, 'info>(
 
     match project_config_args.token_address {
         Some(token_address) => {
-            let mut __data: &[u8] = &vault_address.try_borrow_data()?;
-            let mut __disc_bytes = [0u8; 8];
-            __disc_bytes.copy_from_slice(&__data[..8]);
-            let __discriminator = u64::from_le_bytes(__disc_bytes);
+            let list_remaining_accounts = &mut ctx.remaining_accounts.iter();
+            let token_program = next_account_info(list_remaining_accounts)?;
+            let mint = next_account_info(list_remaining_accounts)?;
 
-            if __discriminator == 0 {
-                let token_program = next_account_info(&mut ctx.remaining_accounts.iter())?;
-                let mint = next_account_info(&mut ctx.remaining_accounts.iter())?;
+            assert_keys_equal(&mint.key(), &token_address)?;
 
-                assert_keys_equal(&mint.key(), &token_address)?;
+            let ata = get_associated_token_address_with_program_id(
+                &receiver.key,
+                &mint.key,
+                &token_program.key,
+            );
 
-                invoke(
-                    &create_associated_token_account(
-                        &creator.key,
-                        &vault_address.key,
-                        &mint.key,
-                        &token_program.key,
-                    ),
-                    &[
-                        creator.to_account_info(),
-                        vault_address.to_account_info(),
-                        mint.to_account_info(),
-                        token_program.to_account_info(),
-                    ],
-                )?;
-            }
+            project.vault_address = ata;
         }
         None => {}
     }
@@ -98,7 +82,7 @@ pub struct RegisterProject<'info> {
     pub project_counter: Account<'info, ProjectCounter>,
 
     /// CHECK:
-    pub vault_address: AccountInfo<'info>,
+    pub receiver: AccountInfo<'info>,
 
     pub system_program: Program<'info, System>,
 }

@@ -12,8 +12,10 @@ import {
   AccountMeta,
   Keypair,
   LAMPORTS_PER_SOL,
+  ParsedTransactionWithMeta,
   PublicKey,
   Transaction,
+  TransactionResponse,
 } from '@solana/web3.js';
 import { assert, expect } from 'chai';
 import {
@@ -29,6 +31,7 @@ import {
   getAssociatedTokenAddressSync,
   getMint,
   getOrCreateAssociatedTokenAccount,
+  createAssociatedTokenAccountInstruction,
 } from '@solana/spl-token';
 import { bs58 } from '@coral-xyz/anchor/dist/cjs/utils/bytes';
 import * as dotenv from 'dotenv';
@@ -62,7 +65,7 @@ describe('Test Kyupad IDO', () => {
   );
 
   describe('📦📦📦 Register project', async () => {
-    xit('Register project with sol', async () => {
+    it('Register project with sol', async () => {
       const vaultAddress = upgradableAuthority.publicKey;
 
       let { arrayWallet, totalTicket } = generateWhiteListInvest(9999);
@@ -110,7 +113,7 @@ describe('Test Kyupad IDO', () => {
         .registerProject(projectConfigArgs)
         .accounts({
           creator: upgradableAuthority.publicKey,
-          vaultAddress: vaultAddress,
+          receiver: vaultAddress,
         })
         .instruction();
 
@@ -124,6 +127,7 @@ describe('Test Kyupad IDO', () => {
       const sig = await connection.sendTransaction(tx, [upgradableAuthority], {
         maxRetries: 20,
         skipPreflight: true,
+        preflightCommitment: 'processed'
       });
 
       console.log('Register project with sol: ', sig);
@@ -159,7 +163,7 @@ describe('Test Kyupad IDO', () => {
       ).to.be.true;
     });
 
-    xit('Register project with token', async () => {
+    it('Register project with token', async () => {
       const tokenAddress = new PublicKey(
         '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
       );
@@ -168,18 +172,15 @@ describe('Test Kyupad IDO', () => {
 
       const receiver = Keypair.generate().publicKey;
 
-      const vaultAddress = (
-        await getOrCreateAssociatedTokenAccount(
-          connection,
-          upgradableAuthority,
-          tokenAddress,
-          receiver
-        )
-      ).address;
+      const vaultAddress = getAssociatedTokenAddressSync(
+        tokenAddress,
+        receiver
+      );
 
       let { arrayWallet, totalTicket } = generateWhiteListInvest(9999);
 
       const randomNumber = Math.floor(Math.random() * 3) + 1;
+
       const test =
         upgradableAuthority.publicKey.toString() +
         '_' +
@@ -232,16 +233,23 @@ describe('Test Kyupad IDO', () => {
         },
       ];
 
+      const createAtaIns = createAssociatedTokenAccountInstruction(
+        upgradableAuthority.publicKey,
+        vaultAddress,
+        receiver,
+        tokenAddress
+      );
+
       const registerProjectIns = await program.methods
         .registerProject(projectConfigArgs)
         .accounts({
           creator: upgradableAuthority.publicKey,
-          vaultAddress: vaultAddress,
+          receiver: receiver,
         })
         .remainingAccounts(remainingAccounRegister)
         .instruction();
 
-      const tx = new Transaction().add(registerProjectIns);
+      const tx = new Transaction().add(createAtaIns).add(registerProjectIns);
 
       tx.feePayer = upgradableAuthority.publicKey;
       tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
@@ -379,7 +387,7 @@ describe('Test Kyupad IDO', () => {
 
   describe('💰💰💰 Invest', () => {
     describe('1️⃣ With no ticket', () => {
-      xit('D1: Try to invest', async () => {
+      it('D1: Try to invest', async () => {
         const tokenAddress = new PublicKey(
           '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
         );
@@ -388,14 +396,10 @@ describe('Test Kyupad IDO', () => {
 
         const receiver = Keypair.generate().publicKey;
 
-        const vaultAddress = (
-          await getOrCreateAssociatedTokenAccount(
-            connection,
-            upgradableAuthority,
-            tokenAddress,
-            receiver
-          )
-        ).address;
+        const vaultAddress = getAssociatedTokenAddressSync(
+          tokenAddress,
+          receiver
+        );
 
         let { arrayWallet, totalTicket } = generateWhiteListInvest(9999);
 
@@ -444,11 +448,18 @@ describe('Test Kyupad IDO', () => {
           },
         ];
 
+        const createAtaIns = createAssociatedTokenAccountInstruction(
+          upgradableAuthority.publicKey,
+          vaultAddress,
+          receiver,
+          tokenAddress
+        );
+
         const registerProjectIns = await program.methods
           .registerProject(projectConfigArgs)
           .accounts({
             creator: upgradableAuthority.publicKey,
-            vaultAddress: vaultAddress,
+            receiver: receiver,
           })
           .remainingAccounts(remainingAccounRegister)
           .instruction();
@@ -490,7 +501,10 @@ describe('Test Kyupad IDO', () => {
           .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
-        const tx = new Transaction().add(registerProjectIns).add(investIns);
+        const tx = new Transaction()
+          .add(createAtaIns)
+          .add(registerProjectIns)
+          .add(investIns);
 
         tx.feePayer = upgradableAuthority.publicKey;
         tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
@@ -507,7 +521,7 @@ describe('Test Kyupad IDO', () => {
           .true;
       });
 
-      xit('D2: Out of time', async () => {
+      it('D2: Out of time', async () => {
         const tokenAddress = new PublicKey(
           '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
         );
@@ -516,14 +530,10 @@ describe('Test Kyupad IDO', () => {
 
         const receiver = Keypair.generate().publicKey;
 
-        const vaultAddress = (
-          await getOrCreateAssociatedTokenAccount(
-            connection,
-            upgradableAuthority,
-            tokenAddress,
-            receiver
-          )
-        ).address;
+        const vaultAddress = getAssociatedTokenAddressSync(
+          tokenAddress,
+          receiver
+        );
 
         let { arrayWallet, totalTicket } = generateWhiteListInvest(9999);
 
@@ -568,11 +578,18 @@ describe('Test Kyupad IDO', () => {
           },
         ];
 
+        const createAtaIns = createAssociatedTokenAccountInstruction(
+          upgradableAuthority.publicKey,
+          vaultAddress,
+          receiver,
+          tokenAddress
+        );
+
         const registerProjectIns = await program.methods
           .registerProject(projectConfigArgs)
           .accounts({
             creator: upgradableAuthority.publicKey,
-            vaultAddress: vaultAddress,
+            receiver: receiver,
           })
           .remainingAccounts(remainingAccounRegister)
           .instruction();
@@ -611,7 +628,10 @@ describe('Test Kyupad IDO', () => {
           .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
-        const tx = new Transaction().add(registerProjectIns).add(investIns);
+        const tx = new Transaction()
+          .add(createAtaIns)
+          .add(registerProjectIns)
+          .add(investIns);
 
         tx.feePayer = upgradableAuthority.publicKey;
         tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
@@ -630,7 +650,7 @@ describe('Test Kyupad IDO', () => {
     });
 
     describe('2️⃣ With 1 ticket', () => {
-      xit('D3: Success', async () => {
+      it('D3: Success', async () => {
         const tokenAddress = new PublicKey(
           '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
         );
@@ -639,14 +659,10 @@ describe('Test Kyupad IDO', () => {
 
         const receiver = Keypair.generate().publicKey;
 
-        const vaultAddress = (
-          await getOrCreateAssociatedTokenAccount(
-            connection,
-            upgradableAuthority,
-            tokenAddress,
-            receiver
-          )
-        ).address;
+        const vaultAddress = getAssociatedTokenAddressSync(
+          tokenAddress,
+          receiver
+        );
 
         let { arrayWallet } = generateWhiteListInvest(100);
         const userTicket = 1;
@@ -706,11 +722,18 @@ describe('Test Kyupad IDO', () => {
           },
         ];
 
+        const createAtaIns = createAssociatedTokenAccountInstruction(
+          upgradableAuthority.publicKey,
+          vaultAddress,
+          receiver,
+          tokenAddress
+        );
+
         const registerProjectIns = await program.methods
           .registerProject(projectConfigArgs)
           .accounts({
             creator: upgradableAuthority.publicKey,
-            vaultAddress: vaultAddress,
+            receiver: receiver,
           })
           .remainingAccounts(remainingAccounRegister)
           .instruction();
@@ -759,7 +782,10 @@ describe('Test Kyupad IDO', () => {
           .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
-        const tx = new Transaction().add(registerProjectIns).add(investIns);
+        const tx = new Transaction()
+          .add(createAtaIns)
+          .add(registerProjectIns)
+          .add(investIns);
 
         tx.feePayer = upgradableAuthority.publicKey;
         tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
@@ -781,10 +807,9 @@ describe('Test Kyupad IDO', () => {
         const info = await getAccount(connection, vaultAddress);
         const amount = Number(info.amount);
 
-        expect(
-          amount,
-          'vaultAddress amount should equal ticket size'
-        ).to.eq(ticketSize.toNumber() * usertotalTicket);
+        expect(amount, 'vaultAddress amount should equal ticket size').to.eq(
+          ticketSize.toNumber() * usertotalTicket
+        );
 
         const projectCounterData = await program.account.projectCounter.fetch(
           projectCounter
@@ -805,7 +830,7 @@ describe('Test Kyupad IDO', () => {
         ).to.eq(0);
       });
 
-      xit('D4: Before invest time', async () => {
+      it('D4: Before invest time', async () => {
         const tokenAddress = new PublicKey(
           '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
         );
@@ -814,14 +839,10 @@ describe('Test Kyupad IDO', () => {
 
         const receiver = Keypair.generate().publicKey;
 
-        const vaultAddress = (
-          await getOrCreateAssociatedTokenAccount(
-            connection,
-            upgradableAuthority,
-            tokenAddress,
-            receiver
-          )
-        ).address;
+        const vaultAddress = getAssociatedTokenAddressSync(
+          tokenAddress,
+          receiver
+        );
 
         let { arrayWallet, totalTicket } = generateWhiteListInvest(9999);
 
@@ -880,11 +901,18 @@ describe('Test Kyupad IDO', () => {
           },
         ];
 
+        const createAtaIns = createAssociatedTokenAccountInstruction(
+          upgradableAuthority.publicKey,
+          vaultAddress,
+          receiver,
+          tokenAddress
+        );
+
         const registerProjectIns = await program.methods
           .registerProject(projectConfigArgs)
           .accounts({
             creator: upgradableAuthority.publicKey,
-            vaultAddress: vaultAddress,
+            receiver: receiver,
           })
           .remainingAccounts(remainingAccounRegister)
           .instruction();
@@ -935,7 +963,7 @@ describe('Test Kyupad IDO', () => {
           .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
-        const tx = new Transaction().add(registerProjectIns).add(investIns);
+        const tx = new Transaction().add(createAtaIns).add(registerProjectIns).add(investIns);
 
         tx.feePayer = upgradableAuthority.publicKey;
         tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
@@ -952,7 +980,7 @@ describe('Test Kyupad IDO', () => {
           .true;
       });
 
-      xit('D5: After invest time', async () => {
+      it('D5: After invest time', async () => {
         const tokenAddress = new PublicKey(
           '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
         );
@@ -961,14 +989,10 @@ describe('Test Kyupad IDO', () => {
 
         const receiver = Keypair.generate().publicKey;
 
-        const vaultAddress = (
-          await getOrCreateAssociatedTokenAccount(
-            connection,
-            upgradableAuthority,
-            tokenAddress,
-            receiver
-          )
-        ).address;
+        const vaultAddress = getAssociatedTokenAddressSync(
+          tokenAddress,
+          receiver
+        );
 
         let { arrayWallet } = generateWhiteListInvest(100);
         const userTicket = 1;
@@ -1033,11 +1057,18 @@ describe('Test Kyupad IDO', () => {
           },
         ];
 
+        const createAtaIns = createAssociatedTokenAccountInstruction(
+          upgradableAuthority.publicKey,
+          vaultAddress,
+          receiver,
+          tokenAddress
+        );
+
         const registerProjectIns = await program.methods
           .registerProject(projectConfigArgs)
           .accounts({
             creator: upgradableAuthority.publicKey,
-            vaultAddress: vaultAddress,
+            receiver: receiver,
           })
           .remainingAccounts(remainingAccounRegister)
           .instruction();
@@ -1086,7 +1117,7 @@ describe('Test Kyupad IDO', () => {
           .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
-        const tx = new Transaction().add(registerProjectIns).add(investIns);
+        const tx = new Transaction().add(createAtaIns).add(registerProjectIns).add(investIns);
 
         tx.feePayer = upgradableAuthority.publicKey;
         tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
@@ -1104,7 +1135,7 @@ describe('Test Kyupad IDO', () => {
           .true;
       });
 
-      xit('D6: Try to invest with more tickets then they have', async () => {
+      it('D6: Try to invest with more tickets then they have', async () => {
         const tokenAddress = new PublicKey(
           '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
         );
@@ -1113,14 +1144,10 @@ describe('Test Kyupad IDO', () => {
 
         const receiver = Keypair.generate().publicKey;
 
-        const vaultAddress = (
-          await getOrCreateAssociatedTokenAccount(
-            connection,
-            upgradableAuthority,
-            tokenAddress,
-            receiver
-          )
-        ).address;
+        const vaultAddress = getAssociatedTokenAddressSync(
+          tokenAddress,
+          receiver
+        );
 
         let { arrayWallet } = generateWhiteListInvest(100);
         const userTicket = 1;
@@ -1185,11 +1212,18 @@ describe('Test Kyupad IDO', () => {
           },
         ];
 
+        const createAtaIns = createAssociatedTokenAccountInstruction(
+          upgradableAuthority.publicKey,
+          vaultAddress,
+          receiver,
+          tokenAddress
+        );
+
         const registerProjectIns = await program.methods
           .registerProject(projectConfigArgs)
           .accounts({
             creator: upgradableAuthority.publicKey,
-            vaultAddress: vaultAddress,
+            receiver: receiver,
           })
           .remainingAccounts(remainingAccounRegister)
           .instruction();
@@ -1238,7 +1272,7 @@ describe('Test Kyupad IDO', () => {
           .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
-        const tx = new Transaction().add(registerProjectIns).add(investIns);
+        const tx = new Transaction().add(createAtaIns).add(registerProjectIns).add(investIns);
 
         tx.feePayer = upgradableAuthority.publicKey;
         tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
@@ -1256,7 +1290,7 @@ describe('Test Kyupad IDO', () => {
           .true;
       });
 
-      xit('D7: User is out of ticket', async () => {
+      it('D7: User is out of ticket', async () => {
         const tokenAddress = new PublicKey(
           '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
         );
@@ -1265,14 +1299,10 @@ describe('Test Kyupad IDO', () => {
 
         const receiver = Keypair.generate().publicKey;
 
-        const vaultAddress = (
-          await getOrCreateAssociatedTokenAccount(
-            connection,
-            upgradableAuthority,
-            tokenAddress,
-            receiver
-          )
-        ).address;
+        const vaultAddress = getAssociatedTokenAddressSync(
+          tokenAddress,
+          receiver
+        );
 
         let { arrayWallet } = generateWhiteListInvest(100);
         const userTicket = 1;
@@ -1337,11 +1367,18 @@ describe('Test Kyupad IDO', () => {
           },
         ];
 
+        const createAtaIns = createAssociatedTokenAccountInstruction(
+          upgradableAuthority.publicKey,
+          vaultAddress,
+          receiver,
+          tokenAddress
+        );
+
         const registerProjectIns = await program.methods
           .registerProject(projectConfigArgs)
           .accounts({
             creator: upgradableAuthority.publicKey,
-            vaultAddress: vaultAddress,
+            receiver: receiver,
           })
           .remainingAccounts(remainingAccounRegister)
           .instruction();
@@ -1390,7 +1427,7 @@ describe('Test Kyupad IDO', () => {
           .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
-        const tx = new Transaction().add(registerProjectIns).add(investIns);
+        const tx = new Transaction().add(createAtaIns).add(registerProjectIns).add(investIns);
 
         tx.feePayer = upgradableAuthority.publicKey;
         tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
@@ -1429,7 +1466,7 @@ describe('Test Kyupad IDO', () => {
           .true;
       });
 
-      xit('D8: Project is out of ticket', async () => {
+      it('D8: Project is out of ticket', async () => {
         const tokenAddress = new PublicKey(
           '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
         );
@@ -1438,14 +1475,10 @@ describe('Test Kyupad IDO', () => {
 
         const receiver = Keypair.generate().publicKey;
 
-        const vaultAddress = (
-          await getOrCreateAssociatedTokenAccount(
-            connection,
-            upgradableAuthority,
-            tokenAddress,
-            receiver
-          )
-        ).address;
+        const vaultAddress = getAssociatedTokenAddressSync(
+          tokenAddress,
+          receiver
+        );
 
         let { arrayWallet } = generateWhiteListInvest(100);
         const userTicket = 2;
@@ -1510,11 +1543,18 @@ describe('Test Kyupad IDO', () => {
           },
         ];
 
+        const createAtaIns = createAssociatedTokenAccountInstruction(
+          upgradableAuthority.publicKey,
+          vaultAddress,
+          receiver,
+          tokenAddress
+        );
+
         const registerProjectIns = await program.methods
           .registerProject(projectConfigArgs)
           .accounts({
             creator: upgradableAuthority.publicKey,
-            vaultAddress: vaultAddress,
+            receiver: receiver,
           })
           .remainingAccounts(remainingAccounRegister)
           .instruction();
@@ -1563,7 +1603,7 @@ describe('Test Kyupad IDO', () => {
           .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
-        const tx = new Transaction().add(registerProjectIns).add(investIns);
+        const tx = new Transaction().add(createAtaIns).add(registerProjectIns).add(investIns);
 
         tx.feePayer = upgradableAuthority.publicKey;
         tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
@@ -1615,14 +1655,10 @@ describe('Test Kyupad IDO', () => {
 
         const receiver = Keypair.generate().publicKey;
 
-        const vaultAddress = (
-          await getOrCreateAssociatedTokenAccount(
-            connection,
-            upgradableAuthority,
-            tokenAddress,
-            receiver
-          )
-        ).address;
+        const vaultAddress = getAssociatedTokenAddressSync(
+          tokenAddress,
+          receiver
+        );
 
         let { arrayWallet } = generateWhiteListInvest(100);
         const userTicket = 2;
@@ -1691,7 +1727,7 @@ describe('Test Kyupad IDO', () => {
           .registerProject(projectConfigArgs)
           .accounts({
             creator: upgradableAuthority.publicKey,
-            vaultAddress: vaultAddress,
+            receiver: receiver,
           })
           .remainingAccounts(remainingAccounRegister)
           .instruction();
@@ -1762,10 +1798,9 @@ describe('Test Kyupad IDO', () => {
         const info = await getAccount(connection, vaultAddress);
         const amount = Number(info.amount);
 
-        expect(
-          amount,
-          'vaultAddress amount should equal ticket size'
-        ).to.eq(ticketSize.toNumber() * usertotalTicket);
+        expect(amount, 'vaultAddress amount should equal ticket size').to.eq(
+          ticketSize.toNumber() * usertotalTicket
+        );
 
         const projectCounterData = await program.account.projectCounter.fetch(
           projectCounter
@@ -1795,14 +1830,10 @@ describe('Test Kyupad IDO', () => {
 
         const receiver = Keypair.generate().publicKey;
 
-        const vaultAddress = (
-          await getOrCreateAssociatedTokenAccount(
-            connection,
-            upgradableAuthority,
-            tokenAddress,
-            receiver
-          )
-        ).address;
+        const vaultAddress = getAssociatedTokenAddressSync(
+          tokenAddress,
+          receiver
+        );
 
         let { arrayWallet } = generateWhiteListInvest(100);
         const userTicket = 2;
@@ -1871,7 +1902,7 @@ describe('Test Kyupad IDO', () => {
           .registerProject(projectConfigArgs)
           .accounts({
             creator: upgradableAuthority.publicKey,
-            vaultAddress: vaultAddress,
+            receiver: receiver,
           })
           .remainingAccounts(remainingAccounRegister)
           .instruction();
@@ -1945,10 +1976,9 @@ describe('Test Kyupad IDO', () => {
         const info = await getAccount(connection, vaultAddress);
         const amount = Number(info.amount);
 
-        expect(
-          amount,
-          'vaultAddress amount should equal ticket size'
-        ).to.eq(ticketSize.toNumber() * userTicket);
+        expect(amount, 'vaultAddress amount should equal ticket size').to.eq(
+          ticketSize.toNumber() * userTicket
+        );
 
         const projectCounterData = await program.account.projectCounter.fetch(
           projectCounter
@@ -1978,14 +2008,10 @@ describe('Test Kyupad IDO', () => {
 
         const receiver = Keypair.generate().publicKey;
 
-        const vaultAddress = (
-          await getOrCreateAssociatedTokenAccount(
-            connection,
-            upgradableAuthority,
-            tokenAddress,
-            receiver
-          )
-        ).address;
+        const vaultAddress = getAssociatedTokenAddressSync(
+          tokenAddress,
+          receiver
+        );
 
         let { arrayWallet } = generateWhiteListInvest(100);
         const userTicket = 2;
@@ -2054,7 +2080,7 @@ describe('Test Kyupad IDO', () => {
           .registerProject(projectConfigArgs)
           .accounts({
             creator: upgradableAuthority.publicKey,
-            vaultAddress: vaultAddress,
+            receiver: receiver,
           })
           .remainingAccounts(remainingAccounRegister)
           .instruction();
@@ -2125,10 +2151,9 @@ describe('Test Kyupad IDO', () => {
         const info = await getAccount(connection, vaultAddress);
         const amount = Number(info.amount);
 
-        expect(
-          amount,
-          'vaultAddress amount should equal ticket size'
-        ).to.eq(ticketSize.toNumber() * usertotalTicket);
+        expect(amount, 'vaultAddress amount should equal ticket size').to.eq(
+          ticketSize.toNumber() * usertotalTicket
+        );
 
         const projectCounterData = await program.account.projectCounter.fetch(
           projectCounter
@@ -2158,14 +2183,10 @@ describe('Test Kyupad IDO', () => {
 
         const receiver = Keypair.generate().publicKey;
 
-        const vaultAddress = (
-          await getOrCreateAssociatedTokenAccount(
-            connection,
-            upgradableAuthority,
-            tokenAddress,
-            receiver
-          )
-        ).address;
+        const vaultAddress = getAssociatedTokenAddressSync(
+          tokenAddress,
+          receiver
+        );
 
         let { arrayWallet } = generateWhiteListInvest(100);
         const userTicket = 2;
@@ -2234,7 +2255,7 @@ describe('Test Kyupad IDO', () => {
           .registerProject(projectConfigArgs)
           .accounts({
             creator: upgradableAuthority.publicKey,
-            vaultAddress: vaultAddress,
+            receiver: receiver,
           })
           .remainingAccounts(remainingAccounRegister)
           .instruction();
@@ -2310,14 +2331,10 @@ describe('Test Kyupad IDO', () => {
 
         const receiver = Keypair.generate().publicKey;
 
-        const vaultAddress = (
-          await getOrCreateAssociatedTokenAccount(
-            connection,
-            upgradableAuthority,
-            tokenAddress,
-            receiver
-          )
-        ).address;
+        const vaultAddress = getAssociatedTokenAddressSync(
+          tokenAddress,
+          receiver
+        );
 
         let { arrayWallet } = generateWhiteListInvest(100);
         const userTicket = 2;
@@ -2386,7 +2403,7 @@ describe('Test Kyupad IDO', () => {
           .registerProject(projectConfigArgs)
           .accounts({
             creator: upgradableAuthority.publicKey,
-            vaultAddress: vaultAddress,
+            receiver: receiver,
           })
           .remainingAccounts(remainingAccounRegister)
           .instruction();
@@ -2462,14 +2479,10 @@ describe('Test Kyupad IDO', () => {
 
         const receiver = Keypair.generate().publicKey;
 
-        const vaultAddress = (
-          await getOrCreateAssociatedTokenAccount(
-            connection,
-            upgradableAuthority,
-            tokenAddress,
-            receiver
-          )
-        ).address;
+        const vaultAddress = getAssociatedTokenAddressSync(
+          tokenAddress,
+          receiver
+        );
 
         let { arrayWallet } = generateWhiteListInvest(100);
         const userTicket = 2;
@@ -2538,7 +2551,7 @@ describe('Test Kyupad IDO', () => {
           .registerProject(projectConfigArgs)
           .accounts({
             creator: upgradableAuthority.publicKey,
-            vaultAddress: vaultAddress,
+            receiver: receiver,
           })
           .remainingAccounts(remainingAccounRegister)
           .instruction();
@@ -2614,14 +2627,10 @@ describe('Test Kyupad IDO', () => {
 
         const receiver = Keypair.generate().publicKey;
 
-        const vaultAddress = (
-          await getOrCreateAssociatedTokenAccount(
-            connection,
-            upgradableAuthority,
-            tokenAddress,
-            receiver
-          )
-        ).address;
+        const vaultAddress = getAssociatedTokenAddressSync(
+          tokenAddress,
+          receiver
+        );
 
         let { arrayWallet } = generateWhiteListInvest(100);
         const userTicket = 2;
@@ -2690,7 +2699,7 @@ describe('Test Kyupad IDO', () => {
           .registerProject(projectConfigArgs)
           .accounts({
             creator: upgradableAuthority.publicKey,
-            vaultAddress: vaultAddress,
+            receiver: receiver,
           })
           .remainingAccounts(remainingAccounRegister)
           .instruction();
@@ -2837,7 +2846,7 @@ describe('Test Kyupad IDO', () => {
         .registerProject(projectConfigArgs)
         .accounts({
           creator: upgradableAuthority.publicKey,
-          vaultAddress: vaultAddress,
+          receiver: vaultAddress,
         })
         .instruction();
 
@@ -2891,9 +2900,7 @@ describe('Test Kyupad IDO', () => {
         projectCounter
       );
 
-      const expectedBalance = await connection.getBalance(
-        vaultAddress
-      );
+      const expectedBalance = await connection.getBalance(vaultAddress);
 
       expect(
         expectedBalance,
@@ -3001,7 +3008,7 @@ describe('Test Kyupad IDO', () => {
         .registerProject(projectConfigArgs)
         .accounts({
           creator: upgradableAuthority.publicKey,
-          vaultAddress: vaultAddress,
+          receiver: receiver,
         })
         .remainingAccounts(remainingAccounRegister)
         .instruction();
@@ -3067,10 +3074,9 @@ describe('Test Kyupad IDO', () => {
       const info = await getAccount(connection, vaultAddress);
       const amount = Number(info.amount);
 
-      expect(
-        amount,
-        'vaultAddress amount should equal ticket size'
-      ).to.eq(ticketSize.toNumber());
+      expect(amount, 'vaultAddress amount should equal ticket size').to.eq(
+        ticketSize.toNumber()
+      );
 
       const projectCounterData = await program.account.projectCounter.fetch(
         projectCounter

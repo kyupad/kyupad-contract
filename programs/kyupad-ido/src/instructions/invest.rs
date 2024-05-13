@@ -133,7 +133,12 @@ pub fn invest<'c: 'info, 'info>(
 
                     // Assign these two value fields to serve fetching data
                     investor_counter.wallet = *investor.key;
-                    investor_counter.project_id = invest_args.project_id;
+                    investor_counter.project_id = invest_args.project_id.clone();
+
+                    emit!(InvestEvent {
+                        project_id: invest_args.project_id.clone(),
+                        ticket_amount: invest_args.ticket_amount
+                    })
                 }
                 Err(_) => return Err(KyuPadError::TransferIsError.into()),
             }
@@ -192,4 +197,10 @@ pub struct InvestArgs {
 
     #[max_len(16)]
     pub merkle_proof: Vec<[u8; 32]>,
+}
+
+#[event]
+pub struct InvestEvent {
+    pub project_id: String,
+    pub ticket_amount: u8,
 }
