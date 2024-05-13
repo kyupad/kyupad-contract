@@ -40,7 +40,9 @@ pub fn register_project<'c: 'info, 'info>(
 
             project.vault_address = ata;
         }
-        None => {}
+        None => {
+            project.vault_address = *receiver.key;
+        }
     }
 
     Ok(())

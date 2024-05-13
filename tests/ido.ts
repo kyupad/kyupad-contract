@@ -127,7 +127,7 @@ describe('Test Kyupad IDO', () => {
       const sig = await connection.sendTransaction(tx, [upgradableAuthority], {
         maxRetries: 20,
         skipPreflight: true,
-        preflightCommitment: 'processed'
+        preflightCommitment: 'processed',
       });
 
       console.log('Register project with sol: ', sig);
@@ -827,7 +827,7 @@ describe('Test Kyupad IDO', () => {
         expect(
           investCounterData.totalInvestedTicket,
           'User invest counter should be equal 0'
-        ).to.eq(0);
+        ).to.eq(1);
       });
 
       it('D4: Before invest time', async () => {
@@ -963,7 +963,10 @@ describe('Test Kyupad IDO', () => {
           .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
-        const tx = new Transaction().add(createAtaIns).add(registerProjectIns).add(investIns);
+        const tx = new Transaction()
+          .add(createAtaIns)
+          .add(registerProjectIns)
+          .add(investIns);
 
         tx.feePayer = upgradableAuthority.publicKey;
         tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
@@ -1117,7 +1120,10 @@ describe('Test Kyupad IDO', () => {
           .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
-        const tx = new Transaction().add(createAtaIns).add(registerProjectIns).add(investIns);
+        const tx = new Transaction()
+          .add(createAtaIns)
+          .add(registerProjectIns)
+          .add(investIns);
 
         tx.feePayer = upgradableAuthority.publicKey;
         tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
@@ -1272,7 +1278,10 @@ describe('Test Kyupad IDO', () => {
           .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
-        const tx = new Transaction().add(createAtaIns).add(registerProjectIns).add(investIns);
+        const tx = new Transaction()
+          .add(createAtaIns)
+          .add(registerProjectIns)
+          .add(investIns);
 
         tx.feePayer = upgradableAuthority.publicKey;
         tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
@@ -1427,7 +1436,10 @@ describe('Test Kyupad IDO', () => {
           .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
-        const tx = new Transaction().add(createAtaIns).add(registerProjectIns).add(investIns);
+        const tx = new Transaction()
+          .add(createAtaIns)
+          .add(registerProjectIns)
+          .add(investIns);
 
         tx.feePayer = upgradableAuthority.publicKey;
         tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
@@ -1603,7 +1615,10 @@ describe('Test Kyupad IDO', () => {
           .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
-        const tx = new Transaction().add(createAtaIns).add(registerProjectIns).add(investIns);
+        const tx = new Transaction()
+          .add(createAtaIns)
+          .add(registerProjectIns)
+          .add(investIns);
 
         tx.feePayer = upgradableAuthority.publicKey;
         tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
@@ -1646,7 +1661,7 @@ describe('Test Kyupad IDO', () => {
     });
 
     describe('3️⃣ With 2 ticket', () => {
-      xit('D10: Success with 1 ticket', async () => {
+      it('D10: Success with 1 ticket', async () => {
         const tokenAddress = new PublicKey(
           '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
         );
@@ -1722,6 +1737,13 @@ describe('Test Kyupad IDO', () => {
             isWritable: false,
           },
         ];
+
+        const createAtaIns = createAssociatedTokenAccountInstruction(
+          upgradableAuthority.publicKey,
+          vaultAddress,
+          receiver,
+          tokenAddress
+        );
 
         const registerProjectIns = await program.methods
           .registerProject(projectConfigArgs)
@@ -1776,7 +1798,7 @@ describe('Test Kyupad IDO', () => {
           .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
-        const tx = new Transaction().add(registerProjectIns).add(investIns);
+        const tx = new Transaction().add(createAtaIns).add(registerProjectIns).add(investIns);
 
         tx.feePayer = upgradableAuthority.publicKey;
         tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
@@ -1817,11 +1839,11 @@ describe('Test Kyupad IDO', () => {
 
         expect(
           investCounterData.totalInvestedTicket,
-          'User invest counter should be equal 1'
-        ).to.eq(userTicket - usertotalTicket);
+          'User invest counter should be equal usertotalTicket'
+        ).to.eq(usertotalTicket);
       });
 
-      xit('D11: Success with second time invesment', async () => {
+      it('D11: Success with second time invesment', async () => {
         const tokenAddress = new PublicKey(
           '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
         );
@@ -1897,6 +1919,13 @@ describe('Test Kyupad IDO', () => {
             isWritable: false,
           },
         ];
+
+        const createAtaIns = createAssociatedTokenAccountInstruction(
+          upgradableAuthority.publicKey,
+          vaultAddress,
+          receiver,
+          tokenAddress
+        );
 
         const registerProjectIns = await program.methods
           .registerProject(projectConfigArgs)
@@ -1952,6 +1981,7 @@ describe('Test Kyupad IDO', () => {
           .instruction();
 
         const tx = new Transaction()
+          .add(createAtaIns)
           .add(registerProjectIns)
           .add(investIns)
           .add(investIns);
@@ -1996,10 +2026,10 @@ describe('Test Kyupad IDO', () => {
         expect(
           investCounterData.totalInvestedTicket,
           'User invest counter should be equal 0'
-        ).to.eq(0);
+        ).to.eq(2);
       });
 
-      xit('D12: Success with 2 ticket', async () => {
+      it('D12: Success with 2 ticket', async () => {
         const tokenAddress = new PublicKey(
           '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
         );
@@ -2076,6 +2106,13 @@ describe('Test Kyupad IDO', () => {
           },
         ];
 
+        const createAtaIns = createAssociatedTokenAccountInstruction(
+          upgradableAuthority.publicKey,
+          vaultAddress,
+          receiver,
+          tokenAddress
+        );
+
         const registerProjectIns = await program.methods
           .registerProject(projectConfigArgs)
           .accounts({
@@ -2129,7 +2166,7 @@ describe('Test Kyupad IDO', () => {
           .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
-        const tx = new Transaction().add(registerProjectIns).add(investIns);
+        const tx = new Transaction().add(createAtaIns).add(registerProjectIns).add(investIns);
 
         tx.feePayer = upgradableAuthority.publicKey;
         tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
@@ -2170,11 +2207,11 @@ describe('Test Kyupad IDO', () => {
 
         expect(
           investCounterData.totalInvestedTicket,
-          'User invest counter should be equal 0'
-        ).to.eq(userTicket - usertotalTicket);
+          'User invest counter should be equal 2'
+        ).to.eq(2);
       });
 
-      xit('D13: Before invest time', async () => {
+      it('D13: Before invest time', async () => {
         const tokenAddress = new PublicKey(
           '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
         );
@@ -2322,7 +2359,7 @@ describe('Test Kyupad IDO', () => {
           .true;
       });
 
-      xit('D14: Afteer invest time', async () => {
+      it('D14: Afteer invest time', async () => {
         const tokenAddress = new PublicKey(
           '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
         );
@@ -2470,7 +2507,7 @@ describe('Test Kyupad IDO', () => {
           .true;
       });
 
-      xit('D15: Number tiket is bigger than they have', async () => {
+      it('D15: Number tiket is bigger than they have', async () => {
         const tokenAddress = new PublicKey(
           '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
         );
@@ -2618,7 +2655,7 @@ describe('Test Kyupad IDO', () => {
           .true;
       });
 
-      xit('D16: Number tiket is bigger than they have', async () => {
+      it('D16: Number tiket is bigger than they have', async () => {
         const tokenAddress = new PublicKey(
           '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
         );
