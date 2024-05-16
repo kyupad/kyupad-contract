@@ -8,19 +8,7 @@ pub fn add_admin(ctx: Context<AddAdmin>, address: Pubkey) -> Result<()> {
     Ok(())
 }
 
-pub fn delete_admin(ctx: Context<DeleteAdmin>, _address: Pubkey) -> Result<()> {
-    let signer = &mut ctx.accounts.signer;
-    let admin_pda = &ctx.accounts.admin_pda;
-
-    let dest_starting_lamports = signer.lamports();
-    **signer.lamports.borrow_mut() = dest_starting_lamports
-        .checked_add(admin_pda.lamports())
-        .unwrap();
-
-    **admin_pda.lamports.borrow_mut() = 0;
-    let mut source_data = admin_pda.data.borrow_mut();
-    source_data.fill(0);
-
+pub fn delete_admin(_ctx: Context<DeleteAdmin>, _address: Pubkey) -> Result<()> {
     Ok(())
 }
 
@@ -46,7 +34,7 @@ pub struct AddAdmin<'info> {
         payer = signer, 
         space = 8 + Admin::INIT_SPACE, 
         seeds = [b"admin", address.key().as_ref()], 
-        bump
+        bump,
      )]
     pub admin_pda: Account<'info, Admin>,
 
@@ -74,9 +62,10 @@ pub struct DeleteAdmin<'info> {
         seeds = [b"admin",_address.key().as_ref() ], 
         bump,
         owner = ID,
+        close = signer
     )]
     /// CHECK:
-    pub admin_pda: AccountInfo<'info>,
+    pub admin_pda: Account<'info, Admin>,
 }
 
 #[account]

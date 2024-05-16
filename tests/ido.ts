@@ -16,6 +16,7 @@ import {
   PublicKey,
   Transaction,
   TransactionResponse,
+  SystemProgram,
 } from '@solana/web3.js';
 import { assert, expect } from 'chai';
 import {
@@ -292,10 +293,76 @@ describe('Test Kyupad IDO', () => {
         'Expect project pda data to be equal initial data'
       ).to.be.true;
     });
+
+    it('Resgister project but not admin', async () => {
+      const fakeAdmin = Keypair.generate();
+
+      // create fakeMaster
+      await createAccount({
+        newAccountKeypair: fakeAdmin,
+        lamports: 0.01 * LAMPORTS_PER_SOL,
+      });
+
+      const vaultAddress = fakeAdmin.publicKey;
+
+      let { arrayWallet, totalTicket } = generateWhiteListInvest(9999);
+
+      const leafNode = arrayWallet.map((addr) => keccak256(addr));
+      const merkleTree = new MerkleTree(leafNode, keccak256, {
+        sortPairs: true,
+      });
+
+      const merkle_root = merkleTree.getRoot();
+
+      const id = generateRandomObjectId();
+      const startDate = new BN(Math.floor(Date.now() / 1000));
+      const endDate = new BN(Math.floor(Date.now() / 1000) + 3000);
+
+      const tokenOffered = 1_000_000;
+      const ticketSize = new BN(0.1 * LAMPORTS_PER_SOL);
+
+      const projectConfigArgs: ProjectConfigArgs = {
+        id: id,
+        startDate: startDate,
+        endDate: endDate,
+        merkleRoot: merkle_root,
+        tokenAddress: null,
+        ticketSize: ticketSize,
+        tokenOffered: tokenOffered,
+        totalTicket: totalTicket,
+      };
+
+      const registerProjectIns = await program.methods
+        .registerProject(projectConfigArgs)
+        .accounts({
+          creator: fakeAdmin.publicKey,
+          receiver: vaultAddress,
+        })
+        .instruction();
+
+      const tx = new Transaction().add(registerProjectIns);
+
+      tx.feePayer = fakeAdmin.publicKey;
+      tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+      tx.partialSign(fakeAdmin);
+
+      let expected_error = false;
+      try {
+        await connection.sendTransaction(tx, [fakeAdmin]);
+      } catch (error) {
+        expected_error = true;
+      }
+
+      expect(
+        expected_error,
+        'Expect register project transaction must be failed'
+      ).to.be.true;
+    });
   });
 
-  describe('🔑🔑🔑 Test decentralize permission', async () => {
-    xit('Init master', async () => {
+  describe('🔑🔑🔑 Permission', async () => {
+    it('Init master', async () => {
       const [masterPda] = PublicKey.findProgramAddressSync(
         [Buffer.from('master')],
         program.programId
@@ -342,9 +409,9 @@ describe('Test Kyupad IDO', () => {
       ).to.be.true;
     });
 
-    xit('Add admin', async () => {
+    it('Add admin', async () => {
       // const adminAddress = new PublicKey(
-      //   'CY92ruXbHmeaNiGqaZ9mXnXFPTjgfq2pHDuoM5VgWY1V'
+      //   '46hMDZggfURmHmG1g3fTTDAqGpgFqh1bFmUvJ2zNYXAW'
       // );
 
       const adminAddress = upgradableAuthority.publicKey;
@@ -382,6 +449,86 @@ describe('Test Kyupad IDO', () => {
         adminPdaData.adminKey.toString() === adminAddress.toString(),
         'This account must to be initialize'
       ).to.be.true;
+    });
+
+    it('Init another master but not deployer', async () => {
+      const fakeDeployer = Keypair.generate();
+
+      // create fakeMaster
+      await createAccount({
+        newAccountKeypair: fakeDeployer,
+        lamports: 0.01 * LAMPORTS_PER_SOL,
+      });
+
+      const BPF_LOADER_PROGRAM = new PublicKey(
+        'BPFLoaderUpgradeab1e11111111111111111111111'
+      );
+
+      const [programData] = PublicKey.findProgramAddressSync(
+        [program.programId.toBuffer()],
+        BPF_LOADER_PROGRAM
+      );
+
+      const createAdminIns = await program.methods
+        .initMaster(fakeDeployer.publicKey)
+        .accounts({
+          signer: fakeDeployer.publicKey,
+          programData: programData,
+        })
+        .instruction();
+
+      const tx = new Transaction().add(createAdminIns);
+
+      tx.feePayer = fakeDeployer.publicKey;
+      tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+      tx.partialSign(fakeDeployer);
+
+      let expected_error = false;
+      try {
+        await connection.sendTransaction(tx, [fakeDeployer], {
+          skipPreflight: true,
+        });
+      } catch (error) {
+        expected_error = true;
+      }
+
+      expect(expected_error, 'Expect invest transaction must be failed').to.be
+        .true;
+    });
+
+    it('Add admin but not master', async () => {
+      const fakeMaster = Keypair.generate();
+
+      // create fakeMaster
+      await createAccount({
+        newAccountKeypair: fakeMaster,
+        lamports: 0.01 * LAMPORTS_PER_SOL,
+      });
+
+      const addAdminIns = await program.methods
+        .addAdmin(fakeMaster.publicKey)
+        .accounts({
+          signer: fakeMaster.publicKey,
+        })
+        .instruction();
+
+      const tx = new Transaction().add(addAdminIns);
+
+      tx.feePayer = fakeMaster.publicKey;
+      tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+      tx.partialSign(fakeMaster);
+
+      let expected_error = false;
+      try {
+        await connection.sendTransaction(tx, [fakeMaster]);
+      } catch (error) {
+        expected_error = true;
+      }
+
+      expect(expected_error, 'Expect invest transaction must be failed').to.be
+        .true;
     });
   });
 
@@ -1798,7 +1945,10 @@ describe('Test Kyupad IDO', () => {
           .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
-        const tx = new Transaction().add(createAtaIns).add(registerProjectIns).add(investIns);
+        const tx = new Transaction()
+          .add(createAtaIns)
+          .add(registerProjectIns)
+          .add(investIns);
 
         tx.feePayer = upgradableAuthority.publicKey;
         tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
@@ -2166,7 +2316,10 @@ describe('Test Kyupad IDO', () => {
           .remainingAccounts(remainingAccountsInvest)
           .instruction();
 
-        const tx = new Transaction().add(createAtaIns).add(registerProjectIns).add(investIns);
+        const tx = new Transaction()
+          .add(createAtaIns)
+          .add(registerProjectIns)
+          .add(investIns);
 
         tx.feePayer = upgradableAuthority.publicKey;
         tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
@@ -2824,6 +2977,152 @@ describe('Test Kyupad IDO', () => {
       });
     });
 
+    describe('4️⃣ Multiple user', async () => {
+      it('Invest successfully', async () => {
+        const vaultAddress = upgradableAuthority.publicKey;
+
+        const number_of_user = 5000;
+
+        const arrayUserKeypair: Keypair[] = [];
+
+        const arrayWallet: string[] = [];
+
+        const arrayMaxTicketAmount: number[] = [];
+
+        let totalTicket = 0;
+
+        // preprare transfer sol to user
+        for (let i = 0; i < number_of_user; i++) {
+          console.log(`💲💲💲 Transfer sol for user ${i}`);
+
+          const userKeypair = Keypair.generate();
+
+          arrayUserKeypair.push(userKeypair);
+
+          const randomNumber = Math.floor(Math.random() * 3) + 1;
+
+          arrayMaxTicketAmount.push(randomNumber);
+
+          arrayWallet.push(
+            userKeypair.publicKey.toString() + '_' + randomNumber.toString()
+          );
+
+          totalTicket += randomNumber;
+
+          await createAccount({
+            newAccountKeypair: userKeypair,
+            lamports: (0.00001 * randomNumber + 0.0015) * LAMPORTS_PER_SOL,
+          });
+        }
+
+        const leafNode = arrayWallet.map((addr) => keccak256(addr));
+        const merkleTree = new MerkleTree(leafNode, keccak256, {
+          sortPairs: true,
+        });
+
+        const merkle_root = merkleTree.getRoot();
+
+        const id = generateRandomObjectId();
+        const startDate = new BN(Math.floor(Date.now() / 1000));
+        const endDate = new BN(Math.floor(Date.now() / 1000) + 3000);
+
+        const tokenOffered = 1_000_000;
+        const ticketSize = new BN(0.00001 * LAMPORTS_PER_SOL);
+
+        const projectConfigArgs: ProjectConfigArgs = {
+          id: id,
+          startDate: startDate,
+          endDate: endDate,
+          merkleRoot: merkle_root,
+          tokenAddress: null,
+          ticketSize: ticketSize,
+          tokenOffered: tokenOffered,
+          totalTicket: totalTicket,
+        };
+
+        const registerProjectIns = await program.methods
+          .registerProject(projectConfigArgs)
+          .accounts({
+            creator: upgradableAuthority.publicKey,
+            receiver: vaultAddress,
+          })
+          .instruction();
+
+        const tx = new Transaction().add(registerProjectIns);
+
+        tx.feePayer = upgradableAuthority.publicKey;
+        tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+        tx.partialSign(upgradableAuthority);
+
+        const sig = await connection.sendTransaction(
+          tx,
+          [upgradableAuthority],
+          {
+            maxRetries: 20,
+            preflightCommitment: 'processed',
+          }
+        );
+
+        console.log('Register project with sol: ', sig);
+
+        // invest
+        for (let i = 0; i < number_of_user; i++) {
+          const ticketAmount =
+            arrayMaxTicketAmount[i] - 1 === 0
+              ? arrayMaxTicketAmount[i]
+              : arrayMaxTicketAmount[i] - 1;
+
+          console.log(
+            `User ${i + 1}: ${
+              arrayUserKeypair[i].publicKey
+            } invest ${ticketAmount}`
+          );
+
+          const wallet_with_max =
+            arrayUserKeypair[i].publicKey.toString() +
+            '_' +
+            arrayMaxTicketAmount[i].toString();
+
+          const getProof = merkleTree.getProof(keccak256(wallet_with_max));
+
+          const merkle_proof = getProof.map((item) => Array.from(item.data));
+
+          const investArgs: InvestArgs = {
+            projectId: id,
+            ticketAmount: ticketAmount,
+            maxTicketAmount: arrayMaxTicketAmount[i],
+            merkleProof: merkle_proof,
+          };
+
+          const investIns = await program.methods
+            .invest(investArgs)
+            .accounts({
+              investor: arrayUserKeypair[i].publicKey,
+              vaultAddress: vaultAddress,
+            })
+            .signers([arrayUserKeypair[i]])
+            .instruction();
+
+          const tx = new Transaction().add(investIns);
+          tx.feePayer = arrayUserKeypair[i].publicKey;
+          tx.recentBlockhash = (
+            await connection.getLatestBlockhash()
+          ).blockhash;
+
+          tx.partialSign(arrayUserKeypair[i]);
+
+          const sig = await connection.sendTransaction(
+            tx,
+            [arrayUserKeypair[i]],
+            { skipPreflight: true }
+          );
+
+          console.log('Invest: ', sig);
+        }
+      });
+    });
+
     xit('Invest project with sol', async () => {
       const vaultAddress = Keypair.generate().publicKey;
 
@@ -3134,4 +3433,50 @@ describe('Test Kyupad IDO', () => {
       ).to.eq(0);
     });
   });
+
+  const createAccount = async ({
+    newAccountKeypair,
+    lamports,
+  }: {
+    newAccountKeypair: Keypair;
+    lamports: number;
+  }) => {
+    const dataLength = 0;
+
+    const rentExemptionAmount =
+      await connection.getMinimumBalanceForRentExemption(dataLength);
+
+    const createAccountIns = SystemProgram.createAccount({
+      fromPubkey: upgradableAuthority.publicKey,
+      newAccountPubkey: newAccountKeypair.publicKey,
+      lamports: rentExemptionAmount,
+      space: dataLength,
+      programId: SystemProgram.programId,
+    });
+
+    const transferIns = SystemProgram.transfer({
+      fromPubkey: upgradableAuthority.publicKey,
+      toPubkey: newAccountKeypair.publicKey,
+      lamports: lamports,
+    });
+
+    const tx = new Transaction().add(createAccountIns).add(transferIns);
+
+    tx.feePayer = upgradableAuthority.publicKey;
+    tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+    tx.partialSign(upgradableAuthority);
+
+    const sig = await connection.sendTransaction(
+      tx,
+      [upgradableAuthority, newAccountKeypair],
+      {
+        maxRetries: 20,
+      }
+    );
+
+    console.log(
+      `Create account ${newAccountKeypair.publicKey} with ${lamports} lamports: ${sig}`
+    );
+  };
 });
