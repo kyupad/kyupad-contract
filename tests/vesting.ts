@@ -2,6 +2,7 @@ import {
   Connection,
   Keypair,
   LAMPORTS_PER_SOL,
+  PublicKey,
   Transaction,
 } from '@solana/web3.js';
 import {
@@ -9,9 +10,13 @@ import {
   ICluster,
   ICreateMultipleStreamData,
   ICreateStreamData,
+  IGetAllData,
   IRecipient,
   IWithdrawData,
+  Stream,
+  StreamDirection,
   StreamflowSolana,
+  StreamType,
 } from '@streamflow/stream';
 import bs58 from 'bs58';
 
@@ -431,6 +436,136 @@ describe('Testing with streamflow', () => {
         console.log('Signature: ', sig);
 
         // console.log(ixs, txId);
+      } catch (exception) {
+        console.log('Error: ', exception);
+      }
+    });
+  });
+
+  describe('Fetch data vesting', () => {
+    const wallet = new PublicKey(
+      '5aMGztMuSVPAp4nm6vrkU25BAho6gGxpWHnnaKZfiUHP'
+    );
+
+    it('Get incoming streams', async () => {
+      const data: IGetAllData = {
+        address: wallet.toString(),
+        type: StreamType.Vesting,
+        direction: StreamDirection.Incoming,
+      };
+
+      try {
+        const streams = await solanaClient.get(data);
+
+        console.log(streams.length);
+      } catch (exception) {
+        console.log('Error: ', exception);
+
+        // handle exception
+      }
+    });
+
+    it('Get outgoing streams', async () => {
+      const data: IGetAllData = {
+        address: wallet.toString(),
+        type: StreamType.Vesting,
+        direction: StreamDirection.Outgoing,
+      };
+
+      try {
+        const streams = await solanaClient.get(data);
+
+        console.log(streams.length);
+      } catch (exception) {
+        console.log('Error: ', exception);
+
+        // handle exception
+      }
+    });
+
+    it('Get all streams', async () => {
+      const data: IGetAllData = {
+        address: wallet.toString(),
+        type: StreamType.Vesting,
+        direction: StreamDirection.All,
+      };
+
+      try {
+        const streams = await solanaClient.get(data);
+
+        console.log(streams.length);
+      } catch (exception) {
+        console.log('Error: ', exception);
+
+        // handle exception
+      }
+    });
+
+    it('Get incoming streams with token', async () => {
+      const data: IGetAllData = {
+        address: wallet.toString(),
+        type: StreamType.Vesting,
+        direction: StreamDirection.Incoming,
+      };
+
+      const mint = new PublicKey(
+        '5SXpAwD1yvUMdib6WeWwtAsQACB9A6t7kBsZonByXAgo'
+      );
+
+      try {
+        const streams = await solanaClient.get(data);
+
+        if (streams.length === 0) {
+          throw Error('User dont have any incoming streams');
+        } else {
+          const specStreams: Stream[] = [];
+          for (let i = 0; i < streams.length; i++) {
+            if (streams[i][1].mint === mint.toString()) {
+              specStreams.push(streams[i][1]);
+            }
+          }
+
+          if (specStreams.length === 0) {
+            throw Error('User dont have any incoming contract with this mint');
+          } else {
+            console.log(specStreams);
+          }
+        }
+      } catch (exception) {
+        console.log('Error: ', exception);
+      }
+    });
+
+    it('Get outgoing streams with token', async () => {
+      const data: IGetAllData = {
+        address: wallet.toString(),
+        type: StreamType.Vesting,
+        direction: StreamDirection.Outgoing,
+      };
+
+      const mint = new PublicKey(
+        '5SXpAwD1yvUMdib6WeWwtAsQACB9A6t7kBsZonByXAgo'
+      );
+
+      try {
+        const streams = await solanaClient.get(data);
+
+        if (streams.length === 0) {
+          throw Error('User dont have any incoming streams');
+        } else {
+          const specStreams: Stream[] = [];
+          for (let i = 0; i < streams.length; i++) {
+            if (streams[i][1].mint === mint.toString()) {
+              specStreams.push(streams[i][1]);
+            }
+          }
+
+          if (specStreams.length === 0) {
+            throw Error('User dont have any outgoing contract with this mint');
+          } else {
+            console.log(specStreams);
+          }
+        }
       } catch (exception) {
         console.log('Error: ', exception);
       }
