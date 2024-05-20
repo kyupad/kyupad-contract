@@ -520,8 +520,9 @@ describe('Testing with streamflow', () => {
         } else {
           const specStreams: Stream[] = [];
           for (let i = 0; i < streams.length; i++) {
-            if (streams[i][1].mint === mint.toString()) {
-              specStreams.push(streams[i][1]);
+            const singleStream = streams[i][1];
+            if (singleStream.mint === mint.toString()) {
+              specStreams.push(singleStream);
             }
           }
 
@@ -564,6 +565,70 @@ describe('Testing with streamflow', () => {
             throw Error('User dont have any outgoing contract with this mint');
           } else {
             console.log(specStreams);
+          }
+        }
+      } catch (exception) {
+        console.log('Error: ', exception);
+      }
+    });
+
+    it('Get outgoing streams with filter', async () => {
+      // Note: this address must be creator of all vesting contract
+      const data: IGetAllData = {
+        address: wallet.toString(),
+        type: StreamType.Vesting,
+        direction: StreamDirection.Outgoing,
+      };
+
+      const mint = new PublicKey(
+        '8dcDq595GVwP2jmU1xpXf9z36SEbcsnTjooDoT4tB4QL'
+      );
+
+      try {
+        const streams = await solanaClient.get(data);
+
+        if (streams.length === 0) {
+          throw Error('User dont have any incoming streams');
+        } else {
+          const specStreams: Stream[] = [];
+          for (let i = 0; i < streams.length; i++) {
+            const singleStream = streams[i][1];
+            const now = Math.floor(Date.now() / 1000);
+            // some vesting contract is closed but closed status is false (because auto send token to user wallet in devnet is error when vesting is over)
+            if (
+              singleStream.mint === mint.toString() &&
+              !singleStream.closed &&
+              singleStream.end >= now
+            ) {
+              specStreams.push(singleStream);
+
+              // Max token can claim now
+              const startTime = singleStream.start;
+              const period = singleStream.period;
+              const amountPerPeriod = singleStream.amountPerPeriod.toNumber();
+
+              const withdrawnToken = singleStream.withdrawnAmount.toNumber();
+
+              const totalCanClaim: number =
+                ((now - startTime) / period) * amountPerPeriod - withdrawnToken;
+
+              // total can claim when vesting over
+              console.log(
+                'Total token can claim when in this vesting ended: ',
+                singleStream.depositedAmount.toNumber()
+              );
+
+              console.log('Total token can claim now: ', totalCanClaim);
+
+              // total claimed
+              console.log('Total token user is claimed: ', withdrawnToken);
+            }
+          }
+
+          if (specStreams.length === 0) {
+            throw Error('User dont have any outgoing contract with this mint');
+          } else {
+            // console.log(specStreams);
           }
         }
       } catch (exception) {
