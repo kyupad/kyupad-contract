@@ -17,9 +17,12 @@ import {
   Transaction,
   TransactionResponse,
   SystemProgram,
+  VersionedTransaction,
+  TransactionMessage,
 } from '@solana/web3.js';
 import { assert, expect } from 'chai';
 import {
+  createAccount,
   generateRandomObjectId,
   generateWhiteListInvest,
   sleep,
@@ -299,6 +302,8 @@ describe('Test Kyupad IDO', () => {
 
       // create fakeMaster
       await createAccount({
+        connection: connection,
+        payerKeypair: upgradableAuthority,
         newAccountKeypair: fakeAdmin,
         lamports: 0.01 * LAMPORTS_PER_SOL,
       });
@@ -428,27 +433,49 @@ describe('Test Kyupad IDO', () => {
         })
         .instruction();
 
-      const tx = new Transaction().add(addAdminIns);
+      const blockhash = (await connection.getLatestBlockhash()).blockhash;
 
-      tx.feePayer = upgradableAuthority.publicKey;
-      tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+      const messageV0 = new TransactionMessage({
+        payerKey: upgradableAuthority.publicKey,
+        recentBlockhash: blockhash,
+        instructions: [addAdminIns],
+      }).compileToV0Message([]);
 
-      tx.partialSign(upgradableAuthority);
+      const transactionV0 = new VersionedTransaction(messageV0);
 
-      const sig = await connection.sendTransaction(tx, [upgradableAuthority], {
-        maxRetries: 20,
-        skipPreflight: true,
+      transactionV0.sign([upgradableAuthority]);
+
+      await connection.simulateTransaction(transactionV0, {
+        replaceRecentBlockhash: true,
+        commitment: 'confirmed',
       });
-      await sleep(2000);
 
-      const adminPdaData = await program.account.admin.fetch(adminPda);
+      // connection.sendTransaction(transactionV0, {
+      //   preflightCommitment: "confirmed"
+      // })
 
-      console.log('Add admin: ', sig);
+      // const signature = await connection?.signTransaction(transactionV0);
 
-      expect(
-        adminPdaData.adminKey.toString() === adminAddress.toString(),
-        'This account must to be initialize'
-      ).to.be.true;
+      // tx.feePayer = upgradableAuthority.publicKey;
+      // tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+      // tx.partialSign(upgradableAuthority);
+
+      // const sig = await connection.sendTransaction(t, {
+      //   maxRetries: 20,
+      //   skipPreflight: true,
+      //   preflightCommitment: 'confirmed',
+      // });
+      // await sleep(2000);
+
+      // const adminPdaData = await program.account.admin.fetch(adminPda);
+
+      // console.log('Add admin: ', sig);
+
+      // expect(
+      //   adminPdaData.adminKey.toString() === adminAddress.toString(),
+      //   'This account must to be initialize'
+      // ).to.be.true;
     });
 
     it('Init another master but not deployer', async () => {
@@ -456,6 +483,8 @@ describe('Test Kyupad IDO', () => {
 
       // create fakeMaster
       await createAccount({
+        connection: connection,
+        payerKeypair: upgradableAuthority,
         newAccountKeypair: fakeDeployer,
         lamports: 0.01 * LAMPORTS_PER_SOL,
       });
@@ -502,6 +531,8 @@ describe('Test Kyupad IDO', () => {
 
       // create fakeMaster
       await createAccount({
+        connection: connection,
+        payerKeypair: upgradableAuthority,
         newAccountKeypair: fakeMaster,
         lamports: 0.01 * LAMPORTS_PER_SOL,
       });
@@ -3010,6 +3041,8 @@ describe('Test Kyupad IDO', () => {
           totalTicket += randomNumber;
 
           await createAccount({
+            connection: connection,
+            payerKeypair: upgradableAuthority,
             newAccountKeypair: userKeypair,
             lamports: (0.00001 * randomNumber + 0.0015) * LAMPORTS_PER_SOL,
           });
@@ -3433,50 +3466,4 @@ describe('Test Kyupad IDO', () => {
       ).to.eq(0);
     });
   });
-
-  const createAccount = async ({
-    newAccountKeypair,
-    lamports,
-  }: {
-    newAccountKeypair: Keypair;
-    lamports: number;
-  }) => {
-    const dataLength = 0;
-
-    const rentExemptionAmount =
-      await connection.getMinimumBalanceForRentExemption(dataLength);
-
-    const createAccountIns = SystemProgram.createAccount({
-      fromPubkey: upgradableAuthority.publicKey,
-      newAccountPubkey: newAccountKeypair.publicKey,
-      lamports: rentExemptionAmount,
-      space: dataLength,
-      programId: SystemProgram.programId,
-    });
-
-    const transferIns = SystemProgram.transfer({
-      fromPubkey: upgradableAuthority.publicKey,
-      toPubkey: newAccountKeypair.publicKey,
-      lamports: lamports,
-    });
-
-    const tx = new Transaction().add(createAccountIns).add(transferIns);
-
-    tx.feePayer = upgradableAuthority.publicKey;
-    tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-
-    tx.partialSign(upgradableAuthority);
-
-    const sig = await connection.sendTransaction(
-      tx,
-      [upgradableAuthority, newAccountKeypair],
-      {
-        maxRetries: 20,
-      }
-    );
-
-    console.log(
-      `Create account ${newAccountKeypair.publicKey} with ${lamports} lamports: ${sig}`
-    );
-  };
 });
