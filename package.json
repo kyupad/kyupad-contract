@@ -18,7 +18,9 @@
     "keccak256": "^1.0.6",
     "lodash": "^4.17.21",
     "merkletreejs": "^0.3.11",
-    "mongodb": "^6.5.0"
+    "mongodb": "^6.5.0",
+    "node-fetch": "^2.7.0",
+    "p-queue": "^6.6.2"
   },
   "devDependencies": {
     "@types/bn.js": "^5.1.0",
