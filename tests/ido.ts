@@ -415,16 +415,11 @@ describe('Test Kyupad IDO', () => {
     });
 
     it('Add admin', async () => {
-      // const adminAddress = new PublicKey(
-      //   '46hMDZggfURmHmG1g3fTTDAqGpgFqh1bFmUvJ2zNYXAW'
-      // );
-
-      const adminAddress = upgradableAuthority.publicKey;
-
-      const [adminPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from('admin'), adminAddress.toBuffer()],
-        program.programId
+      const adminAddress = new PublicKey(
+        '6N4XbeWRUS2Hqy7zBpXZHtQzd4rYYvn8mtfHDRvVYX2X'
       );
+
+      // const adminAddress = upgradableAuthority.publicKey;
 
       const addAdminIns = await program.methods
         .addAdmin(adminAddress)
@@ -433,49 +428,33 @@ describe('Test Kyupad IDO', () => {
         })
         .instruction();
 
-      const blockhash = (await connection.getLatestBlockhash()).blockhash;
+      const tx = new Transaction().add(addAdminIns);
 
-      const messageV0 = new TransactionMessage({
-        payerKey: upgradableAuthority.publicKey,
-        recentBlockhash: blockhash,
-        instructions: [addAdminIns],
-      }).compileToV0Message([]);
+      tx.feePayer = upgradableAuthority.publicKey;
+      tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
 
-      const transactionV0 = new VersionedTransaction(messageV0);
+      tx.partialSign(upgradableAuthority);
 
-      transactionV0.sign([upgradableAuthority]);
-
-      await connection.simulateTransaction(transactionV0, {
-        replaceRecentBlockhash: true,
-        commitment: 'confirmed',
+      const sig = await connection.sendTransaction(tx, [upgradableAuthority], {
+        maxRetries: 20,
+        skipPreflight: true,
+        preflightCommitment: 'confirmed',
       });
+      await sleep(2000);
 
-      // connection.sendTransaction(transactionV0, {
-      //   preflightCommitment: "confirmed"
-      // })
+      const [adminPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from('admin'), adminAddress.toBuffer()],
+        program.programId
+      );
 
-      // const signature = await connection?.signTransaction(transactionV0);
+      const adminPdaData = await program.account.admin.fetch(adminPda);
 
-      // tx.feePayer = upgradableAuthority.publicKey;
-      // tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+      console.log('Add admin: ', sig);
 
-      // tx.partialSign(upgradableAuthority);
-
-      // const sig = await connection.sendTransaction(t, {
-      //   maxRetries: 20,
-      //   skipPreflight: true,
-      //   preflightCommitment: 'confirmed',
-      // });
-      // await sleep(2000);
-
-      // const adminPdaData = await program.account.admin.fetch(adminPda);
-
-      // console.log('Add admin: ', sig);
-
-      // expect(
-      //   adminPdaData.adminKey.toString() === adminAddress.toString(),
-      //   'This account must to be initialize'
-      // ).to.be.true;
+      expect(
+        adminPdaData.adminKey.toString() === adminAddress.toString(),
+        'This account must to be initialize'
+      ).to.be.true;
     });
 
     it('Init another master but not deployer', async () => {
@@ -526,7 +505,7 @@ describe('Test Kyupad IDO', () => {
         .true;
     });
 
-    it('Add admin but not master', async () => {
+    it('Addadmin but not master', async () => {
       const fakeMaster = Keypair.generate();
 
       // create fakeMaster
