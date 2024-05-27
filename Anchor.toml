@@ -4,18 +4,11 @@
 seeds = false
 skip-lint = false
 
-[programs.devnet]
-kyupad_smart_contract = "FHPbXuECjkYGrJHnwU2ozrm7TYzoo2c43CZTo3nJEzs"
-
-[programs.mainnet]
-kyupad_smart_contract = "FHPbXuECjkYGrJHnwU2ozrm7TYzoo2c43CZTo3nJEzs"
-
-[registry]
-url = "https://api.mainnet-beta.solana.com"
-
 [provider]
-cluster = "devnet"
+cluster = "https://kathlin-5yytwf-fast-devnet.helius-rpc.com"
 wallet = "/Users/admin/.config/solana/id.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+test-nft = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/mintNFT.ts"
+test-ido = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/ido.ts"

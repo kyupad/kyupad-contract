@@ -40,7 +40,10 @@ pub struct UpdatePoolConfigArgs {
 
 #[derive(Accounts)]
 pub struct UpdatePoolConfig<'info> {
-    #[account(mut)]
+    #[account(
+        mut,         
+        constraint = signer.key() == admin_pda.admin_key
+    )]
     pub signer: Signer<'info>,
 
     /// CHECK

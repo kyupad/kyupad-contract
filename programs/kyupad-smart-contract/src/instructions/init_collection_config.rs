@@ -20,7 +20,10 @@ pub fn init_collection_config<'c: 'info, 'info>(
 #[derive(Accounts)]
 #[instruction()]
 pub struct InitCollectionConfig<'info> {
-    #[account(mut)]
+    #[account(
+        mut,         
+        constraint = creator.key() == admin_pda.admin_key
+    )]
     pub creator: Signer<'info>,
 
     #[account(

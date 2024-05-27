@@ -22,18 +22,6 @@ pub struct PoolConfig {
 }
 
 impl PoolConfig {
-    // pub fn validate<'info>(&self, payer: AccountInfo<'info>) -> Result<()> {
-    //     if payer.lamports() < self.lamports {
-    //         msg!(
-    //             "Require {} lamports, accounts has {} lamports",
-    //             self.lamports,
-    //             payer.lamports(),
-    //         );
-    //         return err!(KyuPadError::NotEnoughSOL);
-    //     }
-    //     Ok(())
-    // }
-
     pub fn actions<'info>(
         &self,
         payer: AccountInfo<'info>,

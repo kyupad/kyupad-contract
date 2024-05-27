@@ -13,8 +13,28 @@ export const generateWhiteList = (size: number) => {
   return arrayWallet;
 };
 
+export const generateWhiteListInvest = (size: number) => {
+  const arrayWallet: string[] = [];
+
+  let totalTicket = 0;
+
+  for (let i = 0; i < size; i++) {
+    const randomNumber = Math.floor(Math.random() * 3) + 1;
+    totalTicket += randomNumber;
+
+    arrayWallet.push(
+      Keypair.generate().publicKey.toString() + '_' + randomNumber.toString()
+    );
+  }
+
+  return { arrayWallet, totalTicket };
+};
 
 export const generateRandomObjectId = () => {
   const objectId = new ObjectId();
   return objectId.toHexString();
 };
+
+export function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}

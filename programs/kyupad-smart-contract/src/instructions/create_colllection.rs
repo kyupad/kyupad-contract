@@ -117,7 +117,10 @@ pub fn create_collection(ctx: Context<CreateCollection>, data: Vec<u8>) -> Resul
 
 #[derive(Accounts)]
 pub struct CreateCollection<'info> {
-    #[account(mut)]
+    #[account(
+        mut,         
+        constraint = creator.key() == admin_pda.admin_key
+    )]    
     pub creator: Signer<'info>,
 
     #[account(

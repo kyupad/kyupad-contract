@@ -9,9 +9,12 @@ pub struct ProjectConfig {
     pub end_date: i64,
     #[max_len(32)]
     pub merkle_root: Vec<u8>,
-    pub destination: Pubkey,
-    pub token_address: Pubkey,
-    pub ticket_size: f32,
+    pub vault_address: Pubkey,
+    pub token_address: Option<Pubkey>,
+    pub ticket_size: u64,
+    pub token_offered: u32,
+    pub total_ticket: u32,
+    pub token_program: Option<Pubkey>,
 }
 
 impl ProjectConfig {
@@ -26,7 +29,8 @@ pub struct ProjectConfigArgs {
     pub end_date: i64,
     #[max_len(32)]
     pub merkle_root: Vec<u8>,
-    pub destination: Pubkey,
-    pub token_address: Pubkey,
-    pub ticket_size: f32,
+    pub token_address: Option<Pubkey>,
+    pub ticket_size: u64,
+    pub token_offered: u32,
+    pub total_ticket: u32,
 }

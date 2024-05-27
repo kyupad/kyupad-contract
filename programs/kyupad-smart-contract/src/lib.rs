@@ -1,19 +1,17 @@
-#[macro_use]
-extern crate dotenv_codegen;
-
 use anchor_lang::prelude::*;
 use instructions::*;
 use state::*;
 
-use const_str_to_pubkey::str_to_pubkey;
-
 pub mod errors;
 pub mod instructions;
-pub mod pda;
 pub mod state;
 pub mod utils;
 
-const PROGRAM_ID: Pubkey = str_to_pubkey(dotenv!("PROGRAM_ID"));
+#[macro_use]
+extern crate dotenv_codegen;
+use const_str_to_pubkey::str_to_pubkey;
+
+const PROGRAM_ID: Pubkey = str_to_pubkey(dotenv!("NFT_PROGRAM_ID"));
 declare_id!(PROGRAM_ID);
 
 #[program]
@@ -23,9 +21,8 @@ pub mod kyupad_smart_contract {
     pub fn init_admin(
         ctx: Context<InitAdmin>,
         address: Pubkey,
-        permissions: Vec<Permission>,
     ) -> Result<()> {
-        instructions::init_admin(ctx, address, permissions)
+        instructions::init_admin(ctx, address)
     }
 
     pub fn mint_cnft<'c: 'info, 'info>(
@@ -72,12 +69,4 @@ pub mod kyupad_smart_contract {
         instructions::add_pool_config(ctx, pool_config_args)
     }
 
-    pub fn register_project(
-        ctx: Context<RegisterProject>,
-        project_config_args: ProjectConfigArgs,
-    ) -> Result<()> {
-        instructions::register_project(ctx, project_config_args)
-    }
-
-    
 }

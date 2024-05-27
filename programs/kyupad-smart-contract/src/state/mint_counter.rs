@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 
 use crate::{errors::KyuPadError, utils::*, ID};
 
-use super::BpfWriter;
+use crate::BpfWriter;
 
 /// PDA to track the number of mints for an individual address.
 #[account]

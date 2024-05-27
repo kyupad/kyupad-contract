@@ -2,9 +2,6 @@ use anchor_lang::error_code;
 
 #[error_code]
 pub enum KyuPadError {
-    #[msg("Could not save guard to account")]
-    InvalidAccountSize,
-
     #[msg("This wallet is't supported to mint")]
     InvalidWallet,
 
@@ -13,9 +10,6 @@ pub enum KyuPadError {
 
     #[msg("Pool's supply has run out")]
     PoolSupplyRunOut,
-
-    #[msg("Not enough sol to mint")]
-    NotEnoughSOL,
 
     PublicKeyMismatch,
 
@@ -32,18 +26,6 @@ pub enum KyuPadError {
     #[msg("This destination address doesn't not match with pools config")]
     DestinationIsInvalid,
 
-    #[msg("This signer is now allow to init another signer")]
-    InvalidSigner,
-
-    #[msg("Error unknown")]
-    ErrorUnknown,
-
     #[msg("Your pool id doesn't in pools config")]
     PoolIdInvalid,
-
-    #[msg("Invalid merkle root")]
-    InvalidMerkeRoot,
-
-    #[msg("Dont have right to do this action")]
-    DontHaveRight
 }
