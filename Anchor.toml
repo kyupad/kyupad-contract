@@ -12,3 +12,5 @@ wallet = "/Users/admin/.config/solana/id.json"
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
 test-nft = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/mintNFT.ts"
 test-ido = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/ido.ts"
+test-vesting = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/vesting.ts"
+
