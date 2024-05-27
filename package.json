@@ -10,15 +10,18 @@
     "@metaplex-foundation/umi": "^0.9.1",
     "@solana/spl-token": "^0.4.3",
     "@solana/web3.js": "^1.91.8",
-    "@streamflow/common": "^6.3.6",
-    "@streamflow/stream": "^6.3.6",
+    "@streamflow/common": "^6.3.8",
+    "@streamflow/stream": "^6.3.8",
     "borsh": "^2.0.0",
     "bs58": "^5.0.0",
     "dotenv": "^16.4.5",
+    "js-sha256": "^0.11.0",
     "keccak256": "^1.0.6",
     "lodash": "^4.17.21",
     "merkletreejs": "^0.3.11",
-    "mongodb": "^6.5.0"
+    "mongodb": "^6.5.0",
+    "node-fetch": "^2.7.0",
+    "p-queue": "^6.6.2"
   },
   "devDependencies": {
     "@types/bn.js": "^5.1.0",

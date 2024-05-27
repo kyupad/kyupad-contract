@@ -174,7 +174,7 @@ describe('Test Kyupad IDO', () => {
 
       const tokenData = await getMint(connection, tokenAddress);
 
-      const receiver = Keypair.generate().publicKey;
+      const receiver = upgradableAuthority.publicKey;
 
       const vaultAddress = getAssociatedTokenAddressSync(
         tokenAddress,
@@ -237,12 +237,12 @@ describe('Test Kyupad IDO', () => {
         },
       ];
 
-      const createAtaIns = createAssociatedTokenAccountInstruction(
-        upgradableAuthority.publicKey,
-        vaultAddress,
-        receiver,
-        tokenAddress
-      );
+      // const createAtaIns = createAssociatedTokenAccountInstruction(
+      //   upgradableAuthority.publicKey,
+      //   vaultAddress,
+      //   receiver,
+      //   tokenAddress
+      // );
 
       const registerProjectIns = await program.methods
         .registerProject(projectConfigArgs)
@@ -253,7 +253,7 @@ describe('Test Kyupad IDO', () => {
         .remainingAccounts(remainingAccounRegister)
         .instruction();
 
-      const tx = new Transaction().add(createAtaIns).add(registerProjectIns);
+      const tx = new Transaction().add(registerProjectIns);
 
       tx.feePayer = upgradableAuthority.publicKey;
       tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
@@ -415,16 +415,11 @@ describe('Test Kyupad IDO', () => {
     });
 
     it('Add admin', async () => {
-      // const adminAddress = new PublicKey(
-      //   '46hMDZggfURmHmG1g3fTTDAqGpgFqh1bFmUvJ2zNYXAW'
-      // );
-
-      const adminAddress = upgradableAuthority.publicKey;
-
-      const [adminPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from('admin'), adminAddress.toBuffer()],
-        program.programId
+      const adminAddress = new PublicKey(
+        '6N4XbeWRUS2Hqy7zBpXZHtQzd4rYYvn8mtfHDRvVYX2X'
       );
+
+      // const adminAddress = upgradableAuthority.publicKey;
 
       const addAdminIns = await program.methods
         .addAdmin(adminAddress)
@@ -433,49 +428,33 @@ describe('Test Kyupad IDO', () => {
         })
         .instruction();
 
-      const blockhash = (await connection.getLatestBlockhash()).blockhash;
+      const tx = new Transaction().add(addAdminIns);
 
-      const messageV0 = new TransactionMessage({
-        payerKey: upgradableAuthority.publicKey,
-        recentBlockhash: blockhash,
-        instructions: [addAdminIns],
-      }).compileToV0Message([]);
+      tx.feePayer = upgradableAuthority.publicKey;
+      tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
 
-      const transactionV0 = new VersionedTransaction(messageV0);
+      tx.partialSign(upgradableAuthority);
 
-      transactionV0.sign([upgradableAuthority]);
-
-      await connection.simulateTransaction(transactionV0, {
-        replaceRecentBlockhash: true,
-        commitment: 'confirmed',
+      const sig = await connection.sendTransaction(tx, [upgradableAuthority], {
+        maxRetries: 20,
+        skipPreflight: true,
+        preflightCommitment: 'confirmed',
       });
+      await sleep(2000);
 
-      // connection.sendTransaction(transactionV0, {
-      //   preflightCommitment: "confirmed"
-      // })
+      const [adminPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from('admin'), adminAddress.toBuffer()],
+        program.programId
+      );
 
-      // const signature = await connection?.signTransaction(transactionV0);
+      const adminPdaData = await program.account.admin.fetch(adminPda);
 
-      // tx.feePayer = upgradableAuthority.publicKey;
-      // tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+      console.log('Add admin: ', sig);
 
-      // tx.partialSign(upgradableAuthority);
-
-      // const sig = await connection.sendTransaction(t, {
-      //   maxRetries: 20,
-      //   skipPreflight: true,
-      //   preflightCommitment: 'confirmed',
-      // });
-      // await sleep(2000);
-
-      // const adminPdaData = await program.account.admin.fetch(adminPda);
-
-      // console.log('Add admin: ', sig);
-
-      // expect(
-      //   adminPdaData.adminKey.toString() === adminAddress.toString(),
-      //   'This account must to be initialize'
-      // ).to.be.true;
+      expect(
+        adminPdaData.adminKey.toString() === adminAddress.toString(),
+        'This account must to be initialize'
+      ).to.be.true;
     });
 
     it('Init another master but not deployer', async () => {
@@ -526,7 +505,7 @@ describe('Test Kyupad IDO', () => {
         .true;
     });
 
-    it('Add admin but not master', async () => {
+    it('Addadmin but not master', async () => {
       const fakeMaster = Keypair.generate();
 
       // create fakeMaster
@@ -3156,314 +3135,314 @@ describe('Test Kyupad IDO', () => {
       });
     });
 
-    xit('Invest project with sol', async () => {
-      const vaultAddress = Keypair.generate().publicKey;
+    // xit('Invest project with sol', async () => {
+    //   const vaultAddress = Keypair.generate().publicKey;
 
-      let { arrayWallet, totalTicket } = generateWhiteListInvest(9999);
+    //   let { arrayWallet, totalTicket } = generateWhiteListInvest(9999);
 
-      const randomNumber = Math.floor(Math.random() * 3) + 1;
-      const test =
-        upgradableAuthority.publicKey.toString() +
-        '_' +
-        randomNumber.toString();
-      arrayWallet.push(test);
+    //   const randomNumber = Math.floor(Math.random() * 3) + 1;
+    //   const test =
+    //     upgradableAuthority.publicKey.toString() +
+    //     '_' +
+    //     randomNumber.toString();
+    //   arrayWallet.push(test);
 
-      totalTicket += randomNumber;
+    //   totalTicket += randomNumber;
 
-      const leafNode = arrayWallet.map((addr) => keccak256(addr));
-      const merkleTree = new MerkleTree(leafNode, keccak256, {
-        sortPairs: true,
-      });
+    //   const leafNode = arrayWallet.map((addr) => keccak256(addr));
+    //   const merkleTree = new MerkleTree(leafNode, keccak256, {
+    //     sortPairs: true,
+    //   });
 
-      const merkle_root = merkleTree.getRoot();
+    //   const merkle_root = merkleTree.getRoot();
 
-      const id = generateRandomObjectId();
-      const startDate = new BN(Math.floor(Date.now() / 1000));
-      const endDate = new BN(Math.floor(Date.now() / 1000) + 3000);
+    //   const id = generateRandomObjectId();
+    //   const startDate = new BN(Math.floor(Date.now() / 1000));
+    //   const endDate = new BN(Math.floor(Date.now() / 1000) + 3000);
 
-      const tokenOffered = 1_000_000;
-      const ticketSizeSol = 0.1;
-      const ticketSize = new BN(ticketSizeSol * LAMPORTS_PER_SOL);
+    //   const tokenOffered = 1_000_000;
+    //   const ticketSizeSol = 0.1;
+    //   const ticketSize = new BN(ticketSizeSol * LAMPORTS_PER_SOL);
 
-      const projectConfigArgs: ProjectConfigArgs = {
-        id: id,
-        startDate: startDate,
-        endDate: endDate,
-        merkleRoot: merkle_root,
-        tokenAddress: null,
-        ticketSize: ticketSize,
-        tokenOffered: tokenOffered,
-        totalTicket: totalTicket,
-      };
+    //   const projectConfigArgs: ProjectConfigArgs = {
+    //     id: id,
+    //     startDate: startDate,
+    //     endDate: endDate,
+    //     merkleRoot: merkle_root,
+    //     tokenAddress: null,
+    //     ticketSize: ticketSize,
+    //     tokenOffered: tokenOffered,
+    //     totalTicket: totalTicket,
+    //   };
 
-      const [project] = PublicKey.findProgramAddressSync(
-        [Buffer.from('project_config'), Buffer.from(projectConfigArgs.id)],
-        program.programId
-      );
+    //   const [project] = PublicKey.findProgramAddressSync(
+    //     [Buffer.from('project_config'), Buffer.from(projectConfigArgs.id)],
+    //     program.programId
+    //   );
 
-      const [projectCounter] = PublicKey.findProgramAddressSync(
-        [Buffer.from('project_counter'), project.toBuffer()],
-        program.programId
-      );
+    //   const [projectCounter] = PublicKey.findProgramAddressSync(
+    //     [Buffer.from('project_counter'), project.toBuffer()],
+    //     program.programId
+    //   );
 
-      const [adminPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from('admin'), upgradableAuthority.publicKey.toBuffer()],
-        program.programId
-      );
+    //   const [adminPda] = PublicKey.findProgramAddressSync(
+    //     [Buffer.from('admin'), upgradableAuthority.publicKey.toBuffer()],
+    //     program.programId
+    //   );
 
-      const registerProjectIns = await program.methods
-        .registerProject(projectConfigArgs)
-        .accounts({
-          creator: upgradableAuthority.publicKey,
-          receiver: vaultAddress,
-        })
-        .instruction();
+    //   const registerProjectIns = await program.methods
+    //     .registerProject(projectConfigArgs)
+    //     .accounts({
+    //       creator: upgradableAuthority.publicKey,
+    //       receiver: vaultAddress,
+    //     })
+    //     .instruction();
 
-      const getProof = merkleTree.getProof(keccak256(test));
-      const merkle_proof = getProof.map((item) => Array.from(item.data));
+    //   const getProof = merkleTree.getProof(keccak256(test));
+    //   const merkle_proof = getProof.map((item) => Array.from(item.data));
 
-      const usertotalTicket =
-        randomNumber - 1 === 0 ? randomNumber : randomNumber - 1;
+    //   const usertotalTicket =
+    //     randomNumber - 1 === 0 ? randomNumber : randomNumber - 1;
 
-      const investArgs: InvestArgs = {
-        projectId: projectConfigArgs.id,
-        ticketAmount: usertotalTicket,
-        maxTicketAmount: randomNumber,
-        merkleProof: merkle_proof,
-      };
+    //   const investArgs: InvestArgs = {
+    //     projectId: projectConfigArgs.id,
+    //     ticketAmount: usertotalTicket,
+    //     maxTicketAmount: randomNumber,
+    //     merkleProof: merkle_proof,
+    //   };
 
-      const [investCounter] = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from('invest_counter'),
-          project.toBuffer(),
-          upgradableAuthority.publicKey.toBuffer(),
-        ],
-        program.programId
-      );
+    //   const [investCounter] = PublicKey.findProgramAddressSync(
+    //     [
+    //       Buffer.from('invest_counter'),
+    //       project.toBuffer(),
+    //       upgradableAuthority.publicKey.toBuffer(),
+    //     ],
+    //     program.programId
+    //   );
 
-      const investIns = await program.methods
-        .invest(investArgs)
-        .accounts({
-          investor: upgradableAuthority.publicKey,
-          vaultAddress: vaultAddress,
-        })
-        .signers([upgradableAuthority])
-        .instruction();
+    //   const investIns = await program.methods
+    //     .invest(investArgs)
+    //     .accounts({
+    //       investor: upgradableAuthority.publicKey,
+    //       vaultAddress: vaultAddress,
+    //     })
+    //     .signers([upgradableAuthority])
+    //     .instruction();
 
-      const tx = new Transaction().add(registerProjectIns).add(investIns);
+    //   const tx = new Transaction().add(registerProjectIns).add(investIns);
 
-      tx.feePayer = upgradableAuthority.publicKey;
-      tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+    //   tx.feePayer = upgradableAuthority.publicKey;
+    //   tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
 
-      tx.partialSign(upgradableAuthority);
+    //   tx.partialSign(upgradableAuthority);
 
-      const sig = await connection.sendTransaction(tx, [upgradableAuthority], {
-        skipPreflight: true,
-      });
+    //   const sig = await connection.sendTransaction(tx, [upgradableAuthority], {
+    //     skipPreflight: true,
+    //   });
 
-      console.log('Invest: ', sig);
+    //   console.log('Invest: ', sig);
 
-      await sleep(2000);
+    //   await sleep(2000);
 
-      const projectCounterData = await program.account.projectCounter.fetch(
-        projectCounter
-      );
+    //   const projectCounterData = await program.account.projectCounter.fetch(
+    //     projectCounter
+    //   );
 
-      const expectedBalance = await connection.getBalance(vaultAddress);
+    //   const expectedBalance = await connection.getBalance(vaultAddress);
 
-      expect(
-        expectedBalance,
-        'Expected vaultAddress balace equal ticketSOL'
-      ).to.eq(ticketSize.toNumber() * usertotalTicket);
+    //   expect(
+    //     expectedBalance,
+    //     'Expected vaultAddress balace equal ticketSOL'
+    //   ).to.eq(ticketSize.toNumber() * usertotalTicket);
 
-      expect(
-        projectCounterData.remaining,
-        "Project counter should be equal investotal - user's invest total"
-      ).to.eq(totalTicket - usertotalTicket);
+    //   expect(
+    //     projectCounterData.remaining,
+    //     "Project counter should be equal investotal - user's invest total"
+    //   ).to.eq(totalTicket - usertotalTicket);
 
-      const investCounterData = await program.account.investorCounter.fetch(
-        investCounter
-      );
+    //   const investCounterData = await program.account.investorCounter.fetch(
+    //     investCounter
+    //   );
 
-      expect(
-        investCounterData.totalInvestedTicket,
-        'User invest counter should be equal 0 or 1'
-      ).to.eq(randomNumber - usertotalTicket);
-    });
+    //   expect(
+    //     investCounterData.totalInvestedTicket,
+    //     'User invest counter should be equal 0 or 1'
+    //   ).to.eq(randomNumber - usertotalTicket);
+    // });
 
-    xit('Invest project with token', async () => {
-      const tokenAddress = new PublicKey(
-        '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
-      );
+    // xit('Invest project with token', async () => {
+    //   const tokenAddress = new PublicKey(
+    //     '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
+    //   );
 
-      const tokenData = await getMint(connection, tokenAddress);
+    //   const tokenData = await getMint(connection, tokenAddress);
 
-      const receiver = Keypair.generate().publicKey;
+    //   const receiver = Keypair.generate().publicKey;
 
-      const vaultAddress = (
-        await getOrCreateAssociatedTokenAccount(
-          connection,
-          upgradableAuthority,
-          tokenAddress,
-          receiver
-        )
-      ).address;
+    //   const vaultAddress = (
+    //     await getOrCreateAssociatedTokenAccount(
+    //       connection,
+    //       upgradableAuthority,
+    //       tokenAddress,
+    //       receiver
+    //     )
+    //   ).address;
 
-      let { arrayWallet } = generateWhiteListInvest(9999);
+    //   let { arrayWallet } = generateWhiteListInvest(9999);
 
-      const usertotalTicket = 1;
-      const test =
-        upgradableAuthority.publicKey.toString() +
-        '_' +
-        usertotalTicket.toString();
-      arrayWallet.push(test);
+    //   const usertotalTicket = 1;
+    //   const test =
+    //     upgradableAuthority.publicKey.toString() +
+    //     '_' +
+    //     usertotalTicket.toString();
+    //   arrayWallet.push(test);
 
-      const leafNode = arrayWallet.map((addr) => keccak256(addr));
-      const merkleTree = new MerkleTree(leafNode, keccak256, {
-        sortPairs: true,
-      });
+    //   const leafNode = arrayWallet.map((addr) => keccak256(addr));
+    //   const merkleTree = new MerkleTree(leafNode, keccak256, {
+    //     sortPairs: true,
+    //   });
 
-      const merkle_root = merkleTree.getRoot();
+    //   const merkle_root = merkleTree.getRoot();
 
-      const id = generateRandomObjectId();
-      const startDate = new BN(Math.floor(Date.now() / 1000));
-      const endDate = new BN(Math.floor(Date.now() / 1000) + 3000);
+    //   const id = generateRandomObjectId();
+    //   const startDate = new BN(Math.floor(Date.now() / 1000));
+    //   const endDate = new BN(Math.floor(Date.now() / 1000) + 3000);
 
-      const totalTicket = 1500;
-      const tokenOffered = 10000; // 100 000 token KYUPAD
-      const ticketSize = new BN(100 * 10 ** tokenData.decimals); // 100 USDT per ticket
-      // const price = (totalTicket * ticketSize) / tokenOffered;
+    //   const totalTicket = 1500;
+    //   const tokenOffered = 10000; // 100 000 token KYUPAD
+    //   const ticketSize = new BN(100 * 10 ** tokenData.decimals); // 100 USDT per ticket
+    //   // const price = (totalTicket * ticketSize) / tokenOffered;
 
-      const projectConfigArgs: ProjectConfigArgs = {
-        id: id,
-        startDate: startDate,
-        endDate: endDate,
-        merkleRoot: merkle_root,
-        tokenAddress: tokenAddress,
-        ticketSize: ticketSize,
-        tokenOffered: tokenOffered,
-        totalTicket: totalTicket,
-      };
+    //   const projectConfigArgs: ProjectConfigArgs = {
+    //     id: id,
+    //     startDate: startDate,
+    //     endDate: endDate,
+    //     merkleRoot: merkle_root,
+    //     tokenAddress: tokenAddress,
+    //     ticketSize: ticketSize,
+    //     tokenOffered: tokenOffered,
+    //     totalTicket: totalTicket,
+    //   };
 
-      const [project] = PublicKey.findProgramAddressSync(
-        [Buffer.from('project_config'), Buffer.from(projectConfigArgs.id)],
-        program.programId
-      );
+    //   const [project] = PublicKey.findProgramAddressSync(
+    //     [Buffer.from('project_config'), Buffer.from(projectConfigArgs.id)],
+    //     program.programId
+    //   );
 
-      const [projectCounter] = PublicKey.findProgramAddressSync(
-        [Buffer.from('project_counter'), project.toBuffer()],
-        program.programId
-      );
+    //   const [projectCounter] = PublicKey.findProgramAddressSync(
+    //     [Buffer.from('project_counter'), project.toBuffer()],
+    //     program.programId
+    //   );
 
-      const [adminPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from('admin'), upgradableAuthority.publicKey.toBuffer()],
-        program.programId
-      );
+    //   const [adminPda] = PublicKey.findProgramAddressSync(
+    //     [Buffer.from('admin'), upgradableAuthority.publicKey.toBuffer()],
+    //     program.programId
+    //   );
 
-      const remainingAccounRegister: AccountMeta[] = [
-        {
-          pubkey: TOKEN_PROGRAM_ID,
-          isSigner: false,
-          isWritable: false,
-        },
-        {
-          pubkey: tokenAddress,
-          isSigner: false,
-          isWritable: false,
-        },
-      ];
+    //   const remainingAccounRegister: AccountMeta[] = [
+    //     {
+    //       pubkey: TOKEN_PROGRAM_ID,
+    //       isSigner: false,
+    //       isWritable: false,
+    //     },
+    //     {
+    //       pubkey: tokenAddress,
+    //       isSigner: false,
+    //       isWritable: false,
+    //     },
+    //   ];
 
-      const registerProjectIns = await program.methods
-        .registerProject(projectConfigArgs)
-        .accounts({
-          creator: upgradableAuthority.publicKey,
-          receiver: receiver,
-        })
-        .remainingAccounts(remainingAccounRegister)
-        .instruction();
+    //   const registerProjectIns = await program.methods
+    //     .registerProject(projectConfigArgs)
+    //     .accounts({
+    //       creator: upgradableAuthority.publicKey,
+    //       receiver: receiver,
+    //     })
+    //     .remainingAccounts(remainingAccounRegister)
+    //     .instruction();
 
-      const getProof = merkleTree.getProof(keccak256(test));
-      const merkle_proof = getProof.map((item) => Array.from(item.data));
+    //   const getProof = merkleTree.getProof(keccak256(test));
+    //   const merkle_proof = getProof.map((item) => Array.from(item.data));
 
-      const investArgs: InvestArgs = {
-        projectId: projectConfigArgs.id,
-        ticketAmount: usertotalTicket,
-        maxTicketAmount: usertotalTicket,
-        merkleProof: merkle_proof,
-      };
+    //   const investArgs: InvestArgs = {
+    //     projectId: projectConfigArgs.id,
+    //     ticketAmount: usertotalTicket,
+    //     maxTicketAmount: usertotalTicket,
+    //     merkleProof: merkle_proof,
+    //   };
 
-      const [investCounter] = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from('invest_counter'),
-          project.toBuffer(),
-          upgradableAuthority.publicKey.toBuffer(),
-        ],
-        program.programId
-      );
+    //   const [investCounter] = PublicKey.findProgramAddressSync(
+    //     [
+    //       Buffer.from('invest_counter'),
+    //       project.toBuffer(),
+    //       upgradableAuthority.publicKey.toBuffer(),
+    //     ],
+    //     program.programId
+    //   );
 
-      const source = getAssociatedTokenAddressSync(
-        tokenAddress,
-        upgradableAuthority.publicKey
-      );
+    //   const source = getAssociatedTokenAddressSync(
+    //     tokenAddress,
+    //     upgradableAuthority.publicKey
+    //   );
 
-      const remainingAccountsInvest: AccountMeta[] = [
-        ...remainingAccounRegister,
-        {
-          pubkey: source,
-          isSigner: false,
-          isWritable: true,
-        },
-      ];
+    //   const remainingAccountsInvest: AccountMeta[] = [
+    //     ...remainingAccounRegister,
+    //     {
+    //       pubkey: source,
+    //       isSigner: false,
+    //       isWritable: true,
+    //     },
+    //   ];
 
-      const investIns = await program.methods
-        .invest(investArgs)
-        .accounts({
-          investor: upgradableAuthority.publicKey,
-          vaultAddress: vaultAddress,
-        })
-        .signers([upgradableAuthority])
-        .remainingAccounts(remainingAccountsInvest)
-        .instruction();
+    //   const investIns = await program.methods
+    //     .invest(investArgs)
+    //     .accounts({
+    //       investor: upgradableAuthority.publicKey,
+    //       vaultAddress: vaultAddress,
+    //     })
+    //     .signers([upgradableAuthority])
+    //     .remainingAccounts(remainingAccountsInvest)
+    //     .instruction();
 
-      const tx = new Transaction().add(registerProjectIns).add(investIns);
+    //   const tx = new Transaction().add(registerProjectIns).add(investIns);
 
-      tx.feePayer = upgradableAuthority.publicKey;
-      tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+    //   tx.feePayer = upgradableAuthority.publicKey;
+    //   tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
 
-      tx.partialSign(upgradableAuthority);
+    //   tx.partialSign(upgradableAuthority);
 
-      const sig = await connection.sendTransaction(tx, [upgradableAuthority], {
-        skipPreflight: true,
-      });
+    //   const sig = await connection.sendTransaction(tx, [upgradableAuthority], {
+    //     skipPreflight: true,
+    //   });
 
-      console.log('Invest: ', sig);
+    //   console.log('Invest: ', sig);
 
-      await sleep(2000);
+    //   await sleep(2000);
 
-      const info = await getAccount(connection, vaultAddress);
-      const amount = Number(info.amount);
+    //   const info = await getAccount(connection, vaultAddress);
+    //   const amount = Number(info.amount);
 
-      expect(amount, 'vaultAddress amount should equal ticket size').to.eq(
-        ticketSize.toNumber()
-      );
+    //   expect(amount, 'vaultAddress amount should equal ticket size').to.eq(
+    //     ticketSize.toNumber()
+    //   );
 
-      const projectCounterData = await program.account.projectCounter.fetch(
-        projectCounter
-      );
+    //   const projectCounterData = await program.account.projectCounter.fetch(
+    //     projectCounter
+    //   );
 
-      expect(
-        projectCounterData.remaining,
-        "Project counter should be equal investotal - user's invest total"
-      ).to.eq(totalTicket - usertotalTicket);
+    //   expect(
+    //     projectCounterData.remaining,
+    //     "Project counter should be equal investotal - user's invest total"
+    //   ).to.eq(totalTicket - usertotalTicket);
 
-      const investCounterData = await program.account.investorCounter.fetch(
-        investCounter
-      );
+    //   const investCounterData = await program.account.investorCounter.fetch(
+    //     investCounter
+    //   );
 
-      expect(
-        investCounterData.totalInvestedTicket,
-        'User invest counter should be equal 0'
-      ).to.eq(0);
-    });
+    //   expect(
+    //     investCounterData.totalInvestedTicket,
+    //     'User invest counter should be equal 0'
+    //   ).to.eq(0);
+    // });
   });
 });
