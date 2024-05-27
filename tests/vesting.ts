@@ -41,25 +41,14 @@ dotenv.config();
 describe('Testing with streamflow', () => {
   const solanaClient = new StreamflowSolana.SolanaStreamClient(
     process.env.DEV_RPC_ENDPOINT!,
-    ICluster.Devnet,
-    undefined,
-    undefined,
-    undefined,
-    new PQueue({
-      concurrency: 5,
-      intervalCap: 5,
-      interval: 5000,
-    })
+    ICluster.Devnet
   );
 
   const creator = Keypair.fromSecretKey(
     bs58.decode(process.env.VESTING_PRIVATE_KEY!)
   );
 
-  const connection = new Connection(process.env.DEV_RPC_ENDPOINT!, {
-    commitment: 'confirmed',
-    httpAgent: false,
-  });
+  const connection = new Connection(process.env.DEV_RPC_ENDPOINT!, 'confirmed');
 
   describe('Create vesting', () => {
     it('Release 100% right from the start', async () => {
@@ -240,6 +229,257 @@ describe('Testing with streamflow', () => {
       expect(errors.length, 'Expect errors length must be zero').to.eq(size);
       expect(errors[0].contractErrorCode).to.eq('InvalidTimestamps');
     });
+
+    it('Create streams linear with many user', async () => {
+      const { mint, decimals } = await setupToken({ amount: 100_000_000_000 });
+
+      const recipients = generateRecipents(300, false, decimals, 60);
+
+      const createStreamParams: ICreateMultipleStreamData = {
+        period: 1, // Time step (period) in seconds per which the unlocking occurs.
+        start: Math.floor(Date.now() / 1000) + 10000, // Timestamp (in seconds) when the stream/token vesting starts.
+        cliff: Math.floor(Date.now() / 1000) + 10000, // Vesting contract "cliff" timestamp in seconds.
+        cancelableBySender: true, // Whether or not sender can cancel the stream.
+        cancelableByRecipient: false, // Whether or not recipient can cancel the stream.
+        transferableBySender: true, // Whether or not sender can transfer the stream.
+        transferableByRecipient: false, // Whether or not recipient can transfer the stream.
+        canTopup: false, // setting to FALSE will effectively create a vesting contract.
+        automaticWithdrawal: false, // Whether or not a 3rd party (e.g. cron job, "cranker") can initiate a token withdraw/transfer.
+        withdrawalFrequency: 0, // Relevant when automatic withdrawal is enabled. If greater than 0 our withdrawor will take care of withdrawals. If equal to 0 our withdrawor will skip, but everyone else can initiate withdrawals.
+        tokenId: mint.toString(),
+        partner: undefined, //  (optional) Partner's wallet address (string | null).
+        recipients: recipients,
+      };
+
+      const { txs, errors } = await createMultiple(
+        createStreamParams,
+        {
+          sender: creator,
+        },
+        connection,
+        new PQueue({
+          concurrency: 5,
+          intervalCap: 5,
+          interval: 1000,
+        }),
+        new PublicKey('HqDGZjaVRXJ9MGRQEw7qDc2rAr6iH1n1kAQdCZaCMfMZ')
+      );
+
+      // const { txs, errors } = await solanaClient.createMultiple(
+      //   createStreamParams,
+      //   {
+      //     sender: creator,
+      //   }
+      // );
+      // Tạo pda metadata của streamflow: 0.00857472
+      console.log(errors);
+      console.log(errors.length, txs.length);
+
+      // expect(errors.length, 'Expect errors length must be zero').to.eql(0);
+
+      await sleep(10000);
+
+      const data: IGetAllData = {
+        address: creator.publicKey.toString(),
+        type: StreamType.Vesting,
+        direction: StreamDirection.Outgoing,
+      };
+
+      try {
+        console.log('--begin: ', new Date().toISOString());
+
+        const streams = await solanaClient.get(data);
+
+        if (streams.length === 0) {
+          throw Error('User dont have any incoming streams');
+        } else {
+          const specStreams: Stream[] = [];
+          for (let i = 0; i < streams.length; i++) {
+            const singleStream = streams[i][1];
+            const now = Math.floor(Date.now() / 1000);
+            // some vesting contract is closed but closed status is false (because auto send token to user wallet in devnet is error when vesting is over)
+            if (
+              singleStream.mint === mint.toString() &&
+              !singleStream.closed &&
+              singleStream.end >= now
+            ) {
+              specStreams.push(singleStream);
+
+              // // Max token can claim now
+              // const startTime = singleStream.start;
+              // const period = singleStream.period;
+              // const amountPerPeriod = singleStream.amountPerPeriod.toNumber();
+
+              // const withdrawnToken = singleStream.withdrawnAmount.toNumber();
+
+              // const totalCanClaim: number =
+              //   ((now - startTime) / period) * amountPerPeriod - withdrawnToken;
+
+              // console.log('Name: ', singleStream.name);
+
+              // // total can claim when vesting over
+              // console.log(
+              //   'Total token can claim when in this vesting ended: ',
+              //   singleStream.depositedAmount.toNumber()
+              // );
+
+              // console.log('Total token can claim now: ', totalCanClaim);
+
+              // // total claimed
+              // console.log('Total token user is claimed: ', withdrawnToken);
+            }
+          }
+
+          if (specStreams.length === 0) {
+            throw Error('User dont have any outgoing contract with this mint');
+          } else {
+            // console.log(specStreams);
+
+            console.log(specStreams.length);
+            expect(
+              txs.length,
+              'expect txn success length must be streams spec length'
+            ).to.eq(specStreams.length);
+          }
+        }
+      } catch (exception) {
+        console.log('---end', new Date().toISOString());
+        console.log('Error: ', exception);
+      }
+    });
+
+    it('Create streams linear with many user with retry', async () => {
+      const { mint, decimals } = await setupToken({ amount: 100_000_000_000 });
+      const number_of_user = 300;
+      const recipients = generateRecipents(number_of_user, false, decimals, 60);
+
+      const createStreamParams: ICreateMultipleStreamData = {
+        period: 1, // Time step (period) in seconds per which the unlocking occurs.
+        start: Math.floor(Date.now() / 1000) + 10000, // Timestamp (in seconds) when the stream/token vesting starts.
+        cliff: Math.floor(Date.now() / 1000) + 10000, // Vesting contract "cliff" timestamp in seconds.
+        cancelableBySender: true, // Whether or not sender can cancel the stream.
+        cancelableByRecipient: false, // Whether or not recipient can cancel the stream.
+        transferableBySender: true, // Whether or not sender can transfer the stream.
+        transferableByRecipient: false, // Whether or not recipient can transfer the stream.
+        canTopup: false, // setting to FALSE will effectively create a vesting contract.
+        automaticWithdrawal: false, // Whether or not a 3rd party (e.g. cron job, "cranker") can initiate a token withdraw/transfer.
+        withdrawalFrequency: 0, // Relevant when automatic withdrawal is enabled. If greater than 0 our withdrawor will take care of withdrawals. If equal to 0 our withdrawor will skip, but everyone else can initiate withdrawals.
+        tokenId: mint.toString(),
+        partner: undefined, //  (optional) Partner's wallet address (string | null).
+        recipients: recipients,
+      };
+
+      const { txs, errors } = await createMultiple(
+        createStreamParams,
+        {
+          sender: creator,
+        },
+        connection,
+        new PQueue({
+          concurrency: 5,
+          intervalCap: 5,
+          interval: 1000,
+        }),
+        new PublicKey('HqDGZjaVRXJ9MGRQEw7qDc2rAr6iH1n1kAQdCZaCMfMZ')
+      );
+
+      if (errors.length > 0) {
+        const error_recipients: IRecipient[] = [];
+        for (let i = 0; i < errors.length; i++) {
+          const err_rec: IRecipient = recipients.find(
+            (rec) => rec.recipient === errors[i].recipient
+          );
+
+          error_recipients.push(err_rec);
+        }
+
+        if (error_recipients.length === 0) {
+          throw Error('Some thing went wrong');
+        }
+
+        const createStreamParams: ICreateMultipleStreamData = {
+          period: 1, // Time step (period) in seconds per which the unlocking occurs.
+          start: Math.floor(Date.now() / 1000) + 10000, // Timestamp (in seconds) when the stream/token vesting starts.
+          cliff: Math.floor(Date.now() / 1000) + 10000, // Vesting contract "cliff" timestamp in seconds.
+          cancelableBySender: true, // Whether or not sender can cancel the stream.
+          cancelableByRecipient: false, // Whether or not recipient can cancel the stream.
+          transferableBySender: true, // Whether or not sender can transfer the stream.
+          transferableByRecipient: false, // Whether or not recipient can transfer the stream.
+          canTopup: false, // setting to FALSE will effectively create a vesting contract.
+          automaticWithdrawal: false, // Whether or not a 3rd party (e.g. cron job, "cranker") can initiate a token withdraw/transfer.
+          withdrawalFrequency: 0, // Relevant when automatic withdrawal is enabled. If greater than 0 our withdrawor will take care of withdrawals. If equal to 0 our withdrawor will skip, but everyone else can initiate withdrawals.
+          tokenId: mint.toString(),
+          partner: undefined, //  (optional) Partner's wallet address (string | null).
+          recipients: error_recipients,
+        };
+
+        const { errors: new_errors } = await createMultiple(
+          createStreamParams,
+          {
+            sender: creator,
+          },
+          connection,
+          new PQueue({
+            concurrency: 5,
+            intervalCap: 5,
+            interval: 1000,
+          }),
+          new PublicKey('HqDGZjaVRXJ9MGRQEw7qDc2rAr6iH1n1kAQdCZaCMfMZ')
+        );
+
+        expect(
+          new_errors.length,
+          'Expect new errors length must be zero'
+        ).to.eq(0);
+      }
+
+      await sleep(10000);
+
+      const data: IGetAllData = {
+        address: creator.publicKey.toString(),
+        type: StreamType.Vesting,
+        direction: StreamDirection.Outgoing,
+      };
+
+      try {
+        console.log('--begin: ', new Date().toISOString());
+
+        const streams = await solanaClient.get(data);
+
+        if (streams.length === 0) {
+          throw Error('User dont have any incoming streams');
+        } else {
+          const specStreams: Stream[] = [];
+          for (let i = 0; i < streams.length; i++) {
+            const singleStream = streams[i][1];
+            const now = Math.floor(Date.now() / 1000);
+            // some vesting contract is closed but closed status is false (because auto send token to user wallet in devnet is error when vesting is over)
+            if (
+              singleStream.mint === mint.toString() &&
+              !singleStream.closed &&
+              singleStream.end >= now
+            ) {
+              specStreams.push(singleStream);
+            }
+          }
+
+          if (specStreams.length === 0) {
+            throw Error('User dont have any outgoing contract with this mint');
+          } else {
+            // console.log(specStreams);
+
+            console.log(specStreams.length);
+            expect(
+              number_of_user,
+              'expect txn success length must be streams spec length'
+            ).to.eq(specStreams.length);
+          }
+        }
+      } catch (exception) {
+        console.log('---end', new Date().toISOString());
+        console.log('Error: ', exception);
+      }
+    });
   });
 
   describe('Claim', () => {
@@ -319,7 +559,8 @@ describe('Testing with streamflow', () => {
           if (
             singleStream.mint === mint.toString() &&
             !singleStream.closed &&
-            singleStream.end >= now
+            singleStream.end >= now &&
+            singleStream.start <= now
           ) {
             specStreams.push(singleStream);
 
@@ -331,7 +572,8 @@ describe('Testing with streamflow', () => {
             const withdrawnToken = singleStream.withdrawnAmount.toNumber();
 
             const totalCanClaim: number =
-              ((now - startTime) / period) * amountPerPeriod - withdrawnToken;
+              Math.round((now - startTime) / period) * amountPerPeriod -
+              withdrawnToken;
 
             // total can claim when vesting over
             console.log(
@@ -346,31 +588,18 @@ describe('Testing with streamflow', () => {
 
             const withdrawStreamParams: IWithdrawData = {
               id: metadatas[size], // Identifier of a stream to be withdrawn from.
-              amount: getBN(totalCanClaim, decimals), // Requested amount to withdraw. If stream is completed, the whole amount will be withdrawn.
+              amount: getBN(totalCanClaim / 10 ** decimals, decimals), // Requested amount to withdraw. If stream is completed, the whole amount will be withdrawn.
             };
 
             try {
-              const widthDrawIns = await prepareWithdrawInstructions(
+              const { txId } = await solanaClient.withdraw(
                 withdrawStreamParams,
                 {
                   invoker: claimer,
-                },
-                connection
+                }
               );
-              const txn = new Transaction();
-              for (let i = 0; i < widthDrawIns.length; i++) {
-                txn.add(widthDrawIns[i]);
-              }
 
-              txn.feePayer = claimer.publicKey;
-              txn.recentBlockhash = (
-                await connection.getLatestBlockhash()
-              ).blockhash;
-              txn.partialSign(claimer);
-
-              const sig = await connection.sendRawTransaction(txn.serialize());
-
-              console.log('Signature: ', sig);
+              console.log('Signature: ', txId);
             } catch (exception) {
               console.log('Error: ', exception);
             }
@@ -382,93 +611,6 @@ describe('Testing with streamflow', () => {
         } else {
           // console.log(specStreams);
         }
-      }
-    });
-
-    it('Claim success', async () => {
-      const { mint, decimals } = await setupToken({});
-
-      const claimer = Keypair.generate();
-
-      await createAccount({
-        connection: connection,
-        payerKeypair: creator,
-        newAccountKeypair: claimer,
-        lamports: 0.001 * LAMPORTS_PER_SOL,
-      });
-
-      const size = 3;
-
-      const recipients = generateRecipents(size, false, decimals, 60);
-
-      const amount = 1200;
-
-      const newRecipient: IRecipient = {
-        recipient: claimer.publicKey.toString(),
-        amount: getBN(amount, decimals),
-        name: 'Unknown',
-        cliffAmount: getBN(0, decimals),
-        amountPerPeriod: getBN(amount / 60, decimals),
-      };
-
-      recipients.push(newRecipient);
-
-      const createStreamParams: ICreateMultipleStreamData = {
-        period: 1, // Time step (period) in seconds per which the unlocking occurs.
-        start: Math.floor(Date.now() / 1000) + 20, // Timestamp (in seconds) when the stream/token vesting starts.
-        cliff: Math.floor(Date.now() / 1000) + 20, // Vesting contract "cliff" timestamp in seconds.
-        cancelableBySender: true, // Whether or not sender can cancel the stream.
-        cancelableByRecipient: false, // Whether or not recipient can cancel the stream.
-        transferableBySender: true, // Whether or not sender can transfer the stream.
-        transferableByRecipient: false, // Whether or not recipient can transfer the stream.
-        canTopup: false, // setting to FALSE will effectively create a vesting contract.
-        automaticWithdrawal: false, // Whether or not a 3rd party (e.g. cron job, "cranker") can initiate a token withdraw/transfer.
-        withdrawalFrequency: 0, // Relevant when automatic withdrawal is enabled. If greater than 0 our withdrawor will take care of withdrawals. If equal to 0 our withdrawor will skip, but everyone else can initiate withdrawals.
-        tokenId: mint.toString(),
-        partner: undefined, //  (optional) Partner's wallet address (string | null).
-        recipients: recipients,
-      };
-
-      const { metadatas, errors } = await solanaClient.createMultiple(
-        createStreamParams,
-        {
-          sender: creator,
-        }
-      );
-
-      console.log(errors);
-
-      expect(errors.length, 'Expect errors length must be zero').to.eql(0);
-
-      await sleep(40000);
-
-      const withdrawStreamParams: IWithdrawData = {
-        id: metadatas[size], // Identifier of a stream to be withdrawn from.
-        amount: getBN(amount / 60, decimals), // Requested amount to withdraw. If stream is completed, the whole amount will be withdrawn.
-      };
-
-      try {
-        const widthDrawIns = await prepareWithdrawInstructions(
-          withdrawStreamParams,
-          {
-            invoker: claimer,
-          },
-          connection
-        );
-        const txn = new Transaction();
-        for (let i = 0; i < widthDrawIns.length; i++) {
-          txn.add(widthDrawIns[i]);
-        }
-
-        txn.feePayer = claimer.publicKey;
-        txn.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-        txn.partialSign(claimer);
-
-        const sig = await connection.sendRawTransaction(txn.serialize());
-
-        console.log('Signature: ', sig);
-      } catch (exception) {
-        console.log('Error: ', exception);
       }
     });
 
@@ -667,7 +809,7 @@ describe('Testing with streamflow', () => {
       };
 
       const mint = new PublicKey(
-        '8xukXAhpyfNeMePeyxVAamUyVwsymuoztB8tXCz6uNmq'
+        'J92vn8fau5ha6KofFn4MR4ifQAcKkcebyqLzVxXKrwwh'
       );
 
       try {
@@ -717,6 +859,8 @@ describe('Testing with streamflow', () => {
             throw Error('User dont have any outgoing contract with this mint');
           } else {
             // console.log(specStreams);
+
+            console.log(specStreams.length);
           }
         }
       } catch (exception) {

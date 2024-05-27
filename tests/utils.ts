@@ -467,7 +467,8 @@ export async function createMultiple(
         { hash, context },
         { sendThrottler: sendThrottler }
       ))
-    );
+    )
+
   }
 
   responses.forEach((item, index) => {
@@ -609,8 +610,8 @@ async function prepareStreamInstructions(
 }
 
 function getOrCreateStreamMetadata(metadataPubKeys?: PublicKey[]) {
-  let metadata;
-  let metadataPubKey;
+  let metadata: Keypair;
+  let metadataPubKey: PublicKey;
 
   if (!metadataPubKeys) {
     metadata = Keypair.generate();
