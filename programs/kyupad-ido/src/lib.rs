@@ -1,4 +1,9 @@
+#[macro_use]
+extern crate dotenv_codegen;
+
 use anchor_lang::prelude::*;
+use const_str_to_pubkey::str_to_pubkey;
+
 use instructions::*;
 use state::*;
 
@@ -6,10 +11,6 @@ pub mod errors;
 pub mod instructions;
 pub mod state;
 pub mod utils;
-
-#[macro_use]
-extern crate dotenv_codegen;
-use const_str_to_pubkey::str_to_pubkey;
 
 const PROGRAM_ID: Pubkey = str_to_pubkey(dotenv!("IDO_PROGRAM_ID"));
 declare_id!(PROGRAM_ID);
@@ -60,5 +61,9 @@ pub mod kyupad_ido {
 
     pub fn update_vault_address(ctx: Context<UpdateVaultAddress>, project_id: String) -> Result<()> {
         instructions::update_vault_address(ctx, project_id)
+    }
+
+    pub fn refund<'c: 'info, 'info>(ctx: Context<'_, '_, 'c, 'info, Refund<'info>>, refund_args: crate::instructions::refund::RefundArgs) -> Result<()> {
+        instructions::refund(ctx, refund_args)
     }
 }

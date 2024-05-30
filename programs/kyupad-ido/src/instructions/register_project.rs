@@ -20,6 +20,7 @@ pub fn register_project<'c: 'info, 'info>(
     project.ticket_size = project_config_args.ticket_size;
     project.token_offered = project_config_args.token_offered;
     project.total_ticket = project_config_args.total_ticket;
+    project.refund = project_config_args.refund;
 
     let project_counter = &mut ctx.accounts.project_counter;
     project_counter.remaining = project_config_args.total_ticket;
@@ -52,34 +53,34 @@ pub fn register_project<'c: 'info, 'info>(
 #[instruction(project_config_args: ProjectConfigArgs)]
 pub struct RegisterProject<'info> {
     #[account(
-        mut,
-        constraint = creator.key() == admin_pda.admin_key
+    mut,
+    constraint = creator.key() == admin_pda.admin_key
     )]
     pub creator: Signer<'info>,
 
     #[account(
-        seeds=[b"admin", creator.key().as_ref()],  
-        bump,
-        owner = ID,
+    seeds = [b"admin", creator.key().as_ref()],
+    bump,
+    owner = ID,
     )]
     /// CHECK:
     pub admin_pda: Account<'info, Admin>,
 
     #[account(
-        init,
-        payer = creator,
-        space = 8 + ProjectConfig::INIT_SPACE,
-        seeds = [ProjectConfig::PREFIX_SEED, project_config_args.id.as_bytes()],
-        bump
+    init,
+    payer = creator,
+    space = 8 + ProjectConfig::INIT_SPACE,
+    seeds = [ProjectConfig::PREFIX_SEED, project_config_args.id.as_bytes()],
+    bump
     )]
     pub project: Account<'info, ProjectConfig>,
 
     #[account(
-        init,
-        payer = creator,
-        space = 8 + ProjectCounter::INIT_SPACE,
-        seeds = [ProjectCounter::PREFIX_SEED, project.key().as_ref()],
-        bump
+    init,
+    payer = creator,
+    space = 8 + ProjectCounter::INIT_SPACE,
+    seeds = [ProjectCounter::PREFIX_SEED, project.key().as_ref()],
+    bump
     )]
     pub project_counter: Account<'info, ProjectCounter>,
 

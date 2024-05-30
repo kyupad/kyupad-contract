@@ -7,6 +7,7 @@ pub struct InvestorCounter {
     pub project_id: String,
     pub wallet: Pubkey,
     pub total_invested_ticket: u8,
+    pub total_refund_amount: u8,
 }
 
 impl InvestorCounter {

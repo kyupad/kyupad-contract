@@ -15,6 +15,7 @@ pub struct ProjectConfig {
     pub token_offered: u32,
     pub total_ticket: u32,
     pub token_program: Option<Pubkey>,
+    pub refund: Option<RefundConfig>,
 }
 
 impl ProjectConfig {
@@ -33,4 +34,12 @@ pub struct ProjectConfigArgs {
     pub ticket_size: u64,
     pub token_offered: u32,
     pub total_ticket: u32,
+    pub refund: Option<RefundConfig>,
+}
+
+#[derive(InitSpace, Debug, AnchorSerialize, AnchorDeserialize, Clone)]
+pub struct RefundConfig {
+    pub start_date: i64,
+    pub end_date: i64,
+    pub refund_all_ticket_at_once: bool,
 }
