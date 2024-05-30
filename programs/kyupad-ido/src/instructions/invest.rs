@@ -26,7 +26,7 @@ pub fn invest<'c: 'info, 'info>(
     let vault_address = &ctx.accounts.vault_address;
     let system_program = &ctx.accounts.system_program;
 
-    // check if has a valid max_ticket_amount
+    // check if it has a valid max_ticket_amount
     if invest_args.ticket_amount > invest_args.max_ticket_amount {
         return Err(KyuPadError::InvalidTotalInvestment.into());
     }
@@ -38,7 +38,7 @@ pub fn invest<'c: 'info, 'info>(
         return Err(KyuPadError::NotInvestTime.into());
     }
 
-    // check if have enough ticket to invest
+    // check if you have enough ticket to invest
     if project_counter.remaining <= 0 {
         return Err(KyuPadError::ProjectOutOfTicket.into());
     }

@@ -62,7 +62,6 @@ pub struct RegisterProject<'info> {
         bump,
         owner = ID,
     )]
-    /// CHECK:
     pub admin_pda: Account<'info, Admin>,
 
     #[account(
