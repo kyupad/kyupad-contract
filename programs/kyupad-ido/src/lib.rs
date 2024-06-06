@@ -61,4 +61,8 @@ pub mod kyupad_ido {
     pub fn update_vault_address(ctx: Context<UpdateVaultAddress>, project_id: String) -> Result<()> {
         instructions::update_vault_address(ctx, project_id)
     }
+
+    // pub fn add_private_allocate<'c: 'info, 'info>(ctx: Context<'_, '_, 'c, 'info, AddPrivateAllocate<'info>>, add_private_allocate_args: AddPrivateAllocateArgs) -> Result<()> {
+    //     instructions::add_private_allocate(ctx, add_private_allocate_args)
+    // }
 }
