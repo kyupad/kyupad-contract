@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 use spl_associated_token_account::get_associated_token_address_with_program_id;
 
 use crate::*;
+use crate::errors::KyuPadError;
 
 use self::utils::assert_keys_equal;
 
@@ -11,6 +12,16 @@ pub fn register_project<'c: 'info, 'info>(
 ) -> Result<()> {
     let project = &mut ctx.accounts.project;
     let receiver = &mut ctx.accounts.receiver;
+
+    // check if start-date is bigger than end-date
+    if project_config_args.start_date >= project_config_args.end_date {
+        return Err(KyuPadError::InvalidTime.into());
+    }
+
+    // check project config
+    if project_config_args.ticket_size <= 0 || project_config_args.token_offered <= 0 || project_config_args.total_ticket <= 0 || project_config_args.merkle_root.len() != 32usize {
+        return Err(KyuPadError::InvalidProjectConfig.into());
+    }
 
     project.id = project_config_args.id;
     project.start_date = project_config_args.start_date;
@@ -52,34 +63,33 @@ pub fn register_project<'c: 'info, 'info>(
 #[instruction(project_config_args: ProjectConfigArgs)]
 pub struct RegisterProject<'info> {
     #[account(
-        mut,
-        constraint = creator.key() == admin_pda.admin_key
+    mut,
+    constraint = creator.key() == admin_pda.admin_key
     )]
     pub creator: Signer<'info>,
 
     #[account(
-        seeds=[b"admin", creator.key().as_ref()],  
-        bump,
-        owner = ID,
+    seeds = [b"admin", creator.key().as_ref()],
+    bump,
+    owner = ID,
     )]
-    /// CHECK:
     pub admin_pda: Account<'info, Admin>,
 
     #[account(
-        init,
-        payer = creator,
-        space = 8 + ProjectConfig::INIT_SPACE,
-        seeds = [ProjectConfig::PREFIX_SEED, project_config_args.id.as_bytes()],
-        bump
+    init,
+    payer = creator,
+    space = 8 + ProjectConfig::INIT_SPACE,
+    seeds = [ProjectConfig::PREFIX_SEED, project_config_args.id.as_bytes()],
+    bump
     )]
     pub project: Account<'info, ProjectConfig>,
 
     #[account(
-        init,
-        payer = creator,
-        space = 8 + ProjectCounter::INIT_SPACE,
-        seeds = [ProjectCounter::PREFIX_SEED, project.key().as_ref()],
-        bump
+    init,
+    payer = creator,
+    space = 8 + ProjectCounter::INIT_SPACE,
+    seeds = [ProjectCounter::PREFIX_SEED, project.key().as_ref()],
+    bump
     )]
     pub project_counter: Account<'info, ProjectCounter>,
 

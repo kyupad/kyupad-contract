@@ -1,14 +1,12 @@
 use anchor_lang::prelude::*;
+use anchor_spl::token::Mint;
+use spl_associated_token_account::get_associated_token_address_with_program_id;
 use spl_token::{
     instruction::transfer_checked,
     solana_program::{self, program::invoke, system_instruction},
 };
 
 use crate::*;
-
-use spl_associated_token_account::get_associated_token_address_with_program_id;
-
-use anchor_spl::token::Mint;
 
 use self::{
     errors::KyuPadError,
@@ -26,8 +24,11 @@ pub fn invest<'c: 'info, 'info>(
     let vault_address = &ctx.accounts.vault_address;
     let system_program = &ctx.accounts.system_program;
 
-    // check if has a valid max_ticket_amount
-    if invest_args.ticket_amount > invest_args.max_ticket_amount {
+    if invest_args.ticket_amount <= 0 {
+        return Err(KyuPadError::InvalidTicketAmount.into());
+    }
+    // check if it has a valid max_ticket_amount
+    if invest_args.ticket_amount > invest_args.max_ticket_amount || invest_args.max_ticket_amount as u32 > project_counter.remaining {
         return Err(KyuPadError::InvalidTotalInvestment.into());
     }
 
@@ -38,7 +39,7 @@ pub fn invest<'c: 'info, 'info>(
         return Err(KyuPadError::NotInvestTime.into());
     }
 
-    // check if have enough ticket to invest
+    // check if you have enough ticket to invest
     if project_counter.remaining <= 0 {
         return Err(KyuPadError::ProjectOutOfTicket.into());
     }
@@ -46,7 +47,7 @@ pub fn invest<'c: 'info, 'info>(
     let remaining_ticket = invest_args.max_ticket_amount - investor_counter.total_invested_ticket;
 
     // check if remaining is bigger than 0 or ticket amount is bigger than remaining ticket
-    if remaining_ticket <= 0 || invest_args.ticket_amount > remaining_ticket {
+    if remaining_ticket <= 0 || invest_args.ticket_amount > remaining_ticket || invest_args.ticket_amount as u32 > project_counter.remaining {
         return Err(KyuPadError::NotEnoughTicket.into());
     }
 
@@ -97,7 +98,7 @@ pub fn invest<'c: 'info, 'info>(
                             project.ticket_size * invest_args.ticket_amount as u64,
                             mint_data.decimals,
                         )
-                        .unwrap(),
+                            .unwrap(),
                         &[
                             token_program.to_account_info(),
                             source.to_account_info(),
@@ -152,26 +153,26 @@ pub struct Invest<'info> {
     pub investor: Signer<'info>,
 
     #[account(
-        seeds = [ProjectConfig::PREFIX_SEED, invest_args.project_id.as_bytes()],
-        bump,
-        owner = ID,
+    seeds = [ProjectConfig::PREFIX_SEED, invest_args.project_id.as_bytes()],
+    bump,
+    owner = ID,
     )]
     pub project: Account<'info, ProjectConfig>,
 
     #[account(
-        mut,
-        seeds = [ProjectCounter::PREFIX_SEED, project.key().as_ref()],
-        bump,
-        owner = ID,
+    mut,
+    seeds = [ProjectCounter::PREFIX_SEED, project.key().as_ref()],
+    bump,
+    owner = ID,
     )]
     pub project_counter: Account<'info, ProjectCounter>,
 
     #[account(
-        init_if_needed,
-        payer = investor,
-        space = 8 + InvestorCounter::INIT_SPACE,
-        seeds = [InvestorCounter::PREFIX_SEED, project.key().as_ref(), investor.key().as_ref()],
-        bump
+    init_if_needed,
+    payer = investor,
+    space = 8 + InvestorCounter::INIT_SPACE,
+    seeds = [InvestorCounter::PREFIX_SEED, project.key().as_ref(), investor.key().as_ref()],
+    bump
     )]
     pub investor_counter: Account<'info, InvestorCounter>,
 
