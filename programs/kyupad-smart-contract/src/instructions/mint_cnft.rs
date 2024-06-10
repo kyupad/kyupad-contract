@@ -24,7 +24,7 @@ pub fn mint_cft<'c: 'info, 'info>(
     let destination = &ctx.accounts.destination;
     let mint_counter_collection = &mut ctx.accounts.mint_counter_collection;
 
-    // Check if user is allow mint is reached
+    // Check if user is allowed mint is reached
     if mint_counter_collection.count >= pools.max_mint_of_wallet {
         return Err(KyuPadError::AllowedMintLimitReached.into())
     }
@@ -40,7 +40,6 @@ pub fn mint_cft<'c: 'info, 'info>(
 
             // Check to see if the pool's supply has run out
             if pool_minted.remaining_assets <= 0  {
-                msg!("{}",  pool_minted.remaining_assets);
                 return Err(KyuPadError::PoolSupplyRunOut.into());
             }
 
@@ -158,7 +157,7 @@ pub fn mint_cft<'c: 'info, 'info>(
 }
 
 #[derive(Accounts)]
-// #[instruction(pool_id: String)]
+#[instruction(pool_id: String)]
 pub struct MintcNFT<'info> {
     #[account(mut)]
     pub minter: Signer<'info>,
@@ -184,8 +183,8 @@ pub struct MintcNFT<'info> {
 
     #[account(
         mut,
-        // seeds=[PoolMinted::PREFIX_SEED, pools.key().as_ref(), id.as_bytes()], 
-        // bump
+        seeds=[PoolMinted::PREFIX_SEED, pools.key().as_ref(), pool_id.as_bytes()],
+        bump
     )]
     pub pool_minted: Account<'info, PoolMinted>,
 

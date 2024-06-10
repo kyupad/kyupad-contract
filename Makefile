@@ -44,3 +44,7 @@ ido/solana/deploy:
 ido/solana/build:
 	anchor build -p kyupad_ido
 	./scripts/map-programid-from-env.sh
+
+mint/solana/build:
+	anchor build -p kyupad_smart_contract
+	./scripts/map-programid-from-env.sh

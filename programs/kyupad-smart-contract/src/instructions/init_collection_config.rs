@@ -27,8 +27,9 @@ pub struct InitCollectionConfig<'info> {
     pub creator: Signer<'info>,
 
     #[account(
-        seeds=[b"admin", creator.key().as_ref()],  
-        bump
+        seeds=[b"admin", creator.key().as_ref()],
+        bump,
+        owner = ID,
     )]
     pub admin_pda: Account<'info, Admin>,
 
@@ -36,7 +37,7 @@ pub struct InitCollectionConfig<'info> {
     pub collection_mint: AccountInfo<'info>,
 
     #[account(
-        init_if_needed,
+        init,
         payer = creator, 
         space = 8 + Pools::INIT_SPACE, 
         seeds=[b"pools", collection_mint.key.as_ref()], 
