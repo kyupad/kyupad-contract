@@ -29,7 +29,7 @@ pub fn mint_cft<'c: 'info, 'info>(
         return Err(KyuPadError::AllowedMintLimitReached.into())
     }
 
-    let mut valid_merke_root = false;
+    let mut valid_merkle_root = false;
 
     let remaining_accounts_iter = &mut ctx.remaining_accounts.iter();
 
@@ -46,7 +46,7 @@ pub fn mint_cft<'c: 'info, 'info>(
             // Remaining assets is minus 1
             pool_minted.remaining_assets -= 1;
 
-            valid_merke_root = true;
+            valid_merkle_root = true;
             let leaf = solana_program::keccak::hashv(&[minter.key().to_string().as_bytes()]);
 
             // check if this address is allow to mint
@@ -149,7 +149,7 @@ pub fn mint_cft<'c: 'info, 'info>(
         }
     }
 
-    if !valid_merke_root {
+    if !valid_merkle_root {
         return Err(KyuPadError::InvalidMekleRoot.into());
     }
 

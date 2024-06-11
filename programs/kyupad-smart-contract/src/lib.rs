@@ -70,13 +70,11 @@ pub mod kyupad_smart_contract {
         instructions::add_pool_config(ctx, pool_config_args)
     }
 
-    pub fn airdrop<'c: 'info, 'info>(
-        ctx: Context<'_, '_, 'c, 'info, Airdrop<'info>>,
-        pool_id: String,
-        wallet: Pubkey,
+    pub fn airdrop(
+        ctx: Context<Airdrop>,
         data: Vec<u8>,
     ) -> Result<()> {
-        instructions::airdrop(ctx, pool_id, wallet, data)
+        instructions::airdrop(ctx, data)
     }
 }
 

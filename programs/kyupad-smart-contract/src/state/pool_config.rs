@@ -3,8 +3,6 @@ use anchor_lang::{
     solana_program::{program::invoke, system_instruction},
 };
 
-// use crate::errors::KyuPadError;
-
 #[derive(InitSpace, Debug, AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct PoolConfig {
     #[max_len(2)]

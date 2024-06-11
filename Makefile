@@ -48,3 +48,7 @@ ido/solana/build:
 mint/solana/build:
 	anchor build -p kyupad_smart_contract
 	./scripts/map-programid-from-env.sh
+
+mint/solana/deploy:
+	make mint/solana/build
+	solana program deploy ./target/deploy/kyupad_smart_contract.so --program-id ${NFT_PROGRAM_ID}

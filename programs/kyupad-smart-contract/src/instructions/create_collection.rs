@@ -149,6 +149,7 @@ pub struct CreateCollection<'info> {
     pub system_program: Program<'info, System>,
 
     #[account(
+        mut,
         seeds = [b"update_authority"], 
         bump, 
     )]
