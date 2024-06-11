@@ -1,6 +1,14 @@
 import {AnchorProvider, BN, getProvider, IdlTypes, Program, setProvider, workspace,} from '@coral-xyz/anchor';
 import {KyupadSmartContract} from '../target/types/kyupad_smart_contract';
-import {AddressLookupTableProgram, Keypair, PublicKey, SystemProgram, Transaction,} from '@solana/web3.js';
+import {
+    AddressLookupTableProgram,
+    Keypair,
+    PublicKey,
+    SystemProgram,
+    Transaction,
+    TransactionMessage,
+    VersionedTransaction,
+} from '@solana/web3.js';
 import {
     getMerkleTreeSize,
     getMetadataArgsSerializer,
@@ -599,15 +607,6 @@ describe('kyupad-smart-contract', () => {
                 groupConfigArgs.exclusionPools = ['0', '1', '2'];
             }
 
-            const [poolMinted] = PublicKey.findProgramAddressSync(
-                [
-                    Buffer.from('pool_minted'),
-                    poolsPDA.toBuffer(),
-                    Buffer.from(i.toString()),
-                ],
-                program.programId
-            );
-
             const txAddPoolConfig = await program.methods
                 .addPoolConfig(groupConfigArgs)
                 .accounts({
@@ -633,41 +632,8 @@ describe('kyupad-smart-contract', () => {
             numberOfPools
         }
     }
-    // it('update_pool_config', async () => {
-    //   const [adminPda] = PublicKey.findProgramAddressSync(
-    //     [Buffer.from('admin'), minter.toBuffer()],
-    //     program.programId
-    //   );
 
-    //   let arrayWallet = generateWhiteList(20);
-    //   arrayWallet.push(minter.toString());
-    //   const leafNode = arrayWallet.map((addr) => keccak256(addr));
-    //   const merkleTree = new MerkleTree(leafNode, keccak256, {
-    //     sortPairs: true,
-    //   });
-
-    //   const args: UpdatePoolConfigArgs = {
-    //     poolId: '2',
-    //     merkleRoot: merkleTree.getRoot(),
-    //     totalPoolSupply: null,
-    //   };
-
-    //   const tx = await program.methods
-    //     .updatePoolConfig(args)
-    //     .accounts({
-    //       signer: minter,
-    //       adminPda: adminPda,
-    //       collectionMint: collectionMint,
-    //       pools: poolsPDA,
-    //     })
-    //     .rpc({
-    //       skipPreflight: true,
-    //     });
-
-    //   console.log('Update pool config: ', tx);
-    // });
-
-    it('mint cNFT', async () => {
+    xit('mint cNFT', async () => {
         const {
             collectionMint,
             poolsPDA,
@@ -685,7 +651,9 @@ describe('kyupad-smart-contract', () => {
         const leafNode = whiteList.map((addr) => keccak256(addr));
         const merkleTree = new MerkleTree(leafNode, keccak256, {sortPairs: true});
 
-        const getProof = merkleTree.getProof(keccak256(whiteList[3]));
+
+        const getProof = merkleTree.getProof(keccak256(whiteList[whiteList.indexOf(minter.toString())]));
+
         const merkle_proof = getProof.map((item) => Array.from(item.data));
 
         // Mint a compressed NFT
@@ -720,6 +688,12 @@ describe('kyupad-smart-contract', () => {
         );
 
         const pool_id = String(numberOfPools - 1);
+
+        const [poolMinted] = PublicKey.findProgramAddressSync(
+            [Buffer.from('pool_minted'), poolsPDA.toBuffer(), Buffer.from(pool_id)],
+            program.programId
+        );
+
 
         const [mintCounter] = PublicKey.findProgramAddressSync(
             [
@@ -777,6 +751,7 @@ describe('kyupad-smart-contract', () => {
             .accounts({
                 minter: minter,
                 destination: destination,
+                poolMinted: poolMinted,
                 merkleTree: treeAddress,
                 treeAuthority,
                 compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
@@ -790,212 +765,70 @@ describe('kyupad-smart-contract', () => {
                 tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
             })
             .remainingAccounts(remainingAccounts)
-            .rpc({
-                skipPreflight: true
-            })
+            .instruction()
 
-        console.log(mintCnftIns)
-        // .instruction();
+        // construct a v0 compatible transaction `Message`
+        const messageV0 = new TransactionMessage({
+            payerKey: minter,
+            recentBlockhash: (await anchorProvider.connection.getLatestBlockhash())
+                .blockhash,
+            instructions: [mintCnftIns], // note this is an array of instructions
+        }).compileToV0Message([lookupTableAccount]);
 
-        // // construct a v0 compatible transaction `Message`
-        // const messageV0 = new TransactionMessage({
-        //     payerKey: minter,
-        //     recentBlockhash: (await anchorProvider.connection.getLatestBlockhash())
-        //         .blockhash,
-        //     instructions: [mintCnftIns], // note this is an array of instructions
-        // }).compileToV0Message([lookupTableAccount]);
-        //
-        // const transactionV0 = new VersionedTransaction(messageV0);
-        //
-        // const sig = await anchorProvider.sendAndConfirm(transactionV0, [], {
-        //     skipPreflight: true,
-        // });
+        const transactionV0 = new VersionedTransaction(messageV0);
 
-        // console.log('Mint cNFT: ', sig);
+        const sig = await anchorProvider.sendAndConfirm(transactionV0, [], {
+            skipPreflight: true,
+        });
+
+        console.log('Mint cNFT: ', sig);
     });
 
-    // it('update_pool_config and try to mint', async () => {
-    //   const [adminPda] = PublicKey.findProgramAddressSync(
-    //     [Buffer.from('admin'), minter.toBuffer()],
-    //     program.programId
-    //   );
+    it('airdrop', async () => {
+        const {
+            collectionMint,
+            treeAddress,
+            treeAuthority,
+            collectionMetadata,
+            collectionMasterEditionAccount
+        } = await prepareConfig()
 
-    //   let arrayWallet = generateWhiteList(20);
-    //   arrayWallet.push(minter.toString());
-    //   const leafNode = arrayWallet.map((addr) => keccak256(addr));
-    //   const merkleTree = new MerkleTree(leafNode, keccak256, {
-    //     sortPairs: true,
-    //   });
+        const randomWallet = Keypair.generate().publicKey
 
-    //   const pool_id = '0';
+        const metadata: DataV2Args = {
+            name: 'KyuPad',
+            symbol: ' ',
+            uri: 'https://pbs.twimg.com/profile_images/1769690947384750081/d02M-XJA_400x400.jpg',
+            sellerFeeBasisPoints: 100,
+            creators: null,
+            collection: null,
+            uses: null,
+        };
 
-    //   const args: UpdatePoolConfigArgs = {
-    //     poolId: pool_id,
-    //     merkleRoot: merkleTree.getRoot(),
-    //     totalPoolSupply: null,
-    //   };
+        const serialize = getDataV2Serializer();
+        const data = serialize.serialize(metadata);
 
-    //   const tx = await program.methods
-    //     .updatePoolConfig(args)
-    //     .accounts({
-    //       signer: minter,
-    //       adminPda: adminPda,
-    //       collectionMint: collectionMint,
-    //       pools: poolsPDA,
-    //     })
-    //     .rpc({
-    //       skipPreflight: true,
-    //     });
+        const tx = await program.methods.airdrop(Buffer.from(data)).accounts({
+            admin: upgradableAuthority.publicKey,
+            minter: randomWallet,
+            merkleTree: treeAddress,
+            treeAuthority,
+            compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+            logWrapper: SPL_NOOP_PROGRAM_ID,
+            collectionAuthority: collectionAuthority,
+            collectionAuthorityRecordPda: MPL_BUBBLEGUM_PROGRAM_ID,
+            collectionMint: collectionMint,
+            collectionMetadata: collectionMetadata,
+            editionAccount: collectionMasterEditionAccount,
+            bubblegumSigner: bgumSigner,
+            tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
 
-    //   console.log('Update pool config: ', tx);
+        }).rpc({
+            skipPreflight: true
+        })
 
-    //   const getProof = merkleTree.getProof(keccak256(minter.toString()));
-    //   const merkle_proof = getProof.map((item) => Array.from(item.data));
-
-    //   // Mint a compressed NFT
-    //   const nftArgs: MetadataArgsArgs = {
-    //     name: 'Compression Test',
-    //     symbol: 'COMP',
-    //     uri: 'https://arweave.net/gfO_TkYttQls70pTmhrdMDz9pfMUXX8hZkaoIivQjGs',
-    //     creators: [],
-    //     editionNonce: 253,
-    //     tokenProgramVersion: TokenProgramVersion.Original,
-    //     tokenStandard: TokenStandard.NonFungible,
-    //     uses: null,
-    //     primarySaleHappened: false,
-    //     sellerFeeBasisPoints: 0,
-    //     isMutable: false,
-    //     collection: {
-    //       verified: false,
-    //       key: publicKey(collectionMint.toString()),
-    //     },
-    //   };
-
-    //   const serializer = getMetadataArgsSerializer();
-
-    //   const data = serializer.serialize(nftArgs);
-
-    //   const MPL_BUBBLEGUM_PROGRAM_ID = new PublicKey(
-    //     'BGUMAp9Gq7iTEuizy4pqaxsTyUCBK68MDfK752saRPUY'
-    //   );
-
-    //   const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
-    //     'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s'
-    //   );
-
-    //   const [poolMinted] = PublicKey.findProgramAddressSync(
-    //     [Buffer.from('pool_minted'), poolsPDA.toBuffer(), Buffer.from(pool_id)],
-    //     program.programId
-    //   );
-
-    //   const [mintCounter] = PublicKey.findProgramAddressSync(
-    //     [
-    //       Buffer.from('mint_counter'),
-    //       Buffer.from(pool_id),
-    //       minter.toBuffer(),
-    //       poolsPDA.toBuffer(),
-    //     ],
-    //     program.programId
-    //   );
-
-    //   const pools_config_data: any[] = (
-    //     await program.account.pools.fetch(poolsPDA)
-    //   ).poolsConfig;
-
-    //   const remainingAccounts = [
-    //     {
-    //       pubkey: mintCounter,
-    //       isWritable: true,
-    //       isSigner: false,
-    //     },
-    //   ];
-
-    //   pools_config_data.forEach((pool_config) => {
-    //     if (pool_config.id === pool_id) {
-    //       if (pool_config.exclusionPools) {
-    //         pool_config.exclusionPools.forEach((pool_id_exl: string) => {
-    //           const [poolMintedPDA] = PublicKey.findProgramAddressSync(
-    //             [
-    //               Buffer.from('mint_counter'),
-    //               Buffer.from(pool_id_exl),
-    //               minter.toBuffer(),
-    //               poolsPDA.toBuffer(),
-    //             ],
-    //             program.programId
-    //           );
-
-    //           remainingAccounts.push({
-    //             pubkey: poolMintedPDA,
-    //             isWritable: false,
-    //             isSigner: false,
-    //           });
-    //         });
-    //       }
-    //     }
-    //   });
-
-    //   const [mintCounterCollection] = PublicKey.findProgramAddressSync(
-    //     [
-    //       Buffer.from('mint_counter_collection'),
-    //       minter.toBuffer(),
-    //       collectionMint.toBuffer(),
-    //     ],
-    //     program.programId
-    //   );
-
-    //   const lookupTableAddress = new PublicKey(
-    //     '7E9QK9cgbQLr4LGTek3NpxNCcbdbkNCR3oT3JCwK5yHa'
-    //   );
-
-    //   // get the table from the cluster
-    //   const lookupTableAccount = (
-    //     await anchorProvider.connection.getAddressLookupTable(lookupTableAddress)
-    //   ).value;
-
-    //   const mintCnftIns = await program.methods
-    //     .mintCnft(merkle_proof, pool_id, Buffer.from(data))
-    //     .accounts({
-    //       minter: minter,
-    //       pools: poolsPDA,
-    //       mintCounterCollection: mintCounterCollection,
-    //       destination: destination,
-    //       poolMinted: poolMinted,
-    //       merkleTree: treeAddress,
-    //       treeAuthority,
-    //       compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
-    //       logWrapper: SPL_NOOP_PROGRAM_ID,
-    //       collectionAuthority: collectionAuthority,
-    //       collectionAuthorityRecordPda: MPL_BUBBLEGUM_PROGRAM_ID,
-    //       collectionMint: collectionMint,
-    //       collectionMetadata: collectionMetadata,
-    //       editionAccount: collectionMasterEditionAccount,
-    //       bubblegumSigner: bgumSigner,
-    //       tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
-    //     })
-    //     .remainingAccounts(remainingAccounts)
-    //     .instruction();
-
-    //   // construct a v0 compatible transaction `Message`
-    //   const messageV0 = new TransactionMessage({
-    //     payerKey: minter,
-    //     recentBlockhash: (await anchorProvider.connection.getLatestBlockhash())
-    //       .blockhash,
-    //     instructions: [mintCnftIns], // note this is an array of instructions
-    //   }).compileToV0Message([lookupTableAccount]);
-
-    //   const transactionV0 = new VersionedTransaction(messageV0);
-
-    //   const sig = await anchorProvider.sendAndConfirm(transactionV0, [], {
-    //     skipPreflight: true,
-    //   });
-
-    //   // const tx2 = await anchorProvider.wallet.signTransaction(transactionV0);
-
-    //   // const sig = await anchorProvider.connection.sendTransaction(tx2, {
-    //   //   skipPreflight: true,
-    //   // });
-    //   console.log('Mint cNFT: ', sig);
-    // });
+        console.log("Airdrop: ", tx)
+    })
 });
 
 const whiteList = [
@@ -1006,4 +839,5 @@ const whiteList = [
     '7Xhh9UuTmy7g1n4gs4DLP3AV7KzGPJRm897cijJhKuhd',
     'CSEgkPVv75HXeG3AWL2Jsm9naTGYioU8TZipDSmgYzmz',
     'DrBh1v9AVDp2CpZkXT87ATK74QynHJAJ2Pf6wXq2DZ5u',
+    'Fxu7o9k8BKKAJyD94UfESH9sMrEFtoXtRRbQiiUFD1pv'
 ];

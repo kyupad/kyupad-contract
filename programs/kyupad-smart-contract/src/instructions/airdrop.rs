@@ -12,11 +12,6 @@ pub fn airdrop(
     let pools = &mut ctx.accounts.pools;
     let mint_counter_collection = &mut ctx.accounts.mint_counter_collection;
 
-    // Check if user is allowed mint is reached
-    if mint_counter_collection.count >= pools.max_mint_of_wallet {
-        return Err(KyuPadError::AllowedMintLimitReached.into());
-    }
-
     let metadata_args = MetadataArgs::try_from_slice(&data).unwrap();
 
     let seeds: &[&[u8]] = &[b"update_authority"];
@@ -47,12 +42,7 @@ pub fn airdrop(
         .metadata(metadata_args)
         .invoke_signed(&[seeds_admin])?;
 
-    msg!("{}", mint_counter_collection.count);
-
     mint_counter_collection.count += 1;
-
-    msg!("{}", mint_counter_collection.count);
-
 
     Ok(())
 }

@@ -157,14 +157,15 @@ pub fn mint_cft<'c: 'info, 'info>(
 }
 
 #[derive(Accounts)]
-#[instruction(pool_id: String)]
+// #[instruction(pool_id: String)]
 pub struct MintcNFT<'info> {
     #[account(mut)]
     pub minter: Signer<'info>,
 
     #[account(
         seeds=[Pools::PREFIX_SEED, collection_mint.key().as_ref()], 
-        bump
+        bump,
+        owner = ID
     )]
     pub pools: Account<'info, Pools>,
 
@@ -172,7 +173,7 @@ pub struct MintcNFT<'info> {
         init_if_needed, 
         payer = minter, 
         space = 8 + MintCounterCollection::INIT_SPACE, 
-        seeds=[MintCounterCollection::PREFIX_SEED, minter.key().as_ref(), collection_mint.key().as_ref()], 
+        seeds=[MintCounterCollection::PREFIX_SEED, minter.key().as_ref(), collection_mint.key().as_ref()],
         bump
     )]
     pub mint_counter_collection: Account<'info, MintCounterCollection>,
@@ -183,8 +184,9 @@ pub struct MintcNFT<'info> {
 
     #[account(
         mut,
-        seeds=[PoolMinted::PREFIX_SEED, pools.key().as_ref(), pool_id.as_bytes()],
-        bump
+        // seeds=[PoolMinted::PREFIX_SEED, pools.key().as_ref(), pool_id.as_bytes()],
+        // bump,
+        owner = ID
     )]
     pub pool_minted: Account<'info, PoolMinted>,
 
