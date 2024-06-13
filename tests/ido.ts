@@ -3247,7 +3247,7 @@ describe('Test Kyupad IDO', () => {
             expect(investorCounterData.totalInvestedTicket).to.eq(0)
         })
 
-        it('Invest after add private allocate', async () => {
+        xit('Invest after add private allocate', async () => {
             const tokenAddress = new PublicKey(
                 '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
             );

@@ -6,6 +6,7 @@ import {
     PublicKey,
     SystemProgram,
     Transaction,
+    TransactionInstruction,
     TransactionMessage,
     VersionedTransaction,
 } from '@solana/web3.js';
@@ -255,7 +256,7 @@ describe('kyupad-smart-contract', () => {
 
         const metadata: DataV2Args = {
             name: 'KyuPad',
-            symbol: ' ',
+            symbol: 'KPC',
             uri: 'https://pbs.twimg.com/profile_images/1769690947384750081/d02M-XJA_400x400.jpg',
             sellerFeeBasisPoints: 100,
             creators: null,
@@ -568,14 +569,23 @@ describe('kyupad-smart-contract', () => {
 
         const tx = new Transaction()
             .add(initCollectionConfigIns)
-            .add(createLookupTableIns)
-            .add(extendInstruction);
+
 
         const sig = await anchorProvider.sendAndConfirm(tx, [], {
             skipPreflight: true,
         });
 
         console.log('Init collection config: ', sig);
+
+        const createLookupTableTx = new Transaction().add(createLookupTableIns)
+            .add(extendInstruction);
+
+
+        const createLookupTableSig = await anchorProvider.sendAndConfirm(createLookupTableTx, [], {
+            skipPreflight: true,
+        });
+
+        console.log('Create lookup table: ', createLookupTableSig);
 
         for (let i = 0; i < numberOfPools; i++) {
             let arrayWallet: string[] = [];
@@ -790,44 +800,73 @@ describe('kyupad-smart-contract', () => {
             treeAddress,
             treeAuthority,
             collectionMetadata,
-            collectionMasterEditionAccount
+            collectionMasterEditionAccount,
+            lookupTableAddress,
         } = await prepareConfig()
 
-        const randomWallet = Keypair.generate().publicKey
-
-        const metadata: DataV2Args = {
-            name: 'KyuPad',
-            symbol: ' ',
-            uri: 'https://pbs.twimg.com/profile_images/1769690947384750081/d02M-XJA_400x400.jpg',
-            sellerFeeBasisPoints: 100,
-            creators: null,
-            collection: null,
+        // Mint a compressed NFT
+        const nftArgs: MetadataArgsArgs = {
+            name: 'Compression Test',
+            symbol: 'COMP',
+            uri: 'https://arweave.net/gfO_TkYttQls70pTmhrdMDz9pfMUXX8hZkaoIivQjGs',
+            creators: [], //
+            editionNonce: 253,
+            tokenProgramVersion: TokenProgramVersion.Original,
+            tokenStandard: TokenStandard.NonFungible,
             uses: null,
+            primarySaleHappened: false,
+            sellerFeeBasisPoints: 0, //
+            isMutable: false,
+            collection: {
+                verified: true,
+                key: publicKey(collectionMint.toString()),
+            },
         };
 
-        const serialize = getDataV2Serializer();
-        const data = serialize.serialize(metadata);
+        const serializer = getMetadataArgsSerializer();
 
-        const tx = await program.methods.airdrop(Buffer.from(data)).accounts({
-            admin: upgradableAuthority.publicKey,
-            minter: randomWallet,
-            merkleTree: treeAddress,
-            treeAuthority,
-            compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
-            logWrapper: SPL_NOOP_PROGRAM_ID,
-            collectionAuthority: collectionAuthority,
-            collectionAuthorityRecordPda: MPL_BUBBLEGUM_PROGRAM_ID,
-            collectionMint: collectionMint,
-            collectionMetadata: collectionMetadata,
-            editionAccount: collectionMasterEditionAccount,
-            bubblegumSigner: bgumSigner,
-            tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+        const data = serializer.serialize(nftArgs);
 
-        }).rpc({
-            skipPreflight: true
-        })
+        const length = 3
+        const airdropInsArray: TransactionInstruction[] = []
 
-        console.log("Airdrop: ", tx)
+        for (let i = 0; i < length; i++) {
+            const airdropIns = await program.methods.airdrop(Buffer.from(data)).accounts({
+                admin: upgradableAuthority.publicKey,
+                minter: Keypair.generate().publicKey,
+                merkleTree: treeAddress,
+                treeAuthority,
+                compressionProgram: SPL_ACCOUNT_COMPRESSION_PROGRAM_ID,
+                logWrapper: SPL_NOOP_PROGRAM_ID,
+                collectionAuthority: collectionAuthority,
+                collectionAuthorityRecordPda: MPL_BUBBLEGUM_PROGRAM_ID,
+                collectionMint: collectionMint,
+                collectionMetadata: collectionMetadata,
+                editionAccount: collectionMasterEditionAccount,
+                bubblegumSigner: bgumSigner,
+                tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
+
+            }).instruction()
+
+            airdropInsArray.push(airdropIns)
+        }
+
+        // get the table from the cluster
+        const lookupTableAccount = (
+            await anchorProvider.connection.getAddressLookupTable(lookupTableAddress)
+        ).value;
+
+        // construct a v0 compatible transaction `Message`
+        const messageV0 = new TransactionMessage({
+            payerKey: upgradableAuthority.publicKey,
+            recentBlockhash: (await anchorProvider.connection.getLatestBlockhash())
+                .blockhash,
+            instructions: airdropInsArray, // note this is an array of instructions
+        }).compileToV0Message([lookupTableAccount]);
+        const transactionV0 = new VersionedTransaction(messageV0);
+        const sig = await anchorProvider.sendAndConfirm(transactionV0, []);
+
+        console.log('Airdrop: ', sig)
     })
 });
 

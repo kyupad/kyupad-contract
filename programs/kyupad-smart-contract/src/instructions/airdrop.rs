@@ -2,14 +2,12 @@ use anchor_lang::prelude::*;
 use mpl_bubblegum::instructions::MintToCollectionV1CpiBuilder;
 use mpl_bubblegum::types::MetadataArgs;
 use crate::*;
-use crate::errors::KyuPadError;
 use crate::instructions::Admin;
 
 pub fn airdrop(
     ctx: Context<Airdrop>,
     data: Vec<u8>,
 ) -> Result<()> {
-    let pools = &mut ctx.accounts.pools;
     let mint_counter_collection = &mut ctx.accounts.mint_counter_collection;
 
     let metadata_args = MetadataArgs::try_from_slice(&data).unwrap();
@@ -34,7 +32,7 @@ pub fn airdrop(
         .leaf_owner(&ctx.accounts.minter.to_account_info())
         .log_wrapper(&ctx.accounts.log_wrapper.to_account_info())
         .merkle_tree(&ctx.accounts.merkle_tree.to_account_info())
-        .payer(&ctx.accounts.minter.to_account_info())
+        .payer(&ctx.accounts.admin.to_account_info())
         .system_program(&ctx.accounts.system_program.to_account_info())
         .tree_creator_or_delegate(&ctx.accounts.collection_authority.to_account_info())
         .token_metadata_program(&ctx.accounts.token_metadata_program.clone())
@@ -48,7 +46,6 @@ pub fn airdrop(
 }
 
 #[derive(Accounts)]
-#[instruction(wallet: Pubkey, pool_id: String)]
 pub struct Airdrop<'info> {
     #[account(mut, constraint = admin.key() == admin_pda.admin_key)]
     pub admin: Signer<'info>,
