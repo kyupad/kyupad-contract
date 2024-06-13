@@ -10,8 +10,6 @@ import {
     getAccount,
     getAssociatedTokenAddressSync,
     getMint,
-    getOrCreateAssociatedTokenAccount,
-    mintTo,
     TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
 import {bs58} from '@coral-xyz/anchor/dist/cjs/utils/bytes';
@@ -46,486 +44,486 @@ describe('Test Kyupad IDO', () => {
     const upgradableAuthority = Keypair.fromSecretKey(
         bs58.decode(process.env.PRIVATE_KEY!)
     );
-
-    describe('📦📦📦 Register project', async () => {
-        xit('Register project with sol', async () => {
-            const vaultAddress = upgradableAuthority.publicKey;
-
-            let {arrayMerkleLeaf, totalTicket} = generateWhiteListInvest(9999);
-
-            const randomNumber = Math.floor(Math.random() * 3) + 1;
-            const test =
-                upgradableAuthority.publicKey.toString() +
-                '_' +
-                randomNumber.toString();
-            arrayMerkleLeaf.push(test);
-
-            totalTicket += randomNumber;
-
-            const leafNode = arrayMerkleLeaf.map((addr) => keccak256(addr));
-            const merkleTree = new MerkleTree(leafNode, keccak256, {
-                sortPairs: true,
-            });
-
-            const merkle_root = merkleTree.getRoot();
-
-            const id = generateRandomObjectId();
-            const startDate = new BN(Math.floor(Date.now() / 1000));
-            const endDate = new BN(Math.floor(Date.now() / 1000) + 3000);
-
-            const tokenOffered = 1_000_000;
-            const ticketSize = new BN(0.1 * LAMPORTS_PER_SOL);
-
-            const projectConfigArgs: ProjectConfigArgs = {
-                id: id,
-                startDate: startDate,
-                endDate: endDate,
-                merkleRoot: merkle_root,
-                tokenAddress: null,
-                ticketSize: ticketSize,
-                tokenOffered: tokenOffered,
-                totalTicket: totalTicket,
-            };
-
-            const [project] = PublicKey.findProgramAddressSync(
-                [Buffer.from('project_config'), Buffer.from(projectConfigArgs.id)],
-                program.programId
-            );
-
-            const registerProjectIns = await program.methods
-                .registerProject(projectConfigArgs)
-                .accounts({
-                    creator: upgradableAuthority.publicKey,
-                    receiver: vaultAddress,
-                })
-                .instruction();
-
-            const tx = new Transaction().add(registerProjectIns);
-
-            tx.feePayer = upgradableAuthority.publicKey;
-            tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-
-            tx.partialSign(upgradableAuthority);
-
-            const sig = await connection.sendTransaction(tx, [upgradableAuthority], {
-                maxRetries: 20,
-                skipPreflight: true,
-                preflightCommitment: 'processed',
-            });
-
-            console.log('Register project with sol: ', sig);
-
-            await sleep(2000);
-
-            const projectData: ProjectConfig =
-                await program.account.projectConfig.fetch(project);
-
-            const projectDataInput: ProjectConfig = {
-                ...projectConfigArgs,
-                vaultAddress: vaultAddress,
-                tokenProgram: null,
-            };
-
-            const order1 = Object.keys(projectData)
-                .sort()
-                .reduce((obj, key) => {
-                    obj[key] = projectData[key];
-                    return obj;
-                }, {});
-
-            const order2 = Object.keys(projectDataInput)
-                .sort()
-                .reduce((obj, key) => {
-                    obj[key] = projectDataInput[key];
-                    return obj;
-                }, {});
-
-            expect(
-                JSON.stringify(order1) === JSON.stringify(order2),
-                'Expect project pda data to be equal initial data'
-            ).to.be.true;
-        });
-
-        xit('Register project with token', async () => {
-            const tokenAddress = new PublicKey(
-                '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
-            );
-
-            const tokenData = await getMint(connection, tokenAddress);
-
-            const receiver = upgradableAuthority.publicKey;
-
-            const vaultAddress = getAssociatedTokenAddressSync(
-                tokenAddress,
-                receiver
-            );
-
-            let {arrayMerkleLeaf, totalTicket} = generateWhiteListInvest(9999);
-
-            const randomNumber = Math.floor(Math.random() * 3) + 1;
-
-            const test =
-                upgradableAuthority.publicKey.toString() +
-                '_' +
-                randomNumber.toString();
-            arrayMerkleLeaf.push(test);
-
-            totalTicket += randomNumber;
-
-            const leafNode = arrayMerkleLeaf.map((addr) => keccak256(addr));
-            const merkleTree = new MerkleTree(leafNode, keccak256, {
-                sortPairs: true,
-            });
-
-            const merkle_root = merkleTree.getRoot();
-
-            const id = generateRandomObjectId();
-            const startDate = new BN(Math.floor(Date.now() / 1000));
-            const endDate = new BN(Math.floor(Date.now() / 1000) + 3000);
-
-            const tokenOffered = 100000; // 100 000 token KYUPAD
-            const ticketSize = 100; // 100 USDT per ticket
-            // const price = (totalTicket * ticketSize) / tokenOffered;
-
-            const projectConfigArgs: ProjectConfigArgs = {
-                id: id,
-                startDate: startDate,
-                endDate: endDate,
-                merkleRoot: merkle_root,
-                tokenAddress: tokenAddress,
-                ticketSize: new BN(ticketSize * 10 ** tokenData.decimals),
-                tokenOffered: tokenOffered,
-                totalTicket: totalTicket,
-            };
-
-            const [project] = PublicKey.findProgramAddressSync(
-                [Buffer.from('project_config'), Buffer.from(projectConfigArgs.id)],
-                program.programId
-            );
-
-            const remainingAccountRegister: AccountMeta[] = [
-                {
-                    pubkey: TOKEN_PROGRAM_ID,
-                    isSigner: false,
-                    isWritable: false,
-                },
-                {
-                    pubkey: tokenAddress,
-                    isSigner: false,
-                    isWritable: false,
-                },
-            ];
-
-            const registerProjectIns = await program.methods
-                .registerProject(projectConfigArgs)
-                .accounts({
-                    creator: upgradableAuthority.publicKey,
-                    receiver: receiver,
-                })
-                .remainingAccounts(remainingAccountRegister)
-                .instruction();
-
-            const tx = new Transaction().add(registerProjectIns);
-
-            const vaultAccount = await getAccount(connection, vaultAddress, 'confirmed')
-
-            if (vaultAccount.isInitialized) {
-                tx.add(createAssociatedTokenAccountInstruction(
-                    upgradableAuthority.publicKey,
-                    vaultAddress,
-                    receiver, tokenAddress))
-            }
-
-            tx.feePayer = upgradableAuthority.publicKey;
-            tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-
-            tx.partialSign(upgradableAuthority);
-
-            const sig = await connection.sendTransaction(tx, [upgradableAuthority], {
-                skipPreflight: true,
-            });
-
-            console.log('Register project with token: ', sig);
-
-            await sleep(2000);
-
-            const projectData: ProjectConfig =
-                await program.account.projectConfig.fetch(project);
-
-            const projectDataInput: ProjectConfig = {
-                ...projectConfigArgs,
-                vaultAddress: vaultAddress,
-                tokenProgram: null,
-            };
-
-            const order1 = Object.keys(projectData)
-                .sort()
-                .reduce((obj, key) => {
-                    obj[key] = projectData[key];
-                    return obj;
-                }, {});
-
-            const order2 = Object.keys(projectDataInput)
-                .sort()
-                .reduce((obj, key) => {
-                    obj[key] = projectDataInput[key];
-                    return obj;
-                }, {});
-
-            expect(
-                JSON.stringify(order1) === JSON.stringify(order2),
-                'Expect project pda data to be equal initial data'
-            ).to.be.true;
-        });
-
-        xit('Register project but not admin', async () => {
-            const fakeAdmin = Keypair.generate();
-
-            // create fakeMaster
-            await createAccount({
-                connection: connection,
-                payerKeypair: upgradableAuthority,
-                newAccountKeypair: fakeAdmin,
-                lamports: 0.01 * LAMPORTS_PER_SOL,
-            });
-
-            const vaultAddress = fakeAdmin.publicKey;
-
-            let {arrayMerkleLeaf, totalTicket} = generateWhiteListInvest(9999);
-
-            const leafNode = arrayMerkleLeaf.map((addr) => keccak256(addr));
-            const merkleTree = new MerkleTree(leafNode, keccak256, {
-                sortPairs: true,
-            });
-
-            const merkle_root = merkleTree.getRoot();
-
-            const id = generateRandomObjectId();
-            const startDate = new BN(Math.floor(Date.now() / 1000));
-            const endDate = new BN(Math.floor(Date.now() / 1000) + 3000);
-
-            const tokenOffered = 1_000_000;
-            const ticketSize = new BN(0.1 * LAMPORTS_PER_SOL);
-
-            const projectConfigArgs: ProjectConfigArgs = {
-                id: id,
-                startDate: startDate,
-                endDate: endDate,
-                merkleRoot: merkle_root,
-                tokenAddress: null,
-                ticketSize: ticketSize,
-                tokenOffered: tokenOffered,
-                totalTicket: totalTicket,
-            };
-
-            const registerProjectIns = await program.methods
-                .registerProject(projectConfigArgs)
-                .accounts({
-                    creator: fakeAdmin.publicKey,
-                    receiver: vaultAddress,
-                })
-                .instruction();
-
-            const tx = new Transaction().add(registerProjectIns);
-
-            tx.feePayer = fakeAdmin.publicKey;
-            tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-
-            tx.partialSign(fakeAdmin);
-
-            let expected_error = false;
-            try {
-                await connection.sendTransaction(tx, [fakeAdmin]);
-            } catch (error) {
-                expected_error = true;
-            }
-
-            expect(
-                expected_error,
-                'Expect register project transaction must be failed'
-            ).to.be.true;
-        });
-    });
-
-    describe('🔑🔑🔑 Permission', async () => {
-        xit('Init master', async () => {
-            const [masterPda] = PublicKey.findProgramAddressSync(
-                [Buffer.from('master')],
-                program.programId
-            );
-
-            const BPF_LOADER_PROGRAM = new PublicKey(
-                'BPFLoaderUpgradeab1e11111111111111111111111'
-            );
-
-            const [programData] = PublicKey.findProgramAddressSync(
-                [program.programId.toBuffer()],
-                BPF_LOADER_PROGRAM
-            );
-
-            const createAdminIns = await program.methods
-                .initMaster(upgradableAuthority.publicKey)
-                .accounts({
-                    signer: upgradableAuthority.publicKey,
-                    programData: programData,
-                })
-                .instruction();
-
-            const tx = new Transaction().add(createAdminIns);
-
-            tx.feePayer = upgradableAuthority.publicKey;
-            tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-
-            tx.partialSign(upgradableAuthority);
-
-            const sig = await connection.sendTransaction(tx, [upgradableAuthority], {
-                maxRetries: 20,
-                skipPreflight: true,
-            });
-            await sleep(2000);
-
-            const masterData = await program.account.master.fetch(masterPda);
-
-            console.log('Init master: ', sig);
-
-            expect(
-                masterData.masterKey.toString() ===
-                upgradableAuthority.publicKey.toString(),
-                'Expect master PDA have the key of master'
-            ).to.be.true;
-        });
-
-        xit('Add admin', async () => {
-            const adminAddress = new PublicKey(
-                '6N4XbeWRUS2Hqy7zBpXZHtQzd4rYYvn8mtfHDRvVYX2X'
-            );
-
-            // const adminAddress = upgradableAuthority.publicKey;
-
-            const addAdminIns = await program.methods
-                .addAdmin(adminAddress)
-                .accounts({
-                    signer: upgradableAuthority.publicKey,
-                })
-                .instruction();
-
-            const tx = new Transaction().add(addAdminIns);
-
-            tx.feePayer = upgradableAuthority.publicKey;
-            tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-
-            tx.partialSign(upgradableAuthority);
-
-            const sig = await connection.sendTransaction(tx, [upgradableAuthority], {
-                maxRetries: 20,
-                skipPreflight: true,
-                preflightCommitment: 'confirmed',
-            });
-            await sleep(2000);
-
-            const [adminPda] = PublicKey.findProgramAddressSync(
-                [Buffer.from('admin'), adminAddress.toBuffer()],
-                program.programId
-            );
-
-            const adminPdaData = await program.account.admin.fetch(adminPda);
-
-            console.log('Add admin: ', sig);
-
-            expect(
-                adminPdaData.adminKey.toString() === adminAddress.toString(),
-                'This account must to be initialize'
-            ).to.be.true;
-        });
-
-        xit('Init another master but not deployer', async () => {
-            const fakeDeployer = Keypair.generate();
-
-            // create fakeMaster
-            await createAccount({
-                connection: connection,
-                payerKeypair: upgradableAuthority,
-                newAccountKeypair: fakeDeployer,
-                lamports: 0.01 * LAMPORTS_PER_SOL,
-            });
-
-            const BPF_LOADER_PROGRAM = new PublicKey(
-                'BPFLoaderUpgradeab1e11111111111111111111111'
-            );
-
-            const [programData] = PublicKey.findProgramAddressSync(
-                [program.programId.toBuffer()],
-                BPF_LOADER_PROGRAM
-            );
-
-            const createAdminIns = await program.methods
-                .initMaster(fakeDeployer.publicKey)
-                .accounts({
-                    signer: fakeDeployer.publicKey,
-                    programData: programData,
-                })
-                .instruction();
-
-            const tx = new Transaction().add(createAdminIns);
-
-            tx.feePayer = fakeDeployer.publicKey;
-            tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-
-            tx.partialSign(fakeDeployer);
-
-            let expected_error = false;
-            try {
-                await connection.sendTransaction(tx, [fakeDeployer], {
-                    skipPreflight: true,
-                });
-            } catch (error) {
-                expected_error = true;
-            }
-
-            expect(expected_error, 'Expect invest transaction must be failed').to.be
-                .true;
-        });
-
-        xit('Add admin but not master', async () => {
-            const fakeMaster = Keypair.generate();
-
-            // create fakeMaster
-            await createAccount({
-                connection: connection,
-                payerKeypair: upgradableAuthority,
-                newAccountKeypair: fakeMaster,
-                lamports: 0.01 * LAMPORTS_PER_SOL,
-            });
-
-            const addAdminIns = await program.methods
-                .addAdmin(fakeMaster.publicKey)
-                .accounts({
-                    signer: fakeMaster.publicKey,
-                })
-                .instruction();
-
-            const tx = new Transaction().add(addAdminIns);
-
-            tx.feePayer = fakeMaster.publicKey;
-            tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-
-            tx.partialSign(fakeMaster);
-
-            let expected_error = false;
-            try {
-                await connection.sendTransaction(tx, [fakeMaster]);
-            } catch (error) {
-                expected_error = true;
-            }
-
-            expect(expected_error, 'Expect invest transaction must be failed').to.be
-                .true;
-        });
-    });
+    //
+    // describe('📦📦📦 Register project', async () => {
+    //     it('Register project with sol', async () => {
+    //         const vaultAddress = upgradableAuthority.publicKey;
+    //
+    //         let {arrayMerkleLeaf, totalTicket} = generateWhiteListInvest(9999);
+    //
+    //         const randomNumber = Math.floor(Math.random() * 3) + 1;
+    //         const test =
+    //             upgradableAuthority.publicKey.toString() +
+    //             '_' +
+    //             randomNumber.toString();
+    //         arrayMerkleLeaf.push(test);
+    //
+    //         totalTicket += randomNumber;
+    //
+    //         const leafNode = arrayMerkleLeaf.map((addr) => keccak256(addr));
+    //         const merkleTree = new MerkleTree(leafNode, keccak256, {
+    //             sortPairs: true,
+    //         });
+    //
+    //         const merkle_root = merkleTree.getRoot();
+    //
+    //         const id = generateRandomObjectId();
+    //         const startDate = new BN(Math.floor(Date.now() / 1000));
+    //         const endDate = new BN(Math.floor(Date.now() / 1000) + 3000);
+    //
+    //         const tokenOffered = 1_000_000;
+    //         const ticketSize = new BN(0.1 * LAMPORTS_PER_SOL);
+    //
+    //         const projectConfigArgs: ProjectConfigArgs = {
+    //             id: id,
+    //             startDate: startDate,
+    //             endDate: endDate,
+    //             merkleRoot: merkle_root,
+    //             tokenAddress: null,
+    //             ticketSize: ticketSize,
+    //             tokenOffered: tokenOffered,
+    //             totalTicket: totalTicket,
+    //         };
+    //
+    //         const [project] = PublicKey.findProgramAddressSync(
+    //             [Buffer.from('project_config'), Buffer.from(projectConfigArgs.id)],
+    //             program.programId
+    //         );
+    //
+    //         const registerProjectIns = await program.methods
+    //             .registerProject(projectConfigArgs)
+    //             .accounts({
+    //                 creator: upgradableAuthority.publicKey,
+    //                 receiver: vaultAddress,
+    //             })
+    //             .instruction();
+    //
+    //         const tx = new Transaction().add(registerProjectIns);
+    //
+    //         tx.feePayer = upgradableAuthority.publicKey;
+    //         tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+    //
+    //         tx.partialSign(upgradableAuthority);
+    //
+    //         const sig = await connection.sendTransaction(tx, [upgradableAuthority], {
+    //             maxRetries: 20,
+    //             skipPreflight: true,
+    //             preflightCommitment: 'processed',
+    //         });
+    //
+    //         console.log('Register project with sol: ', sig);
+    //
+    //         await sleep(2000);
+    //
+    //         const projectData: ProjectConfig =
+    //             await program.account.projectConfig.fetch(project);
+    //
+    //         const projectDataInput: ProjectConfig = {
+    //             ...projectConfigArgs,
+    //             vaultAddress: vaultAddress,
+    //             tokenProgram: null,
+    //         };
+    //
+    //         const order1 = Object.keys(projectData)
+    //             .sort()
+    //             .reduce((obj, key) => {
+    //                 obj[key] = projectData[key];
+    //                 return obj;
+    //             }, {});
+    //
+    //         const order2 = Object.keys(projectDataInput)
+    //             .sort()
+    //             .reduce((obj, key) => {
+    //                 obj[key] = projectDataInput[key];
+    //                 return obj;
+    //             }, {});
+    //
+    //         expect(
+    //             JSON.stringify(order1) === JSON.stringify(order2),
+    //             'Expect project pda data to be equal initial data'
+    //         ).to.be.true;
+    //     });
+    //
+    //     it('Register project with token', async () => {
+    //         const tokenAddress = new PublicKey(
+    //             '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
+    //         );
+    //
+    //         const tokenData = await getMint(connection, tokenAddress);
+    //
+    //         const receiver = upgradableAuthority.publicKey;
+    //
+    //         const vaultAddress = getAssociatedTokenAddressSync(
+    //             tokenAddress,
+    //             receiver
+    //         );
+    //
+    //         let {arrayMerkleLeaf, totalTicket} = generateWhiteListInvest(9999);
+    //
+    //         const randomNumber = Math.floor(Math.random() * 3) + 1;
+    //
+    //         const test =
+    //             upgradableAuthority.publicKey.toString() +
+    //             '_' +
+    //             randomNumber.toString();
+    //         arrayMerkleLeaf.push(test);
+    //
+    //         totalTicket += randomNumber;
+    //
+    //         const leafNode = arrayMerkleLeaf.map((addr) => keccak256(addr));
+    //         const merkleTree = new MerkleTree(leafNode, keccak256, {
+    //             sortPairs: true,
+    //         });
+    //
+    //         const merkle_root = merkleTree.getRoot();
+    //
+    //         const id = generateRandomObjectId();
+    //         const startDate = new BN(Math.floor(Date.now() / 1000));
+    //         const endDate = new BN(Math.floor(Date.now() / 1000) + 3000);
+    //
+    //         const tokenOffered = 100000; // 100 000 token KYUPAD
+    //         const ticketSize = 100; // 100 USDT per ticket
+    //         // const price = (totalTicket * ticketSize) / tokenOffered;
+    //
+    //         const projectConfigArgs: ProjectConfigArgs = {
+    //             id: id,
+    //             startDate: startDate,
+    //             endDate: endDate,
+    //             merkleRoot: merkle_root,
+    //             tokenAddress: tokenAddress,
+    //             ticketSize: new BN(ticketSize * 10 ** tokenData.decimals),
+    //             tokenOffered: tokenOffered,
+    //             totalTicket: totalTicket,
+    //         };
+    //
+    //         const [project] = PublicKey.findProgramAddressSync(
+    //             [Buffer.from('project_config'), Buffer.from(projectConfigArgs.id)],
+    //             program.programId
+    //         );
+    //
+    //         const remainingAccountRegister: AccountMeta[] = [
+    //             {
+    //                 pubkey: TOKEN_PROGRAM_ID,
+    //                 isSigner: false,
+    //                 isWritable: false,
+    //             },
+    //             {
+    //                 pubkey: tokenAddress,
+    //                 isSigner: false,
+    //                 isWritable: false,
+    //             },
+    //         ];
+    //
+    //         const registerProjectIns = await program.methods
+    //             .registerProject(projectConfigArgs)
+    //             .accounts({
+    //                 creator: upgradableAuthority.publicKey,
+    //                 receiver: receiver,
+    //             })
+    //             .remainingAccounts(remainingAccountRegister)
+    //             .instruction();
+    //
+    //         const tx = new Transaction().add(registerProjectIns);
+    //
+    //         const vaultAccount = await getAccount(connection, vaultAddress, 'confirmed')
+    //
+    //         if (vaultAccount.isInitialized) {
+    //             tx.add(createAssociatedTokenAccountInstruction(
+    //                 upgradableAuthority.publicKey,
+    //                 vaultAddress,
+    //                 receiver, tokenAddress))
+    //         }
+    //
+    //         tx.feePayer = upgradableAuthority.publicKey;
+    //         tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+    //
+    //         tx.partialSign(upgradableAuthority);
+    //
+    //         const sig = await connection.sendTransaction(tx, [upgradableAuthority], {
+    //             skipPreflight: true,
+    //         });
+    //
+    //         console.log('Register project with token: ', sig);
+    //
+    //         await sleep(2000);
+    //
+    //         const projectData: ProjectConfig =
+    //             await program.account.projectConfig.fetch(project);
+    //
+    //         const projectDataInput: ProjectConfig = {
+    //             ...projectConfigArgs,
+    //             vaultAddress: vaultAddress,
+    //             tokenProgram: null,
+    //         };
+    //
+    //         const order1 = Object.keys(projectData)
+    //             .sort()
+    //             .reduce((obj, key) => {
+    //                 obj[key] = projectData[key];
+    //                 return obj;
+    //             }, {});
+    //
+    //         const order2 = Object.keys(projectDataInput)
+    //             .sort()
+    //             .reduce((obj, key) => {
+    //                 obj[key] = projectDataInput[key];
+    //                 return obj;
+    //             }, {});
+    //
+    //         expect(
+    //             JSON.stringify(order1) === JSON.stringify(order2),
+    //             'Expect project pda data to be equal initial data'
+    //         ).to.be.true;
+    //     });
+    //
+    //     it('Register project but not admin', async () => {
+    //         const fakeAdmin = Keypair.generate();
+    //
+    //         // create fakeMaster
+    //         await createAccount({
+    //             connection: connection,
+    //             payerKeypair: upgradableAuthority,
+    //             newAccountKeypair: fakeAdmin,
+    //             lamports: 0.01 * LAMPORTS_PER_SOL,
+    //         });
+    //
+    //         const vaultAddress = fakeAdmin.publicKey;
+    //
+    //         let {arrayMerkleLeaf, totalTicket} = generateWhiteListInvest(9999);
+    //
+    //         const leafNode = arrayMerkleLeaf.map((addr) => keccak256(addr));
+    //         const merkleTree = new MerkleTree(leafNode, keccak256, {
+    //             sortPairs: true,
+    //         });
+    //
+    //         const merkle_root = merkleTree.getRoot();
+    //
+    //         const id = generateRandomObjectId();
+    //         const startDate = new BN(Math.floor(Date.now() / 1000));
+    //         const endDate = new BN(Math.floor(Date.now() / 1000) + 3000);
+    //
+    //         const tokenOffered = 1_000_000;
+    //         const ticketSize = new BN(0.1 * LAMPORTS_PER_SOL);
+    //
+    //         const projectConfigArgs: ProjectConfigArgs = {
+    //             id: id,
+    //             startDate: startDate,
+    //             endDate: endDate,
+    //             merkleRoot: merkle_root,
+    //             tokenAddress: null,
+    //             ticketSize: ticketSize,
+    //             tokenOffered: tokenOffered,
+    //             totalTicket: totalTicket,
+    //         };
+    //
+    //         const registerProjectIns = await program.methods
+    //             .registerProject(projectConfigArgs)
+    //             .accounts({
+    //                 creator: fakeAdmin.publicKey,
+    //                 receiver: vaultAddress,
+    //             })
+    //             .instruction();
+    //
+    //         const tx = new Transaction().add(registerProjectIns);
+    //
+    //         tx.feePayer = fakeAdmin.publicKey;
+    //         tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+    //
+    //         tx.partialSign(fakeAdmin);
+    //
+    //         let expected_error = false;
+    //         try {
+    //             await connection.sendTransaction(tx, [fakeAdmin]);
+    //         } catch (error) {
+    //             expected_error = true;
+    //         }
+    //
+    //         expect(
+    //             expected_error,
+    //             'Expect register project transaction must be failed'
+    //         ).to.be.true;
+    //     });
+    // });
+    //
+    // describe('🔑🔑🔑 Permission', async () => {
+    //     it('Init master', async () => {
+    //         const [masterPda] = PublicKey.findProgramAddressSync(
+    //             [Buffer.from('master')],
+    //             program.programId
+    //         );
+    //
+    //         const BPF_LOADER_PROGRAM = new PublicKey(
+    //             'BPFLoaderUpgradeab1e11111111111111111111111'
+    //         );
+    //
+    //         const [programData] = PublicKey.findProgramAddressSync(
+    //             [program.programId.toBuffer()],
+    //             BPF_LOADER_PROGRAM
+    //         );
+    //
+    //         const createAdminIns = await program.methods
+    //             .initMaster(upgradableAuthority.publicKey)
+    //             .accounts({
+    //                 signer: upgradableAuthority.publicKey,
+    //                 programData: programData,
+    //             })
+    //             .instruction();
+    //
+    //         const tx = new Transaction().add(createAdminIns);
+    //
+    //         tx.feePayer = upgradableAuthority.publicKey;
+    //         tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+    //
+    //         tx.partialSign(upgradableAuthority);
+    //
+    //         const sig = await connection.sendTransaction(tx, [upgradableAuthority], {
+    //             maxRetries: 20,
+    //             skipPreflight: true,
+    //         });
+    //         await sleep(2000);
+    //
+    //         const masterData = await program.account.master.fetch(masterPda);
+    //
+    //         console.log('Init master: ', sig);
+    //
+    //         expect(
+    //             masterData.masterKey.toString() ===
+    //             upgradableAuthority.publicKey.toString(),
+    //             'Expect master PDA have the key of master'
+    //         ).to.be.true;
+    //     });
+    //
+    //     it('Add admin', async () => {
+    //         const adminAddress = new PublicKey(
+    //             '6N4XbeWRUS2Hqy7zBpXZHtQzd4rYYvn8mtfHDRvVYX2X'
+    //         );
+    //
+    //         // const adminAddress = upgradableAuthority.publicKey;
+    //
+    //         const addAdminIns = await program.methods
+    //             .addAdmin(adminAddress)
+    //             .accounts({
+    //                 signer: upgradableAuthority.publicKey,
+    //             })
+    //             .instruction();
+    //
+    //         const tx = new Transaction().add(addAdminIns);
+    //
+    //         tx.feePayer = upgradableAuthority.publicKey;
+    //         tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+    //
+    //         tx.partialSign(upgradableAuthority);
+    //
+    //         const sig = await connection.sendTransaction(tx, [upgradableAuthority], {
+    //             maxRetries: 20,
+    //             skipPreflight: true,
+    //             preflightCommitment: 'confirmed',
+    //         });
+    //         await sleep(2000);
+    //
+    //         const [adminPda] = PublicKey.findProgramAddressSync(
+    //             [Buffer.from('admin'), adminAddress.toBuffer()],
+    //             program.programId
+    //         );
+    //
+    //         const adminPdaData = await program.account.admin.fetch(adminPda);
+    //
+    //         console.log('Add admin: ', sig);
+    //
+    //         expect(
+    //             adminPdaData.adminKey.toString() === adminAddress.toString(),
+    //             'This account must to be initialize'
+    //         ).to.be.true;
+    //     });
+    //
+    //     it('Init another master but not deployer', async () => {
+    //         const fakeDeployer = Keypair.generate();
+    //
+    //         // create fakeMaster
+    //         await createAccount({
+    //             connection: connection,
+    //             payerKeypair: upgradableAuthority,
+    //             newAccountKeypair: fakeDeployer,
+    //             lamports: 0.01 * LAMPORTS_PER_SOL,
+    //         });
+    //
+    //         const BPF_LOADER_PROGRAM = new PublicKey(
+    //             'BPFLoaderUpgradeab1e11111111111111111111111'
+    //         );
+    //
+    //         const [programData] = PublicKey.findProgramAddressSync(
+    //             [program.programId.toBuffer()],
+    //             BPF_LOADER_PROGRAM
+    //         );
+    //
+    //         const createAdminIns = await program.methods
+    //             .initMaster(fakeDeployer.publicKey)
+    //             .accounts({
+    //                 signer: fakeDeployer.publicKey,
+    //                 programData: programData,
+    //             })
+    //             .instruction();
+    //
+    //         const tx = new Transaction().add(createAdminIns);
+    //
+    //         tx.feePayer = fakeDeployer.publicKey;
+    //         tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+    //
+    //         tx.partialSign(fakeDeployer);
+    //
+    //         let expected_error = false;
+    //         try {
+    //             await connection.sendTransaction(tx, [fakeDeployer], {
+    //                 skipPreflight: true,
+    //             });
+    //         } catch (error) {
+    //             expected_error = true;
+    //         }
+    //
+    //         expect(expected_error, 'Expect invest transaction must be failed').to.be
+    //             .true;
+    //     });
+    //
+    //     it('Add admin but not master', async () => {
+    //         const fakeMaster = Keypair.generate();
+    //
+    //         // create fakeMaster
+    //         await createAccount({
+    //             connection: connection,
+    //             payerKeypair: upgradableAuthority,
+    //             newAccountKeypair: fakeMaster,
+    //             lamports: 0.01 * LAMPORTS_PER_SOL,
+    //         });
+    //
+    //         const addAdminIns = await program.methods
+    //             .addAdmin(fakeMaster.publicKey)
+    //             .accounts({
+    //                 signer: fakeMaster.publicKey,
+    //             })
+    //             .instruction();
+    //
+    //         const tx = new Transaction().add(addAdminIns);
+    //
+    //         tx.feePayer = fakeMaster.publicKey;
+    //         tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+    //
+    //         tx.partialSign(fakeMaster);
+    //
+    //         let expected_error = false;
+    //         try {
+    //             await connection.sendTransaction(tx, [fakeMaster]);
+    //         } catch (error) {
+    //             expected_error = true;
+    //         }
+    //
+    //         expect(expected_error, 'Expect invest transaction must be failed').to.be
+    //             .true;
+    //     });
+    // });
 
     describe('💰💰💰 Invest', () => {
         describe('1️⃣ With no ticket', () => {
-            xit('D1: Try to invest', async () => {
+            it('D1: Try to invest', async () => {
                 const tokenAddress = new PublicKey(
                     '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
                 );
@@ -659,7 +657,7 @@ describe('Test Kyupad IDO', () => {
                     .true;
             });
 
-            xit('D2: Out of time', async () => {
+            it('D2: Out of time', async () => {
                 const tokenAddress = new PublicKey(
                     '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
                 );
@@ -788,7 +786,7 @@ describe('Test Kyupad IDO', () => {
         });
 
         describe('2️⃣ With 1 ticket', () => {
-            xit('D3: Success', async () => {
+            it('D3: Success', async () => {
                 const tokenAddress = new PublicKey(
                     '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
                 );
@@ -968,7 +966,7 @@ describe('Test Kyupad IDO', () => {
                 ).to.eq(1);
             });
 
-            xit('D4: Before invest time', async () => {
+            it('D4: Before invest time', async () => {
                 const tokenAddress = new PublicKey(
                     '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
                 );
@@ -1121,7 +1119,7 @@ describe('Test Kyupad IDO', () => {
                     .true;
             });
 
-            xit('D5: After invest time', async () => {
+            it('D5: After invest time', async () => {
                 const tokenAddress = new PublicKey(
                     '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
                 );
@@ -1279,7 +1277,7 @@ describe('Test Kyupad IDO', () => {
                     .true;
             });
 
-            xit('D6: Try to invest with more tickets then they have', async () => {
+            it('D6: Try to invest with more tickets then they have', async () => {
                 const tokenAddress = new PublicKey(
                     '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
                 );
@@ -1437,7 +1435,7 @@ describe('Test Kyupad IDO', () => {
                     .true;
             });
 
-            xit('D7: User is out of ticket', async () => {
+            it('D7: User is out of ticket', async () => {
                 const tokenAddress = new PublicKey(
                     '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
                 );
@@ -1473,7 +1471,6 @@ describe('Test Kyupad IDO', () => {
                 const totalTicket = 1500;
                 const tokenOffered = 10000; // 100 000 token KYUPAD
                 const ticketSize = new BN(100 * 10 ** tokenData.decimals); // 100 USDT per ticket
-                // const price = (totalTicket * ticketSize) / tokenOffered;
 
                 const projectConfigArgs: ProjectConfigArgs = {
                     id: id,
@@ -1584,7 +1581,10 @@ describe('Test Kyupad IDO', () => {
 
                 tx.partialSign(upgradableAuthority);
 
-                await connection.sendTransaction(tx, [upgradableAuthority]);
+                await sleep(1000)
+                const sig = await connection.sendTransaction(tx, [upgradableAuthority], {skipPreflight: true});
+
+                console.log('Invest 1st: ', sig)
 
                 const investSecondTimeIns = await program.methods
                     .invest(investArgs)
@@ -1616,7 +1616,7 @@ describe('Test Kyupad IDO', () => {
                     .true;
             });
 
-            xit('D8: Project is out of ticket', async () => {
+            it('D8: Project is out of ticket', async () => {
                 const tokenAddress = new PublicKey(
                     '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
                 );
@@ -1799,7 +1799,7 @@ describe('Test Kyupad IDO', () => {
         });
 
         describe('3️⃣ With 2 ticket', () => {
-            xit('D10: Success with 1 ticket', async () => {
+            it('D10: Success with 1 ticket', async () => {
                 const tokenAddress = new PublicKey(
                     '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
                 );
@@ -1956,7 +1956,7 @@ describe('Test Kyupad IDO', () => {
 
                 console.log('Invest: ', sig);
 
-                await sleep(2000);
+                await sleep(4000);
 
                 const info = await getAccount(connection, vaultAddress);
                 const amount = Number(info.amount);
@@ -1984,7 +1984,7 @@ describe('Test Kyupad IDO', () => {
                 ).to.eq(userTotalTicket);
             });
 
-            xit('D11: Success with second time investment', async () => {
+            it('D11: Success with second time investment', async () => {
                 const tokenAddress = new PublicKey(
                     '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
                 );
@@ -1999,7 +1999,7 @@ describe('Test Kyupad IDO', () => {
                 );
 
                 let {arrayMerkleLeaf} = generateWhiteListInvest(100);
-                const userTicket = 2;
+                const userTicket = 5;
                 const test =
                     upgradableAuthority.publicKey.toString() +
                     '_' +
@@ -2080,7 +2080,7 @@ describe('Test Kyupad IDO', () => {
                 const getProof = merkleTree.getProof(keccak256(test));
                 const merkle_proof = getProof.map((item) => Array.from(item.data));
 
-                const userTotalTicket = userTicket - 1;
+                const userTotalTicket = 3;
                 const investArgs: InvestArgs = {
                     projectId: projectConfigArgs.id,
                     ticketAmount: userTotalTicket,
@@ -2125,12 +2125,9 @@ describe('Test Kyupad IDO', () => {
                     .add(createAtaIns)
                     .add(registerProjectIns)
                     .add(investIns)
-                    .add(investIns);
 
                 tx.feePayer = upgradableAuthority.publicKey;
                 tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-
-                tx.partialSign(upgradableAuthority);
 
                 const sig = await connection.sendTransaction(
                     tx,
@@ -2140,9 +2137,40 @@ describe('Test Kyupad IDO', () => {
                     }
                 );
 
-                console.log('Invest: ', sig);
+                console.log('Invest 1st: ', sig);
 
-                await sleep(2000);
+                const investIns2 = await program.methods
+                    .invest({
+                        projectId: projectConfigArgs.id,
+                        ticketAmount: userTicket - userTotalTicket,
+                        maxTicketAmount: userTicket,
+                        merkleProof: merkle_proof,
+                    })
+                    .accounts({
+                        investor: upgradableAuthority.publicKey,
+                        vaultAddress: vaultAddress,
+                    })
+                    .signers([upgradableAuthority])
+                    .remainingAccounts(remainingAccountsInvest)
+                    .instruction();
+
+                const tx2 = new Transaction().add(investIns2);
+                tx2.feePayer = upgradableAuthority.publicKey;
+                tx2.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+                tx2.partialSign(upgradableAuthority);
+
+                const sig2 = await connection.sendTransaction(
+                    tx2,
+                    [upgradableAuthority],
+                    {
+                        skipPreflight: true,
+                    }
+                );
+
+                console.log('Invest 2nd: ', sig2);
+
+                await sleep(5000);
 
                 const info = await getAccount(connection, vaultAddress);
                 const amount = Number(info.amount);
@@ -2167,10 +2195,10 @@ describe('Test Kyupad IDO', () => {
                 expect(
                     investCounterData.totalInvestedTicket,
                     'User invest counter should be equal 0'
-                ).to.eq(2);
+                ).to.eq(userTicket);
             });
 
-            xit('D12: Success with 2 ticket', async () => {
+            it('D12: Success with 2 ticket', async () => {
                 const tokenAddress = new PublicKey(
                     '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
                 );
@@ -2355,7 +2383,7 @@ describe('Test Kyupad IDO', () => {
                 ).to.eq(2);
             });
 
-            xit('D13: Before invest time', async () => {
+            it('D13: Before invest time', async () => {
                 const tokenAddress = new PublicKey(
                     '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
                 );
@@ -2503,7 +2531,7 @@ describe('Test Kyupad IDO', () => {
                     .true;
             });
 
-            xit('D14: After invest time', async () => {
+            it('D14: After invest time', async () => {
                 const tokenAddress = new PublicKey(
                     '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
                 );
@@ -2651,7 +2679,7 @@ describe('Test Kyupad IDO', () => {
                     .true;
             });
 
-            xit('D15: Number ticket is bigger than they have', async () => {
+            it('D15: Number ticket is bigger than they have', async () => {
                 const tokenAddress = new PublicKey(
                     '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
                 );
@@ -2799,7 +2827,7 @@ describe('Test Kyupad IDO', () => {
                     .true;
             });
 
-            xit('D16: Number ticket is bigger than they have', async () => {
+            it('D16: Number ticket is bigger than they have', async () => {
                 const tokenAddress = new PublicKey(
                     '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
                 );
@@ -3118,7 +3146,7 @@ describe('Test Kyupad IDO', () => {
     });
 
     // describe('🕵️🕵️🕵️ Add private allocate', () => {
-    //     xit('Register project with token and add private allocate successfully', async () => {
+    //     it('Register project with token and add private allocate successfully', async () => {
     //         const tokenAddress = new PublicKey(
     //             '4LU6qSioai7RSwSBaNErE4pcj6z7dCtUY2UTNHXstxsg'
     //         );
