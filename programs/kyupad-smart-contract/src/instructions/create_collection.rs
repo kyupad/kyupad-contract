@@ -125,7 +125,8 @@ pub struct CreateCollection<'info> {
 
     #[account(
         seeds=[b"admin", creator.key().as_ref()],  
-        bump
+        bump,
+        owner = ID,
     )]
     pub admin_pda: Account<'info, Admin>,
 
@@ -148,9 +149,7 @@ pub struct CreateCollection<'info> {
     pub system_program: Program<'info, System>,
 
     #[account(
-        init_if_needed, 
-        payer = creator, 
-        space = 0,
+        mut,
         seeds = [b"update_authority"], 
         bump, 
     )]

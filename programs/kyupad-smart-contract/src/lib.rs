@@ -1,4 +1,9 @@
+#[macro_use]
+extern crate dotenv_codegen;
+
 use anchor_lang::prelude::*;
+use const_str_to_pubkey::str_to_pubkey;
+
 use instructions::*;
 use state::*;
 
@@ -6,10 +11,6 @@ pub mod errors;
 pub mod instructions;
 pub mod state;
 pub mod utils;
-
-#[macro_use]
-extern crate dotenv_codegen;
-use const_str_to_pubkey::str_to_pubkey;
 
 const PROGRAM_ID: Pubkey = str_to_pubkey(dotenv!("NFT_PROGRAM_ID"));
 declare_id!(PROGRAM_ID);
@@ -69,4 +70,11 @@ pub mod kyupad_smart_contract {
         instructions::add_pool_config(ctx, pool_config_args)
     }
 
+    pub fn airdrop(
+        ctx: Context<Airdrop>,
+        data: Vec<u8>,
+    ) -> Result<()> {
+        instructions::airdrop(ctx, data)
+    }
 }
+

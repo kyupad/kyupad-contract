@@ -15,7 +15,7 @@ pub struct InitAdmin<'info> {
 
     /// CHECK
     #[account(
-        init_if_needed, 
+        init,
         payer = signer, 
         space = 8 + Admin::INIT_SPACE, 
         seeds = [b"admin", address.as_ref()], 

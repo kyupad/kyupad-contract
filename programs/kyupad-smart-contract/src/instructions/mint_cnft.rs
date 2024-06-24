@@ -24,12 +24,12 @@ pub fn mint_cft<'c: 'info, 'info>(
     let destination = &ctx.accounts.destination;
     let mint_counter_collection = &mut ctx.accounts.mint_counter_collection;
 
-    // Check if user is allow mint is reached
+    // Check if user is allowed mint is reached
     if mint_counter_collection.count >= pools.max_mint_of_wallet {
         return Err(KyuPadError::AllowedMintLimitReached.into())
     }
 
-    let mut valid_merke_root = false;
+    let mut valid_merkle_root = false;
 
     let remaining_accounts_iter = &mut ctx.remaining_accounts.iter();
 
@@ -40,14 +40,13 @@ pub fn mint_cft<'c: 'info, 'info>(
 
             // Check to see if the pool's supply has run out
             if pool_minted.remaining_assets <= 0  {
-                msg!("{}",  pool_minted.remaining_assets);
                 return Err(KyuPadError::PoolSupplyRunOut.into());
             }
 
             // Remaining assets is minus 1
             pool_minted.remaining_assets -= 1;
 
-            valid_merke_root = true;
+            valid_merkle_root = true;
             let leaf = solana_program::keccak::hashv(&[minter.key().to_string().as_bytes()]);
 
             // check if this address is allow to mint
@@ -150,7 +149,7 @@ pub fn mint_cft<'c: 'info, 'info>(
         }
     }
 
-    if !valid_merke_root {
+    if !valid_merkle_root {
         return Err(KyuPadError::InvalidMekleRoot.into());
     }
 
@@ -165,7 +164,8 @@ pub struct MintcNFT<'info> {
 
     #[account(
         seeds=[Pools::PREFIX_SEED, collection_mint.key().as_ref()], 
-        bump
+        bump,
+        owner = ID
     )]
     pub pools: Account<'info, Pools>,
 
@@ -173,7 +173,7 @@ pub struct MintcNFT<'info> {
         init_if_needed, 
         payer = minter, 
         space = 8 + MintCounterCollection::INIT_SPACE, 
-        seeds=[MintCounterCollection::PREFIX_SEED, minter.key().as_ref(), collection_mint.key().as_ref()], 
+        seeds=[MintCounterCollection::PREFIX_SEED, minter.key().as_ref(), collection_mint.key().as_ref()],
         bump
     )]
     pub mint_counter_collection: Account<'info, MintCounterCollection>,
@@ -184,8 +184,9 @@ pub struct MintcNFT<'info> {
 
     #[account(
         mut,
-        // seeds=[PoolMinted::PREFIX_SEED, pools.key().as_ref(), id.as_bytes()], 
-        // bump
+        // seeds=[PoolMinted::PREFIX_SEED, pools.key().as_ref(), pool_id.as_bytes()],
+        // bump,
+        owner = ID
     )]
     pub pool_minted: Account<'info, PoolMinted>,
 

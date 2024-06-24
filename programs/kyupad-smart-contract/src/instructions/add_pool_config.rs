@@ -2,6 +2,8 @@ use anchor_lang::prelude::*;
 
 use crate::{errors::KyuPadError, state::PoolConfig, Admin, PoolConfigArgs, PoolMinted, Pools};
 
+use crate::*;
+
 pub fn add_pool_config<'c: 'info, 'info>(
     ctx: Context<'_, '_, 'c, 'info, AddPoolConfig<'info>>,
     pool_config_args: PoolConfigArgs,
@@ -46,7 +48,8 @@ pub struct AddPoolConfig<'info> {
 
     #[account(
         seeds=[b"admin", creator.key().as_ref()],  
-        bump
+        bump,
+        owner = ID,
     )]
     pub admin_pda: Account<'info, Admin>,
 
@@ -56,7 +59,8 @@ pub struct AddPoolConfig<'info> {
     #[account(
         mut,
         seeds=[b"pools", collection_mint.key().as_ref()], 
-        bump
+        bump,
+        owner = ID,
     )]
     pub pools: Account<'info, Pools>,
 
@@ -64,7 +68,7 @@ pub struct AddPoolConfig<'info> {
     pub destination: AccountInfo<'info>,
 
     #[account(
-        init_if_needed,
+        init,
         payer = creator,
         seeds=[PoolMinted::PREFIX_SEED, pools.key().as_ref(), pool_config_args.id.as_bytes()],
         space = 8 + PoolMinted::INIT_SPACE,
