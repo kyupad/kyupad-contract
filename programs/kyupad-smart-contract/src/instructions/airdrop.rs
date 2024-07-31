@@ -8,8 +8,6 @@ pub fn airdrop(
     ctx: Context<Airdrop>,
     data: Vec<u8>,
 ) -> Result<()> {
-    let mint_counter_collection = &mut ctx.accounts.mint_counter_collection;
-
     let metadata_args = MetadataArgs::try_from_slice(&data).unwrap();
 
     let seeds: &[&[u8]] = &[b"update_authority"];
@@ -40,8 +38,6 @@ pub fn airdrop(
         .metadata(metadata_args)
         .invoke_signed(&[seeds_admin])?;
 
-    mint_counter_collection.count += 1;
-
     Ok(())
 }
 
@@ -52,15 +48,6 @@ pub struct Airdrop<'info> {
 
     /// CHECK:
     pub minter: AccountInfo<'info>,
-
-    #[account(
-    init_if_needed,
-    payer = admin,
-    space = 8 + MintCounterCollection::INIT_SPACE,
-    seeds=[MintCounterCollection::PREFIX_SEED, minter.key().as_ref(), collection_mint.key().as_ref()],
-    bump
-    )]
-    pub mint_counter_collection: Account<'info, MintCounterCollection>,
 
     #[account(
     seeds = [b"admin", admin.key().as_ref()],
